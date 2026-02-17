@@ -1,8 +1,8 @@
 -- Miner Planner - Main runtime control
 -- Handles event registration and dispatching
 
-local SELECTION_TOOL_NAME = "miner-planner-selection-tool"
-local SHORTCUT_NAME = "miner-planner-shortcut"
+local SELECTION_TOOL_NAME = "mineore-selection-tool"
+local SHORTCUT_NAME = "mineore-shortcut"
 
 -- Initialize global storage on mod load
 script.on_init(function()
@@ -35,7 +35,7 @@ script.on_event(defines.events.on_lua_shortcut, function(event)
 end)
 
 -- Handle custom input (keyboard shortcut ALT+M)
-script.on_event("miner-planner-toggle", function(event)
+script.on_event("mineore-toggle", function(event)
     local player = game.get_player(event.player_index)
     if player then
         give_selection_tool(player)
@@ -51,7 +51,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     local entities = event.entities
     if #entities == 0 then
         player.create_local_flying_text({
-            text = {"miner-planner.no-resources-found"},
+            text = {"mineore.no-resources-found"},
             create_at_cursor = true,
         })
         return
@@ -63,7 +63,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         resource_counts[entity.name] = (resource_counts[entity.name] or 0) + 1
     end
     for name, count in pairs(resource_counts) do
-        player.print({"miner-planner.resource-found", name, count})
+        player.print({"mineore.resource-found", name, count})
     end
 end)
 
@@ -87,12 +87,12 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
 
     if removed > 0 then
         player.create_local_flying_text({
-            text = {"miner-planner.ghosts-removed", removed},
+            text = {"mineore.ghosts-removed", removed},
             create_at_cursor = true,
         })
     else
         player.create_local_flying_text({
-            text = {"miner-planner.no-ghosts-found"},
+            text = {"mineore.no-ghosts-found"},
             create_at_cursor = true,
         })
     end

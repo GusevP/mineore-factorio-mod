@@ -1,10 +1,10 @@
 local selection_tool = {
     type = "selection-tool",
-    name = "miner-planner-selection-tool",
-    icon = "__base__/graphics/icons/steel-axe.png",
+    name = "mineore-selection-tool",
+    icon = "__mineore__/graphics/icons/steel-axe.png",
     icon_size = 64,
     subgroup = "tool",
-    order = "c[automated-construction]-d[miner-planner]",
+    order = "c[automated-construction]-d[mineore]",
     stack_size = 1,
     hidden = true,
     select = {
