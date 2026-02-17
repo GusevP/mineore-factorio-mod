@@ -1,6 +1,8 @@
 -- Miner Planner - Main runtime control
 -- Handles event registration and dispatching
 
+local resource_scanner = require("scripts.resource_scanner")
+
 local SELECTION_TOOL_NAME = "mineore-selection-tool"
 local SHORTCUT_NAME = "mineore-shortcut"
 
@@ -13,9 +15,15 @@ script.on_configuration_changed(function()
     storage.players = storage.players or {}
 end)
 
+-- Get or initialize per-player storage
+local function get_player_data(player_index)
+    storage.players[player_index] = storage.players[player_index] or {}
+    return storage.players[player_index]
+end
+
 -- Track new players joining
 script.on_event(defines.events.on_player_created, function(event)
-    storage.players[event.player_index] = storage.players[event.player_index] or {}
+    get_player_data(event.player_index)
 end)
 
 -- Give the player the selection tool when shortcut is clicked
@@ -57,13 +65,28 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         return
     end
 
-    -- Log selected resources for debugging (will be replaced by GUI in Task 4)
-    local resource_counts = {}
-    for _, entity in pairs(entities) do
-        resource_counts[entity.name] = (resource_counts[entity.name] or 0) + 1
+    -- Scan selected resources and find compatible drills
+    local scan_results = resource_scanner.scan(entities, player)
+    if not scan_results then
+        player.create_local_flying_text({
+            text = {"mineore.no-resources-found"},
+            create_at_cursor = true,
+        })
+        return
     end
-    for name, count in pairs(resource_counts) do
-        player.print({"mineore.resource-found", name, count})
+
+    -- Store scan results for this player (used by GUI and placer later)
+    local player_data = get_player_data(event.player_index)
+    player_data.last_scan = scan_results
+
+    -- Print debug info to console (will be replaced by GUI in Task 4)
+    resource_scanner.print_results(scan_results, player)
+
+    if #scan_results.compatible_drills == 0 then
+        player.create_local_flying_text({
+            text = {"mineore.no-compatible-drills"},
+            create_at_cursor = true,
+        })
     end
 end)
 
