@@ -145,7 +145,7 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 - [x] Skip positions that fail placement check and optionally report count of skipped positions
 - [x] Handle alt-selection (shift-drag) to remove/cancel ghost drills placed by this mod in selected area
 - [x] Add flying-text feedback showing "Placed X miners" or "No valid positions found"
-- [ ] Verify: select ore patch, configure, press Place - ghost miners appear in correct grid pattern
+- [x] Verify: select ore patch, configure, press Place - ghost miners appear in correct grid pattern
 
 ### Task 7: Module and quality support
 
