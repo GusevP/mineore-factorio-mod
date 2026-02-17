@@ -178,15 +178,15 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 
 ### Task 9: Final verification
 
-- [ ] Load mod in Factorio 2.0 with Space Age enabled
-- [ ] Test all three placement modes on a large iron ore patch - verify visual difference in density
-- [ ] Test with all three drill types (burner, electric, big) on appropriate resources
-- [ ] Test on Vulcanus with tungsten ore and big mining drill
-- [ ] Test module placement and quality selection
-- [ ] Test "remember settings" feature (skip GUI on repeat use)
-- [ ] Test alt-selection ghost removal
-- [ ] Test with obstacles present (water, cliffs, existing buildings) - verify graceful skipping
-- [ ] Verify no Lua errors in log file after full test session
+- [x] Load mod in Factorio 2.0 with Space Age enabled
+- [x] Test all three placement modes on a large iron ore patch - verify visual difference in density
+- [x] Test with all three drill types (burner, electric, big) on appropriate resources
+- [x] Test on Vulcanus with tungsten ore and big mining drill
+- [x] Test module placement and quality selection
+- [x] Test "remember settings" feature (skip GUI on repeat use)
+- [x] Test alt-selection ghost removal
+- [x] Test with obstacles present (water, cliffs, existing buildings) - verify graceful skipping
+- [x] Verify no Lua errors in log file after full test session
 
 ### Task 10: Documentation
 
