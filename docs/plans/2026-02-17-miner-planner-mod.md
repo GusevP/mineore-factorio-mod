@@ -168,13 +168,13 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 
 - Modify: various
 
-- [ ] Handle edge case: player selects area with multiple ore types - show GUI with tabs or let user pick which ore to fill
-- [ ] Handle undo: register on_pre_ghost_deconstructed or rely on Factorio's native Ctrl+Z for ghost removal
-- [ ] Add mod settings (data.lua settings stage): default placement mode, default drill preference, show-gui-always toggle
-- [ ] Add shortcut tooltip and proper icon (create simple 32x32 and 64x64 icons)
-- [ ] Ensure proper cleanup on player disconnect / mod removal (on_player_removed, on_configuration_changed)
-- [ ] Test on different planets: Nauvis (iron, copper, stone, coal, uranium), Vulcanus (tungsten, calcite with big mining drill), Fulgora (scrap), Gleba (if applicable)
-- [ ] Verify: mod works correctly across planet surfaces, handles all resource types
+- [x] Handle edge case: player selects area with multiple ore types - show GUI with tabs or let user pick which ore to fill
+- [x] Handle undo: register on_pre_ghost_deconstructed or rely on Factorio's native Ctrl+Z for ghost removal
+- [x] Add mod settings (data.lua settings stage): default placement mode, default drill preference, show-gui-always toggle
+- [x] Add shortcut tooltip and proper icon (create simple 32x32 and 64x64 icons)
+- [x] Ensure proper cleanup on player disconnect / mod removal (on_player_removed, on_configuration_changed)
+- [x] Test on different planets: Nauvis (iron, copper, stone, coal, uranium), Vulcanus (tungsten, calcite with big mining drill), Fulgora (scrap), Gleba (if applicable)
+- [x] Verify: mod works correctly across planet surfaces, handles all resource types
 
 ### Task 9: Final verification
 

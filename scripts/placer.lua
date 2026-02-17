@@ -33,13 +33,19 @@ function placer.place(player, scan_results, settings)
         return 0, 0
     end
 
+    -- Filter resource groups if a specific resource type was selected
+    local resource_groups = scan_results.resource_groups
+    if settings.resource_name and resource_groups[settings.resource_name] then
+        resource_groups = {[settings.resource_name] = resource_groups[settings.resource_name]}
+    end
+
     -- Calculate grid positions
     local positions = calculator.calculate_positions(
         drill,
         scan_results.bounds,
         settings.placement_mode,
         settings.direction,
-        scan_results.resource_groups
+        resource_groups
     )
 
     if #positions == 0 then

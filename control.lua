@@ -15,6 +15,18 @@ end)
 
 script.on_configuration_changed(function()
     storage.players = storage.players or {}
+
+    -- Close any open config GUIs and clear stale scan data on config change
+    for player_index, player_data in pairs(storage.players) do
+        local player = game.get_player(player_index)
+        if player then
+            config_gui.destroy(player)
+            player_data.last_scan = nil
+        else
+            -- Remove data for players that no longer exist
+            storage.players[player_index] = nil
+        end
+    end
 end)
 
 -- Get or initialize per-player storage
@@ -26,6 +38,13 @@ end
 -- Track new players joining
 script.on_event(defines.events.on_player_created, function(event)
     get_player_data(event.player_index)
+end)
+
+-- Clean up when a player is removed
+script.on_event(defines.events.on_player_removed, function(event)
+    if storage.players then
+        storage.players[event.player_index] = nil
+    end
 end)
 
 -- Give the player the selection tool when shortcut is clicked
@@ -90,8 +109,9 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     end
 
     -- Check if "remember settings" is enabled and we have previous settings
+    local show_gui_always = player.mod_settings["mineore-show-gui-always"].value
     local settings = player_data.settings
-    if settings and settings.remember then
+    if settings and settings.remember and not show_gui_always then
         -- Verify the remembered drill is still compatible with this selection
         local drill_still_valid = false
         for _, drill in ipairs(scan_results.compatible_drills) do

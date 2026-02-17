@@ -23,6 +23,11 @@ function gui.create(player, scan_results, player_data)
 
     local settings = player_data.settings or {}
 
+    -- Apply default placement mode from mod settings if no previous choice
+    if not settings.placement_mode then
+        settings.placement_mode = player.mod_settings["mineore-default-mode"].value
+    end
+
     -- Main frame
     local main_frame = player.gui.screen.add{
         type = "frame",
@@ -80,6 +85,18 @@ function gui.create(player, scan_results, player_data)
 
     -- Resource info section
     gui._add_resource_info(inner, scan_results)
+
+    -- Resource type selector (when multiple ore types are selected)
+    local resource_names = {}
+    for name, _ in pairs(scan_results.resource_groups) do
+        resource_names[#resource_names + 1] = name
+    end
+    table.sort(resource_names)
+
+    if #resource_names > 1 then
+        inner.add{type = "line", direction = "horizontal"}
+        gui._add_resource_selector(inner, resource_names, settings)
+    end
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -179,6 +196,36 @@ function gui._add_resource_info(parent, scan_results)
             caption = {"mineore.gui-resource-line", name, group.count},
         }
     end
+end
+
+--- Add resource type selector when multiple ore types are in the selection.
+--- @param parent LuaGuiElement
+--- @param resource_names string[] Sorted list of resource names
+--- @param settings table Player settings
+function gui._add_resource_selector(parent, resource_names, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-resource-select-header"},
+        style = "caption_label",
+    }
+
+    local captions = {}
+    local selected_index = 1
+    for i, name in ipairs(resource_names) do
+        captions[i] = {"entity-name." .. name}
+        if settings.resource_name and settings.resource_name == name then
+            selected_index = i
+        end
+    end
+
+    local dropdown = parent.add{
+        type = "drop-down",
+        name = "mineore_resource_dropdown",
+        items = captions,
+        selected_index = selected_index,
+    }
+    dropdown.style.horizontally_stretchable = true
+    dropdown.tags = {resource_names = resource_names}
 end
 
 --- Add drill selector dropdown to the GUI.
@@ -455,6 +502,13 @@ function gui.read_settings(player)
 
     local inner = frame.content.inner
     local settings = {}
+
+    -- Read resource type selection (when multiple ore types)
+    local res_dropdown = inner.mineore_resource_dropdown
+    if res_dropdown and res_dropdown.selected_index > 0 then
+        local resource_names = res_dropdown.tags.resource_names
+        settings.resource_name = resource_names[res_dropdown.selected_index]
+    end
 
     -- Read drill selection
     local dropdown = inner.mineore_drill_dropdown

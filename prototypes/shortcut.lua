@@ -2,6 +2,7 @@ local shortcut = {
     type = "shortcut",
     name = "mineore-shortcut",
     localised_name = {"shortcut.mineore"},
+    localised_description = {"shortcut-description.mineore"},
     action = "lua",
     icon = "__mineore__/graphics/icons/mineore_icon_64.png",
     icon_size = 64,
