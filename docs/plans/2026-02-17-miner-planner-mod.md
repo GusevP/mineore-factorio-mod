@@ -109,14 +109,14 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 - Modify: `control.lua`
 - Modify: `locale/en/locale.cfg`
 
-- [ ] After area selection and resource scan, show a configuration frame (player.gui.screen)
-- [ ] GUI elements: resource type label showing what was selected, drill selector dropdown (populated with compatible drills), placement mode selector (radio buttons: Productivity / Normal / Efficient), direction preference (N/S/E/W for drill output direction), "Place" button, "Cancel" button
-- [ ] Add "Remember settings" checkbox - when checked, skip GUI on next use and reuse last settings (like P.U.M.P.)
-- [ ] Store per-player settings in global table
-- [ ] Handle on_gui_click, on_gui_selection_state_changed events for GUI interaction
-- [ ] Add GUI styles in style.lua for consistent look
-- [ ] Add all GUI strings to locale.cfg
-- [ ] Verify: GUI opens after selection, all controls work, settings persist
+- [x] After area selection and resource scan, show a configuration frame (player.gui.screen)
+- [x] GUI elements: resource type label showing what was selected, drill selector dropdown (populated with compatible drills), placement mode selector (radio buttons: Productivity / Normal / Efficient), direction preference (N/S/E/W for drill output direction), "Place" button, "Cancel" button
+- [x] Add "Remember settings" checkbox - when checked, skip GUI on next use and reuse last settings (like P.U.M.P.)
+- [x] Store per-player settings in global table
+- [x] Handle on_gui_click, on_gui_selection_state_changed events for GUI interaction
+- [x] Add GUI styles in style.lua for consistent look
+- [x] Add all GUI strings to locale.cfg
+- [x] Verify: GUI opens after selection, all controls work, settings persist
 
 ### Task 5: Grid calculation engine
 

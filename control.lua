@@ -2,6 +2,7 @@
 -- Handles event registration and dispatching
 
 local resource_scanner = require("scripts.resource_scanner")
+local config_gui = require("scripts.gui")
 
 local SELECTION_TOOL_NAME = "mineore-selection-tool"
 local SHORTCUT_NAME = "mineore-shortcut"
@@ -75,19 +76,44 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         return
     end
 
-    -- Store scan results for this player (used by GUI and placer later)
+    -- Store scan results for this player
     local player_data = get_player_data(event.player_index)
     player_data.last_scan = scan_results
-
-    -- Print debug info to console (will be replaced by GUI in Task 4)
-    resource_scanner.print_results(scan_results, player)
 
     if #scan_results.compatible_drills == 0 then
         player.create_local_flying_text({
             text = {"mineore.no-compatible-drills"},
             create_at_cursor = true,
         })
+        return
     end
+
+    -- Check if "remember settings" is enabled and we have previous settings
+    local settings = player_data.settings
+    if settings and settings.remember then
+        -- Verify the remembered drill is still compatible with this selection
+        local drill_still_valid = false
+        for _, drill in ipairs(scan_results.compatible_drills) do
+            if drill.name == settings.drill_name then
+                drill_still_valid = true
+                break
+            end
+        end
+
+        if drill_still_valid then
+            -- Skip GUI, go straight to placement (will be wired in Task 6)
+            player.print({"mineore.using-remembered-settings"})
+            player_data.pending_placement = {
+                scan = scan_results,
+                settings = settings,
+            }
+            -- TODO: call placer directly once Task 6 is implemented
+            return
+        end
+    end
+
+    -- Show configuration GUI
+    config_gui.create(player, scan_results, player_data)
 end)
 
 -- Handle alt-selection (shift-drag to remove ghost miners)
@@ -118,5 +144,69 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
             text = {"mineore.no-ghosts-found"},
             create_at_cursor = true,
         })
+    end
+end)
+
+-- GUI event handlers
+
+-- Handle button clicks (Place, Cancel, Close)
+script.on_event(defines.events.on_gui_click, function(event)
+    local element = event.element
+    if not element or not element.valid then return end
+    if not config_gui.is_mineore_element(element) then return end
+
+    local player = game.get_player(event.player_index)
+    if not player then return end
+
+    if element.name == "mineore_close_button" or element.name == "mineore_cancel_button" then
+        config_gui.destroy(player)
+        return
+    end
+
+    if element.name == "mineore_place_button" then
+        local settings = config_gui.read_settings(player)
+        if settings then
+            local player_data = get_player_data(event.player_index)
+            player_data.settings = settings
+
+            -- Store pending placement for the placer (Task 6)
+            player_data.pending_placement = {
+                scan = player_data.last_scan,
+                settings = settings,
+            }
+
+            config_gui.destroy(player)
+
+            -- TODO: call placer directly once Task 6 is implemented
+            player.print({"mineore.placement-queued"})
+        end
+        return
+    end
+end)
+
+-- Handle radiobutton changes (placement mode and direction)
+script.on_event(defines.events.on_gui_checked_state_changed, function(event)
+    local element = event.element
+    if not element or not element.valid then return end
+    if not config_gui.is_mineore_element(element) then return end
+
+    config_gui.handle_radio_change(element)
+end)
+
+-- Handle dropdown selection changes
+script.on_event(defines.events.on_gui_selection_state_changed, function(event)
+    local element = event.element
+    if not element or not element.valid then return end
+    if not config_gui.is_mineore_element(element) then return end
+    -- No additional action needed - selection is read when Place is clicked
+end)
+
+-- Handle ESC key closing the GUI
+script.on_event(defines.events.on_gui_closed, function(event)
+    local element = event.element
+    if not element or not element.valid then return end
+
+    if element.name == "mineore_config_frame" then
+        element.destroy()
     end
 end)
