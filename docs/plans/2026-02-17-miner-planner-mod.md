@@ -124,13 +124,13 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 
 - Create: `scripts/calculator.lua`
 
-- [ ] Implement function to calculate drill placement grid based on: drill collision_box dimensions, drill resource_searching_radius, placement mode (Productivity/Normal/Efficient), selected area bounds, resource tile positions
-- [ ] Productivity mode: spacing = drill physical size (drills touching edge-to-edge)
-- [ ] Normal mode: spacing = mining area diameter (mining areas touching, no overlap)
-- [ ] Efficient mode: spacing = mining area diameter with staggered/offset rows for maximum unique coverage
-- [ ] Return list of {position, direction} for each drill to place
-- [ ] Filter out positions where the drill body would have no resource tiles underneath (skip empty spots)
-- [ ] Verify: given known drill sizes and a rectangular area, output expected grid positions
+- [x] Implement function to calculate drill placement grid based on: drill collision_box dimensions, drill resource_searching_radius, placement mode (Productivity/Normal/Efficient), selected area bounds, resource tile positions
+- [x] Productivity mode: spacing = drill physical size (drills touching edge-to-edge)
+- [x] Normal mode: spacing = mining area diameter (mining areas touching, no overlap)
+- [x] Efficient mode: spacing = mining area diameter with staggered/offset rows for maximum unique coverage
+- [x] Return list of {position, direction} for each drill to place
+- [x] Filter out positions where the drill body would have no resource tiles underneath (skip empty spots)
+- [x] Verify: given known drill sizes and a rectangular area, output expected grid positions
 
 ### Task 6: Ghost entity placement
 
