@@ -139,12 +139,12 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 - Create: `scripts/placer.lua`
 - Modify: `control.lua`
 
-- [ ] Take grid positions from calculator and place entity-ghost for each drill position
-- [ ] Use surface.create_entity with name="entity-ghost", inner_name=selected drill, position, direction, force=player.force
-- [ ] Before placing each ghost, check surface.can_place_entity to avoid conflicts with existing entities, water, cliffs
-- [ ] Skip positions that fail placement check and optionally report count of skipped positions
-- [ ] Handle alt-selection (shift-drag) to remove/cancel ghost drills placed by this mod in selected area
-- [ ] Add flying-text feedback showing "Placed X miners" or "No valid positions found"
+- [x] Take grid positions from calculator and place entity-ghost for each drill position
+- [x] Use surface.create_entity with name="entity-ghost", inner_name=selected drill, position, direction, force=player.force
+- [x] Before placing each ghost, check surface.can_place_entity to avoid conflicts with existing entities, water, cliffs
+- [x] Skip positions that fail placement check and optionally report count of skipped positions
+- [x] Handle alt-selection (shift-drag) to remove/cancel ghost drills placed by this mod in selected area
+- [x] Add flying-text feedback showing "Placed X miners" or "No valid positions found"
 - [ ] Verify: select ore patch, configure, press Place - ghost miners appear in correct grid pattern
 
 ### Task 7: Module and quality support

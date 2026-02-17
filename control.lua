@@ -3,6 +3,7 @@
 
 local resource_scanner = require("scripts.resource_scanner")
 local config_gui = require("scripts.gui")
+local placer = require("scripts.placer")
 
 local SELECTION_TOOL_NAME = "mineore-selection-tool"
 local SHORTCUT_NAME = "mineore-shortcut"
@@ -101,13 +102,9 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         end
 
         if drill_still_valid then
-            -- Skip GUI, go straight to placement (will be wired in Task 6)
+            -- Skip GUI, go straight to placement
             player.print({"mineore.using-remembered-settings"})
-            player_data.pending_placement = {
-                scan = scan_results,
-                settings = settings,
-            }
-            -- TODO: call placer directly once Task 6 is implemented
+            placer.place(player, scan_results, settings)
             return
         end
     end
@@ -169,16 +166,12 @@ script.on_event(defines.events.on_gui_click, function(event)
             local player_data = get_player_data(event.player_index)
             player_data.settings = settings
 
-            -- Store pending placement for the placer (Task 6)
-            player_data.pending_placement = {
-                scan = player_data.last_scan,
-                settings = settings,
-            }
-
             config_gui.destroy(player)
 
-            -- TODO: call placer directly once Task 6 is implemented
-            player.print({"mineore.placement-queued"})
+            -- Place ghost drills using calculated grid positions
+            if player_data.last_scan then
+                placer.place(player, player_data.last_scan, settings)
+            end
         end
         return
     end
