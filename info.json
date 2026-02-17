@@ -1,0 +1,14 @@
+{
+    "name": "miner-planner",
+    "version": "0.1.0",
+    "title": "Miner Planner",
+    "author": "pavelgusev",
+    "contact": "",
+    "homepage": "",
+    "description": "Automates mining drill placement on ore patches. Select an area, choose a drill and placement mode, and ghost miners are placed in an optimal grid pattern.",
+    "factorio_version": "2.0",
+    "dependencies": [
+        "base >= 2.0",
+        "? space-age >= 2.0"
+    ]
+}
