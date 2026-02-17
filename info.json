@@ -5,7 +5,7 @@
   "author": "pavelgusev",
   "contact": "",
   "homepage": "",
-  "description": "Automates mining drill placement on ore patches. Select an area, choose a drill and placement mode, and ghost miners are placed in an optimal grid pattern.",
+  "description": "Automates mining drill placement on ore patches. Drag-select an area, choose a drill, placement mode (Productivity/Normal/Efficient), modules, and quality, then ghost miners are placed in an optimal grid pattern. Supports all drill types and resources across all planets.",
   "factorio_version": "2.0",
   "dependencies": ["base >= 2.0", "? space-age >= 2.0"]
 }

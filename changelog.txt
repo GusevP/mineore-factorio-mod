@@ -1,0 +1,16 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2026-02-17
+  Features:
+    - Initial release
+    - Selection tool for drag-selecting ore patches
+    - Three placement modes: Productivity, Normal, and Efficient
+    - Support for all base game and Space Age mining drills (burner, electric, big)
+    - Support for all solid minable resources across all planets
+    - Configuration GUI with drill selection, placement mode, and output direction
+    - Module pre-requests on ghost drills (speed, productivity, efficiency, quality)
+    - Quality selection for ghost drills (requires Space Age DLC)
+    - Remember settings option to skip GUI on repeat use
+    - Shift-drag ghost miner removal
+    - Automatic obstacle avoidance (water, cliffs, existing buildings)
+    - Mod settings for default placement mode and GUI behavior
