@@ -155,12 +155,12 @@ The exact spacing is computed dynamically based on the selected drill's collisio
 - Modify: `scripts/placer.lua`
 - Modify: `locale/en/locale.cfg`
 
-- [ ] Add module selector to GUI - dropdown showing compatible modules for the selected drill (speed, productivity, efficiency, quality modules)
-- [ ] Add module count selector (up to the drill's module_slots count)
-- [ ] When placing ghost drills, also set module requests on the ghost entities using insert_plan or module ghost items
-- [ ] Add quality selector dropdown if Space Age is active (normal, uncommon, rare, epic, legendary)
-- [ ] When quality is selected, pass quality parameter to ghost entity creation
-- [ ] Verify: placed ghost drills show correct module requests and quality level
+- [x] Add module selector to GUI - dropdown showing compatible modules for the selected drill (speed, productivity, efficiency, quality modules)
+- [x] Add module count selector (up to the drill's module_slots count)
+- [x] When placing ghost drills, also set module requests on the ghost entities using insert_plan or module ghost items
+- [x] Add quality selector dropdown if Space Age is active (normal, uncommon, rare, epic, legendary)
+- [x] When quality is selected, pass quality parameter to ghost entity creation
+- [x] Verify: placed ghost drills show correct module requests and quality level
 
 ### Task 8: Polish and edge cases
 

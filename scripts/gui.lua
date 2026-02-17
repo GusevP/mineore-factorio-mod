@@ -102,6 +102,18 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
+    -- Module selector
+    gui._add_module_selector(inner, scan_results, settings)
+
+    -- Quality selector (Space Age only)
+    if script.feature_flags.quality then
+        inner.add{type = "line", direction = "horizontal"}
+        gui._add_quality_selector(inner, settings)
+    end
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
     -- Remember settings checkbox
     inner.add{
         type = "checkbox",
@@ -257,6 +269,183 @@ function gui._add_direction_selector(parent, settings)
     end
 end
 
+--- Add module selector to the GUI.
+--- @param parent LuaGuiElement
+--- @param scan_results table
+--- @param settings table Player settings
+function gui._add_module_selector(parent, scan_results, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-module-header"},
+        style = "caption_label",
+    }
+
+    -- Get the currently selected drill to check module slots
+    local drill_index = settings.drill_name and 1 or 1
+    for i, drill in ipairs(scan_results.compatible_drills) do
+        if settings.drill_name and settings.drill_name == drill.name then
+            drill_index = i
+            break
+        end
+    end
+    local selected_drill = scan_results.compatible_drills[drill_index]
+    local max_slots = selected_drill and selected_drill.module_inventory_size or 0
+
+    if max_slots == 0 then
+        parent.add{
+            type = "label",
+            name = "mineore_no_modules_label",
+            caption = {"mineore.gui-no-module-slots"},
+        }
+        return
+    end
+
+    -- Find compatible modules for the selected drill
+    local module_names, module_captions = gui._get_compatible_modules(selected_drill)
+
+    -- Module type dropdown
+    local mod_flow = parent.add{
+        type = "flow",
+        name = "module_flow",
+        direction = "horizontal",
+    }
+    mod_flow.style.vertical_align = "center"
+    mod_flow.style.horizontal_spacing = 8
+
+    -- "None" option + compatible modules
+    local items = {{"mineore.gui-module-none"}}
+    local selected_mod_index = 1
+    for i, caption in ipairs(module_captions) do
+        items[#items + 1] = caption
+        if settings.module_name and settings.module_name == module_names[i] then
+            selected_mod_index = i + 1
+        end
+    end
+
+    local mod_dropdown = mod_flow.add{
+        type = "drop-down",
+        name = "mineore_module_dropdown",
+        items = items,
+        selected_index = selected_mod_index,
+    }
+    mod_dropdown.style.horizontally_stretchable = true
+    mod_dropdown.tags = {module_names = module_names}
+
+    -- Module count slider
+    mod_flow.add{
+        type = "label",
+        caption = "x",
+    }
+
+    local current_count = settings.module_count or max_slots
+    if current_count > max_slots then current_count = max_slots end
+
+    local count_dropdown_items = {}
+    for i = 1, max_slots do
+        count_dropdown_items[i] = tostring(i)
+    end
+
+    mod_flow.add{
+        type = "drop-down",
+        name = "mineore_module_count",
+        items = count_dropdown_items,
+        selected_index = current_count,
+        tags = {max_slots = max_slots},
+    }
+end
+
+--- Get compatible module prototypes for a drill.
+--- @param drill table Drill info from scan results
+--- @return string[] module_names
+--- @return LocalisedString[] module_captions
+function gui._get_compatible_modules(drill)
+    local all_modules = prototypes.get_item_filtered({{filter = "type", type = "module"}})
+
+    -- Get drill prototype for allowed_effects and allowed_module_categories
+    local drill_proto = prototypes.entity[drill.name]
+    local allowed_effects = drill_proto and drill_proto.allowed_effects or nil
+    local allowed_categories = drill_proto and drill_proto.allowed_module_categories or nil
+
+    local module_names = {}
+    local module_captions = {}
+
+    for mod_name, mod_proto in pairs(all_modules) do
+        local category_ok = true
+        if allowed_categories then
+            category_ok = (allowed_categories[mod_proto.category] == true)
+        end
+
+        local effect_ok = true
+        if allowed_effects and mod_proto.module_effects then
+            for effect_name, _ in pairs(mod_proto.module_effects) do
+                if not allowed_effects[effect_name] then
+                    effect_ok = false
+                    break
+                end
+            end
+        end
+
+        if category_ok and effect_ok then
+            module_names[#module_names + 1] = mod_name
+            module_captions[#module_captions + 1] = mod_proto.localised_name
+        end
+    end
+
+    -- Sort by name for consistent ordering
+    local indices = {}
+    for i = 1, #module_names do indices[i] = i end
+    table.sort(indices, function(a, b) return module_names[a] < module_names[b] end)
+
+    local sorted_names = {}
+    local sorted_captions = {}
+    for _, idx in ipairs(indices) do
+        sorted_names[#sorted_names + 1] = module_names[idx]
+        sorted_captions[#sorted_captions + 1] = module_captions[idx]
+    end
+
+    return sorted_names, sorted_captions
+end
+
+--- Add quality selector to the GUI (Space Age only).
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+function gui._add_quality_selector(parent, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-quality-header"},
+        style = "caption_label",
+    }
+
+    -- Get all quality prototypes sorted by level
+    local qualities = {}
+    for name, quality in pairs(prototypes.quality) do
+        if not quality.hidden then
+            qualities[#qualities + 1] = {name = name, localised_name = quality.localised_name, level = quality.level}
+        end
+    end
+    table.sort(qualities, function(a, b) return a.level < b.level end)
+
+    local quality_names = {}
+    local quality_captions = {}
+    local selected_index = 1
+    for i, q in ipairs(qualities) do
+        quality_names[i] = q.name
+        quality_captions[i] = q.localised_name
+        if settings.quality and settings.quality == q.name then
+            selected_index = i
+        end
+    end
+
+    local dropdown = parent.add{
+        type = "drop-down",
+        name = "mineore_quality_dropdown",
+        items = quality_captions,
+        selected_index = selected_index,
+    }
+    dropdown.style.horizontally_stretchable = true
+    dropdown.tags = {quality_names = quality_names}
+end
+
 --- Read the current GUI selections and return a settings table.
 --- @param player LuaPlayer
 --- @return table|nil settings {drill_name, placement_mode, direction, remember}
@@ -292,6 +481,28 @@ function gui.read_settings(player)
             settings.direction = dir
             break
         end
+    end
+
+    -- Read module selection
+    local mod_flow = inner.module_flow
+    if mod_flow then
+        local mod_dropdown = mod_flow.mineore_module_dropdown
+        if mod_dropdown and mod_dropdown.selected_index > 1 then
+            local module_names = mod_dropdown.tags.module_names
+            settings.module_name = module_names[mod_dropdown.selected_index - 1]
+        end
+
+        local count_dropdown = mod_flow.mineore_module_count
+        if count_dropdown then
+            settings.module_count = count_dropdown.selected_index
+        end
+    end
+
+    -- Read quality selection (Space Age only)
+    local quality_dropdown = inner.mineore_quality_dropdown
+    if quality_dropdown and quality_dropdown.selected_index > 0 then
+        local quality_names = quality_dropdown.tags.quality_names
+        settings.quality = quality_names[quality_dropdown.selected_index]
     end
 
     -- Read remember checkbox

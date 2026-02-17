@@ -73,14 +73,40 @@ function placer.place(player, scan_results, settings)
         })
 
         if can_place then
-            surface.create_entity({
+            local ghost = surface.create_entity({
                 name = "entity-ghost",
                 inner_name = drill.name,
                 position = pos,
                 direction = dir,
                 force = force,
                 player = player,
+                quality = settings.quality or "normal",
             })
+
+            -- Set module requests on the ghost if configured
+            if ghost and ghost.valid and settings.module_name then
+                local count = settings.module_count or 1
+                local insert_plan = {}
+                for slot = 0, count - 1 do
+                    insert_plan[#insert_plan + 1] = {
+                        id = {
+                            name = settings.module_name,
+                            quality = settings.quality or "normal",
+                        },
+                        items = {
+                            in_inventory = {
+                                {
+                                    inventory = defines.inventory.mining_drill_modules,
+                                    stack = slot,
+                                    count = 1,
+                                },
+                            },
+                        },
+                    }
+                end
+                ghost.insert_plan = insert_plan
+            end
+
             placed = placed + 1
         else
             skipped = skipped + 1
