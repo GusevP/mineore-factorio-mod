@@ -1,7 +1,7 @@
 local selection_tool = {
     type = "selection-tool",
     name = "mineore-selection-tool",
-    icon = "__mineore__/graphics/icons/steel-axe.png",
+    icon = "__mineore__/graphics/icons/mineore_icon_64.png",
     icon_size = 64,
     subgroup = "tool",
     order = "c[automated-construction]-d[mineore]",
