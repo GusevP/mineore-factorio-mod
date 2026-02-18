@@ -34,7 +34,7 @@ Fix three bugs in the miner planner placement pipeline:
 - [x] Add a helper function or lookup table to compute the opposite direction (north<->south, east<->west)
 - [x] In `_place_underground_belts`, set `ubo_dir` to the opposite of `belt_dir_define` (the output must face 180 degrees from the input for underground belts to connect)
 - [x] Keep `ubi_dir` as `belt_dir_define` (input faces the belt flow direction)
-- [ ] Manual test: place 3x3 electric mining drills with belt direction south - UBO should face north, UBI should face south, and items should transport correctly through the underground belt pair
+- [x] Manual test: place 3x3 electric mining drills with belt direction south - UBO should face north, UBI should face south, and items should transport correctly through the underground belt pair
 
 ### Task 2: Fix beacon placement to fill full column/row
 
