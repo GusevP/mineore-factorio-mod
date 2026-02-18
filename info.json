@@ -1,11 +1,11 @@
 {
   "name": "mineore",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "title": "Miner Planner",
   "author": "pavelgusev",
   "contact": "",
   "homepage": "",
-  "description": "Automates mining drill placement on ore patches. Drag-select an area, choose a drill, placement mode (Productivity/Normal/Efficient), modules, and quality, then ghost miners are placed in an optimal grid pattern. Supports all drill types and resources across all planets.",
+  "description": "Automates mining drill placement on ore patches with transport belts, electric poles, and beacons. Drag-select an area, configure drills, belts, poles, and beacons via icon-based GUI, then ghost entities are placed in paired-row layouts ready for bots. Supports all drill types, belt tiers, pole types, and resources across all planets.",
   "factorio_version": "2.0",
   "dependencies": ["base >= 2.0", "? space-age >= 2.0"]
 }

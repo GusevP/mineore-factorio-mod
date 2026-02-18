@@ -1,23 +1,30 @@
 # Miner Planner
 
-A Factorio 2.0 mod that automates mining drill placement on ore patches. Select an area over any ore patch, pick your drill and placement mode, and the mod places ghost miners in an optimal grid pattern — ready for bots to build.
+A Factorio 2.0 mod that automates mining drill placement on ore patches with transport belts, electric poles, and beacons. Select an area over any ore patch, configure your layout via an icon-based GUI, and the mod places ghost entities in paired-row layouts — ready for bots to build.
 
 Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does the same for pumpjacks on oil fields.
 
 ## Features
 
 - **Selection tool** — drag-select any ore patch to start planning miners
+- **Paired-row drill layout** — drills face each other with a belt gap between them for efficient output collection
 - **Three placement modes:**
   - **Productivity** — maximum drills, edge-to-edge, highest ore throughput
   - **Normal** — balanced spacing, mining areas touch without overlap
   - **Efficient** — fewest drills, staggered rows for maximum coverage per drill
+- **Transport belt placement** — belts automatically placed in the gap between paired drill rows
+- **Electric pole/substation placement** — poles placed at optimal intervals for full power coverage
+- **Beacon placement** — beacons placed alongside drill columns/rows with configurable limits per drill
 - **All drill types** — burner, electric, and big mining drills
+- **All belt tiers** — transport belt, fast, express, turbo, and any modded belts
+- **All pole types** — small, medium, big electric poles and substations
 - **All resources** — works with every solid minable resource across all planets (Nauvis, Vulcanus, Fulgora, Gleba)
-- **Module support** — pre-request modules (speed, productivity, efficiency, quality) on placed ghost drills
-- **Quality support** — select quality level for ghost drills when Space Age is active
-- **Output direction** — choose which direction (N/S/E/W) drills face for belt alignment
+- **Icon-based GUI** — choose-elem-button selectors for all entity types (following P.U.M.P. pattern)
+- **Module support** — pre-request modules on ghost drills and beacons (speed, productivity, efficiency, quality)
+- **Quality support** — per-entity quality selection for drills, belts, poles, and beacons (Space Age)
+- **Belt orientation** — choose North-South or East-West belt direction
 - **Remember settings** — skip the GUI on repeat use by remembering your last configuration
-- **Ghost removal** — shift-drag to remove ghost miners in an area
+- **Ghost removal** — shift-drag to remove ghost miners, belts, poles, and beacons in an area
 - **Obstacle handling** — automatically skips positions blocked by water, cliffs, or existing buildings
 
 ## Requirements
@@ -36,20 +43,25 @@ Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does th
 2. Drag-select over an ore patch
 3. In the configuration GUI:
    - Select which resource to place miners on (if multiple ore types were selected)
-   - Choose a mining drill from the dropdown
+   - Choose a mining drill by clicking its icon
+   - Choose a transport belt type (or "none" to skip belts)
+   - Choose an electric pole/substation type (or "none" to skip poles)
+   - Choose a beacon type (or "none" to skip beacons) and select a module for beacons
    - Pick a placement mode (Productivity / Normal / Efficient)
-   - Set the output direction for the drills
-   - Optionally select modules and quality level
+   - Set belt orientation (North-South or East-West)
+   - Optionally select drill modules and quality levels per entity type
    - Check "Remember settings" to skip this dialog next time
 4. Click "Place Miners" — ghost entities appear in the selected area
 5. Your construction bots will build them automatically
 
-To remove placed ghost miners, hold Shift and drag-select over the area.
+To remove placed ghost entities, hold Shift and drag-select over the area.
 
 ## Mod Settings
 
 - **Default placement mode** — choose which mode is selected by default (Productivity, Normal, or Efficient)
 - **Always show configuration GUI** — when disabled, uses remembered settings if available
+- **Max beacons per drill** — maximum number of beacons that can affect any single drill (1-12, default 4)
+- **Preferred beacons per drill** — target number of beacons per drill; placement stops once each drill reaches this count (0-12, default 1; 0 = no limit)
 
 ## License
 

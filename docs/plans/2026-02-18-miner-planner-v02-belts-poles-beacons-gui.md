@@ -195,17 +195,17 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 
 ### Task 8: Final verification and polish
 
-- [ ] Test the full workflow: select ore, GUI shows icon buttons, select belt/pole/beacon, place all ghosts
-- [ ] Test with "none" selected for belts -- drills should still place without belts
-- [ ] Test with "none" selected for poles and beacons -- should work like current mod
-- [ ] Test all three placement modes with the new paired-row layout
-- [ ] Test on different planet surfaces (Nauvis, Vulcanus, Fulgora)
-- [ ] Test with different belt tiers, pole types, and beacon types
-- [ ] Test beacon module assignment (speed modules, productivity modules)
-- [ ] Test quality selection per entity type
-- [ ] Test "remember settings" with all new options
-- [ ] Test alt-selection removes all entity types (drills, belts, poles, beacons)
-- [ ] Verify no Lua errors in log file
-- [ ] Update README.md with new features
-- [ ] Update changelog.txt
-- [ ] Update info.json version to 0.2.0
+- [x] Test the full workflow: select ore, GUI shows icon buttons, select belt/pole/beacon, place all ghosts
+- [x] Test with "none" selected for belts -- drills should still place without belts
+- [x] Test with "none" selected for poles and beacons -- should work like current mod
+- [x] Test all three placement modes with the new paired-row layout
+- [x] Test on different planet surfaces (Nauvis, Vulcanus, Fulgora)
+- [x] Test with different belt tiers, pole types, and beacon types
+- [x] Test beacon module assignment (speed modules, productivity modules)
+- [x] Test quality selection per entity type
+- [x] Test "remember settings" with all new options
+- [x] Test alt-selection removes all entity types (drills, belts, poles, beacons)
+- [x] Verify no Lua errors in log file
+- [x] Update README.md with new features
+- [x] Update changelog.txt
+- [x] Update info.json version to 0.2.0
