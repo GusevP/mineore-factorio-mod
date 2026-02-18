@@ -546,9 +546,7 @@ function gui._add_mode_selector(parent, settings)
         style = "caption_label",
     }
 
-    -- Migrate legacy "normal" to "loose"
     local current_mode = settings.placement_mode or "loose"
-    if current_mode == "normal" then current_mode = "loose" end
 
     for _, mode in ipairs(PLACEMENT_MODES) do
         parent.add{

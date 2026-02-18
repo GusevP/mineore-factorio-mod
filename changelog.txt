@@ -1,4 +1,18 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2026-02-19
+  Features:
+    - Underground belt placement for 3x3+ drills (replaces plain belts in the drill body rows)
+    - 4-direction belt selector (North, South, East, West) replaces NS/EW radio buttons
+    - Beacon fill pass: beacons now fill the entire column/row alongside drills with no gaps
+    - Obstacle demolition: trees, rocks, and cliffs in the placement zone are marked for deconstruction
+    - Ore-specific filtering: drills skip positions where mining area overlaps a different ore type
+  Changes:
+    - "Normal" placement mode renamed to "Loose" with adjusted spacing formula
+    - Pole selector restricted to 1x1 poles only (substations and big electric poles removed)
+  Bugfixes:
+    - Fixed underground belt output direction to face opposite of input for proper connectivity
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2026-02-18
   Features:

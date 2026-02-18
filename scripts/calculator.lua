@@ -25,13 +25,6 @@ function calculator.get_spacing(drill, mode)
         local spacing_across = body_h + mining_radius
         return spacing_along, spacing_across, 0
 
-    elseif mode == "normal" then
-        -- Legacy: treat as "loose"
-        local mining_radius = math.floor(radius)
-        local spacing_along = body_w + mining_radius
-        local spacing_across = body_h + mining_radius
-        return spacing_along, spacing_across, 0
-
     elseif mode == "efficient" then
         return mining_diameter, mining_diameter, math.floor(mining_diameter / 2)
     end
