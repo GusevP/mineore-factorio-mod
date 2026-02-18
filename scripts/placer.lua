@@ -1,6 +1,7 @@
 -- Placer - Places ghost mining drills on the map based on calculated grid positions
 
 local calculator = require("scripts.calculator")
+local belt_placer = require("scripts.belt_placer")
 
 local placer = {}
 
@@ -122,9 +123,29 @@ function placer.place(player, scan_results, settings)
         end
     end
 
+    -- Place belts between paired drill rows if belt type is configured
+    local belts_placed = 0
+    local belts_skipped = 0
+    if settings.belt_name and settings.belt_name ~= "" and #result.belt_lines > 0 then
+        local gap = calculator.get_pair_gap()
+        belts_placed, belts_skipped = belt_placer.place(
+            surface, force, player,
+            result.belt_lines,
+            drill,
+            settings.belt_name,
+            settings.belt_quality or settings.quality or "normal",
+            gap
+        )
+    end
+
     -- Show feedback to the player
     if placed > 0 then
-        if skipped > 0 then
+        if belts_placed > 0 then
+            player.create_local_flying_text({
+                text = {"mineore.placed-miners-and-belts", placed, belts_placed},
+                create_at_cursor = true,
+            })
+        elseif skipped > 0 then
             player.create_local_flying_text({
                 text = {"mineore.placed-with-skipped", placed, skipped},
                 create_at_cursor = true,

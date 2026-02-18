@@ -68,15 +68,15 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Create: `scripts/belt_placer.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] Create belt_placer module that takes calculator output (belt line metadata) and places ghost transport belts
-- [ ] Place regular belt segments along the center line between paired drill rows
-- [ ] Place underground belt entrances at each drill output position connecting to the center belt line
-- [ ] Place underground belt exits at the center belt line receiving from each drill
-- [ ] Handle belt direction: belts in the center line all run the same direction (toward a collection point or end of the row)
-- [ ] Accept belt type from settings (transport-belt, fast-transport-belt, express-transport-belt, turbo-transport-belt, etc.)
-- [ ] Use `surface.can_place_entity` before placing each belt ghost, skip if blocked
-- [ ] Integrate belt placement call into the main placer.place() flow after drill placement
-- [ ] Verify: ghost belts appear correctly connecting paired drill rows
+- [x] Create belt_placer module that takes calculator output (belt line metadata) and places ghost transport belts
+- [x] Place regular belt segments along the center line between paired drill rows
+- [x] Place underground belt entrances at each drill output position connecting to the center belt line
+- [x] Place underground belt exits at the center belt line receiving from each drill
+- [x] Handle belt direction: belts in the center line all run the same direction (toward a collection point or end of the row)
+- [x] Accept belt type from settings (transport-belt, fast-transport-belt, express-transport-belt, turbo-transport-belt, etc.)
+- [x] Use `surface.can_place_entity` before placing each belt ghost, skip if blocked
+- [x] Integrate belt placement call into the main placer.place() flow after drill placement
+- [x] Verify: ghost belts appear correctly connecting paired drill rows
 
 ### Task 3: Pole/substation placement logic
 
