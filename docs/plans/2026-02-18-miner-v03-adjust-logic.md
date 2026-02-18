@@ -229,9 +229,9 @@ order_deconstruction() ) so construction bots will clear them
 [x] Run demolition before ghost placement so can_place_entity checks are
 more accurate
 [x] Do NOT demolish resource entities (ores) or other ghost entities
-[ ] Manual test: place miners in an area with trees - trees should get
+[x] Manual test: place miners in an area with trees - trees should get
 marked for deconstruction
-[ ] Manual test: ensure ores and existing ghost entities are not affected
+[x] Manual test: ensure ores and existing ghost entities are not affected
 
 ### Task 6: Add support for 4 directions (N, S, W, E)
 
