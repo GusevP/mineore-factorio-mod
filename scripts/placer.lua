@@ -164,7 +164,14 @@ function placer.place(player, scan_results, settings)
     local beacons_placed = 0
     local beacons_skipped = 0
     if settings.beacon_name and settings.beacon_name ~= "" and #positions > 0 then
-        local max_beacons = settings.max_beacons_per_drill or 4
+        local max_beacons = player.mod_settings["mineore-max-beacons-per-drill"].value
+        local preferred_beacons = player.mod_settings["mineore-preferred-beacons-per-drill"].value
+        -- Use the lower of max and preferred as the effective limit,
+        -- but if preferred is 0 it means no preference limit (use max only)
+        local effective_limit = max_beacons
+        if preferred_beacons > 0 and preferred_beacons < max_beacons then
+            effective_limit = preferred_beacons
+        end
         beacons_placed, beacons_skipped = beacon_placer.place(
             surface, force, player,
             positions,
@@ -174,7 +181,7 @@ function placer.place(player, scan_results, settings)
             settings.beacon_quality or settings.quality or "normal",
             settings.beacon_module_name,
             settings.beacon_module_count,
-            max_beacons,
+            effective_limit,
             gap
         )
     end

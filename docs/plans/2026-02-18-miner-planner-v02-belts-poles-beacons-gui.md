@@ -187,11 +187,11 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Modify: `settings.lua`
 - Modify: `locale/en/locale.cfg`
 
-- [ ] Add runtime setting: "mineore-max-beacons-per-drill" (int, default 4, min 1, max 12)
-- [ ] Add runtime setting: "mineore-preferred-beacons-per-drill" (int, default 1, min 0, max 12)
-- [ ] Add locale strings for new settings
-- [ ] Read these settings in beacon_placer module
-- [ ] Verify: settings appear in mod settings menu and affect beacon placement
+- [x] Add runtime setting: "mineore-max-beacons-per-drill" (int, default 4, min 1, max 12)
+- [x] Add runtime setting: "mineore-preferred-beacons-per-drill" (int, default 1, min 0, max 12)
+- [x] Add locale strings for new settings
+- [x] Read these settings in beacon_placer module
+- [x] Verify: settings appear in mod settings menu and affect beacon placement
 
 ### Task 8: Final verification and polish
 
