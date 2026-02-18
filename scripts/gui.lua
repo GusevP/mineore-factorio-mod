@@ -1,4 +1,4 @@
--- Configuration GUI - Shows after area selection for drill/mode/direction configuration
+-- Configuration GUI - Icon-based selectors following P.U.M.P. mod pattern
 
 local gui = {}
 
@@ -81,7 +81,7 @@ function gui.create(player, scan_results, player_data)
         direction = "vertical",
     }
     inner.style.vertical_spacing = 8
-    inner.style.minimal_width = 300
+    inner.style.minimal_width = 340
 
     -- Resource info section
     gui._add_resource_info(inner, scan_results)
@@ -101,8 +101,26 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Drill selector
+    -- Drill selector (icon buttons)
     gui._add_drill_selector(inner, scan_results, settings)
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
+    -- Belt type selector (icon buttons)
+    gui._add_belt_selector(inner, settings)
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
+    -- Pole/substation selector (icon buttons)
+    gui._add_pole_selector(inner, settings)
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
+    -- Beacon selector (icon buttons)
+    gui._add_beacon_selector(inner, settings)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -113,20 +131,14 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Direction selector
-    gui._add_direction_selector(inner, settings)
+    -- Belt orientation selector
+    gui._add_belt_orientation_selector(inner, settings)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Module selector
+    -- Drill module selector (choose-elem-button)
     gui._add_module_selector(inner, scan_results, settings)
-
-    -- Quality selector (Space Age only)
-    if script.feature_flags.quality then
-        inner.add{type = "line", direction = "horizontal"}
-        gui._add_quality_selector(inner, settings)
-    end
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -228,7 +240,7 @@ function gui._add_resource_selector(parent, resource_names, settings)
     dropdown.tags = {resource_names = resource_names}
 end
 
---- Add drill selector dropdown to the GUI.
+--- Add drill selector as a row of locked choose-elem-buttons.
 --- @param parent LuaGuiElement
 --- @param scan_results table
 --- @param settings table Player settings
@@ -239,28 +251,285 @@ function gui._add_drill_selector(parent, scan_results, settings)
         style = "caption_label",
     }
 
-    local drill_names = {}
-    local drill_captions = {}
-    local selected_index = 1
+    local flow = parent.add{
+        type = "flow",
+        name = "drill_selector_flow",
+        direction = "horizontal",
+    }
+    flow.style.horizontal_spacing = 4
 
-    for i, drill in ipairs(scan_results.compatible_drills) do
-        drill_names[i] = drill.name
-        drill_captions[i] = drill.localised_name
-        if settings.drill_name and settings.drill_name == drill.name then
-            selected_index = i
+    local selected_name = settings.drill_name
+    -- Default to first drill if no previous selection
+    if not selected_name and #scan_results.compatible_drills > 0 then
+        selected_name = scan_results.compatible_drills[1].name
+    end
+
+    for _, drill in ipairs(scan_results.compatible_drills) do
+        local btn = flow.add{
+            type = "choose-elem-button",
+            name = "mineore_drill_btn_" .. drill.name,
+            elem_type = "entity",
+            entity = drill.name,
+            style = "slot_sized_button",
+            tooltip = drill.localised_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "drill", entity_name = drill.name}
+        if drill.name == selected_name then
+            btn.style = "slot_sized_button_pressed"
+        end
+    end
+end
+
+--- Add belt type selector as locked choose-elem-buttons + "none" sprite-button.
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+function gui._add_belt_selector(parent, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-belt-header"},
+        style = "caption_label",
+    }
+
+    local row = parent.add{
+        type = "flow",
+        name = "belt_selector_row",
+        direction = "horizontal",
+    }
+    row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
+
+    -- Belt icon buttons
+    local belt_flow = row.add{
+        type = "flow",
+        name = "belt_selector_flow",
+        direction = "horizontal",
+    }
+    belt_flow.style.horizontal_spacing = 4
+
+    local belt_types = gui._get_transport_belt_types()
+    local selected_belt = settings.belt_name
+    local has_selection = false
+
+    for _, belt_name in ipairs(belt_types) do
+        local proto = prototypes.entity[belt_name]
+        if proto then
+            local btn = belt_flow.add{
+                type = "choose-elem-button",
+                name = "mineore_belt_btn_" .. belt_name,
+                elem_type = "entity",
+                entity = belt_name,
+                style = "slot_sized_button",
+                tooltip = proto.localised_name,
+            }
+            btn.locked = true
+            btn.tags = {selector_group = "belt", entity_name = belt_name}
+            if belt_name == selected_belt then
+                btn.style = "slot_sized_button_pressed"
+                has_selection = true
+            end
         end
     end
 
-    local dropdown = parent.add{
-        type = "drop-down",
-        name = "mineore_drill_dropdown",
-        items = drill_captions,
-        selected_index = selected_index,
+    -- "None" button
+    local none_btn = belt_flow.add{
+        type = "sprite-button",
+        name = "mineore_belt_none",
+        sprite = "utility/close",
+        style = "slot_sized_button",
+        tooltip = {"mineore.gui-none"},
     }
-    dropdown.style.horizontally_stretchable = true
+    none_btn.tags = {selector_group = "belt", entity_name = ""}
+    if not has_selection then
+        none_btn.style = "slot_sized_button_pressed"
+    end
 
-    -- Store drill name mapping as tags for later retrieval
-    dropdown.tags = {drill_names = drill_names}
+    -- Quality dropdown for belts
+    if script.feature_flags.quality then
+        row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(row, "belt", settings.belt_quality or settings.quality)
+    end
+end
+
+--- Add pole/substation selector as locked choose-elem-buttons + "none" sprite-button.
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+function gui._add_pole_selector(parent, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-pole-header"},
+        style = "caption_label",
+    }
+
+    local row = parent.add{
+        type = "flow",
+        name = "pole_selector_row",
+        direction = "horizontal",
+    }
+    row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
+
+    local pole_flow = row.add{
+        type = "flow",
+        name = "pole_selector_flow",
+        direction = "horizontal",
+    }
+    pole_flow.style.horizontal_spacing = 4
+
+    local pole_types = gui._get_electric_pole_types()
+    local selected_pole = settings.pole_name
+    local has_selection = false
+
+    for _, pole_name in ipairs(pole_types) do
+        local proto = prototypes.entity[pole_name]
+        if proto then
+            local btn = pole_flow.add{
+                type = "choose-elem-button",
+                name = "mineore_pole_btn_" .. pole_name,
+                elem_type = "entity",
+                entity = pole_name,
+                style = "slot_sized_button",
+                tooltip = proto.localised_name,
+            }
+            btn.locked = true
+            btn.tags = {selector_group = "pole", entity_name = pole_name}
+            if pole_name == selected_pole then
+                btn.style = "slot_sized_button_pressed"
+                has_selection = true
+            end
+        end
+    end
+
+    -- "None" button
+    local none_btn = pole_flow.add{
+        type = "sprite-button",
+        name = "mineore_pole_none",
+        sprite = "utility/close",
+        style = "slot_sized_button",
+        tooltip = {"mineore.gui-none"},
+    }
+    none_btn.tags = {selector_group = "pole", entity_name = ""}
+    if not has_selection then
+        none_btn.style = "slot_sized_button_pressed"
+    end
+
+    -- Quality dropdown for poles
+    if script.feature_flags.quality then
+        row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(row, "pole", settings.pole_quality or settings.quality)
+    end
+end
+
+--- Add beacon selector as locked choose-elem-buttons + "none" sprite-button,
+--- plus beacon module selector as unlocked choose-elem-button.
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+function gui._add_beacon_selector(parent, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-beacon-header"},
+        style = "caption_label",
+    }
+
+    local row = parent.add{
+        type = "flow",
+        name = "beacon_selector_row",
+        direction = "horizontal",
+    }
+    row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
+
+    local beacon_flow = row.add{
+        type = "flow",
+        name = "beacon_selector_flow",
+        direction = "horizontal",
+    }
+    beacon_flow.style.horizontal_spacing = 4
+
+    local beacon_types = gui._get_beacon_types()
+    local selected_beacon = settings.beacon_name
+    local has_selection = false
+
+    for _, beacon_name in ipairs(beacon_types) do
+        local proto = prototypes.entity[beacon_name]
+        if proto then
+            local btn = beacon_flow.add{
+                type = "choose-elem-button",
+                name = "mineore_beacon_btn_" .. beacon_name,
+                elem_type = "entity",
+                entity = beacon_name,
+                style = "slot_sized_button",
+                tooltip = proto.localised_name,
+            }
+            btn.locked = true
+            btn.tags = {selector_group = "beacon", entity_name = beacon_name}
+            if beacon_name == selected_beacon then
+                btn.style = "slot_sized_button_pressed"
+                has_selection = true
+            end
+        end
+    end
+
+    -- "None" button
+    local none_btn = beacon_flow.add{
+        type = "sprite-button",
+        name = "mineore_beacon_none",
+        sprite = "utility/close",
+        style = "slot_sized_button",
+        tooltip = {"mineore.gui-none"},
+    }
+    none_btn.tags = {selector_group = "beacon", entity_name = ""}
+    if not has_selection then
+        none_btn.style = "slot_sized_button_pressed"
+    end
+
+    -- Quality dropdown for beacons
+    if script.feature_flags.quality then
+        row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(row, "beacon", settings.beacon_quality or settings.quality)
+    end
+
+    -- Beacon module selector (unlocked choose-elem-button + count)
+    local mod_row = parent.add{
+        type = "flow",
+        name = "beacon_module_row",
+        direction = "horizontal",
+    }
+    mod_row.style.vertical_align = "center"
+    mod_row.style.horizontal_spacing = 8
+    mod_row.style.top_margin = 4
+
+    mod_row.add{
+        type = "label",
+        caption = {"mineore.gui-beacon-module"},
+    }
+
+    local module_btn = mod_row.add{
+        type = "choose-elem-button",
+        name = "mineore_beacon_module_btn",
+        elem_type = "item",
+        item = settings.beacon_module_name,
+        style = "slot_sized_button",
+    }
+    module_btn.elem_filters = {{filter = "type", type = "module"}}
+
+    mod_row.add{
+        type = "label",
+        caption = "x",
+    }
+
+    -- Module count dropdown (1-8, default to what's configured or 2)
+    local count_items = {}
+    for i = 1, 8 do
+        count_items[i] = tostring(i)
+    end
+
+    mod_row.add{
+        type = "drop-down",
+        name = "mineore_beacon_module_count",
+        items = count_items,
+        selected_index = settings.beacon_module_count or 2,
+    }
 end
 
 --- Add placement mode radio buttons to the GUI.
@@ -286,37 +555,43 @@ function gui._add_mode_selector(parent, settings)
     end
 end
 
---- Add direction selector to the GUI.
+--- Add belt orientation selector (NS vs EW).
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_direction_selector(parent, settings)
+function gui._add_belt_orientation_selector(parent, settings)
     parent.add{
         type = "label",
-        caption = {"mineore.gui-direction-header"},
+        caption = {"mineore.gui-belt-orientation-header"},
         style = "caption_label",
     }
 
-    local current_dir = settings.direction or "north"
-    local directions = {"north", "south", "east", "west"}
+    local current = settings.belt_orientation or "NS"
 
     local flow = parent.add{
         type = "flow",
-        name = "direction_flow",
+        name = "belt_orientation_flow",
         direction = "horizontal",
     }
     flow.style.horizontal_spacing = 8
 
-    for _, dir in ipairs(directions) do
-        flow.add{
-            type = "radiobutton",
-            name = "mineore_dir_" .. dir,
-            caption = {"mineore.gui-dir-" .. dir},
-            state = (dir == current_dir),
-        }
-    end
+    flow.add{
+        type = "radiobutton",
+        name = "mineore_orient_NS",
+        caption = {"mineore.gui-orient-ns"},
+        tooltip = {"mineore.gui-orient-ns-tooltip"},
+        state = (current == "NS"),
+    }
+
+    flow.add{
+        type = "radiobutton",
+        name = "mineore_orient_EW",
+        caption = {"mineore.gui-orient-ew"},
+        tooltip = {"mineore.gui-orient-ew-tooltip"},
+        state = (current == "EW"),
+    }
 end
 
---- Add module selector to the GUI.
+--- Add drill module selector as choose-elem-button + count dropdown.
 --- @param parent LuaGuiElement
 --- @param scan_results table
 --- @param settings table Player settings
@@ -328,14 +603,17 @@ function gui._add_module_selector(parent, scan_results, settings)
     }
 
     -- Get the currently selected drill to check module slots
-    local drill_index = settings.drill_name and 1 or 1
-    for i, drill in ipairs(scan_results.compatible_drills) do
+    local selected_drill = nil
+    for _, drill in ipairs(scan_results.compatible_drills) do
         if settings.drill_name and settings.drill_name == drill.name then
-            drill_index = i
+            selected_drill = drill
             break
         end
     end
-    local selected_drill = scan_results.compatible_drills[drill_index]
+    if not selected_drill and #scan_results.compatible_drills > 0 then
+        selected_drill = scan_results.compatible_drills[1]
+    end
+
     local max_slots = selected_drill and selected_drill.module_inventory_size or 0
 
     if max_slots == 0 then
@@ -347,10 +625,6 @@ function gui._add_module_selector(parent, scan_results, settings)
         return
     end
 
-    -- Find compatible modules for the selected drill
-    local module_names, module_captions = gui._get_compatible_modules(selected_drill)
-
-    -- Module type dropdown
     local mod_flow = parent.add{
         type = "flow",
         name = "module_flow",
@@ -359,143 +633,136 @@ function gui._add_module_selector(parent, scan_results, settings)
     mod_flow.style.vertical_align = "center"
     mod_flow.style.horizontal_spacing = 8
 
-    -- "None" option + compatible modules
-    local items = {{"mineore.gui-module-none"}}
-    local selected_mod_index = 1
-    for i, caption in ipairs(module_captions) do
-        items[#items + 1] = caption
-        if settings.module_name and settings.module_name == module_names[i] then
-            selected_mod_index = i + 1
-        end
-    end
-
-    local mod_dropdown = mod_flow.add{
-        type = "drop-down",
-        name = "mineore_module_dropdown",
-        items = items,
-        selected_index = selected_mod_index,
+    -- Unlocked choose-elem-button for module selection
+    local module_btn = mod_flow.add{
+        type = "choose-elem-button",
+        name = "mineore_drill_module_btn",
+        elem_type = "item",
+        item = settings.module_name,
+        style = "slot_sized_button",
     }
-    mod_dropdown.style.horizontally_stretchable = true
-    mod_dropdown.tags = {module_names = module_names}
+    module_btn.elem_filters = {{filter = "type", type = "module"}}
 
-    -- Module count slider
     mod_flow.add{
         type = "label",
         caption = "x",
     }
 
+    -- Module count dropdown
     local current_count = settings.module_count or max_slots
     if current_count > max_slots then current_count = max_slots end
 
-    local count_dropdown_items = {}
+    local count_items = {}
     for i = 1, max_slots do
-        count_dropdown_items[i] = tostring(i)
+        count_items[i] = tostring(i)
     end
 
     mod_flow.add{
         type = "drop-down",
         name = "mineore_module_count",
-        items = count_dropdown_items,
+        items = count_items,
         selected_index = current_count,
         tags = {max_slots = max_slots},
     }
 end
 
---- Get compatible module prototypes for a drill.
---- @param drill table Drill info from scan results
---- @return string[] module_names
---- @return LocalisedString[] module_captions
-function gui._get_compatible_modules(drill)
-    local all_modules = prototypes.get_item_filtered({{filter = "type", type = "module"}})
-
-    -- Get drill prototype for allowed_effects and allowed_module_categories
-    local drill_proto = prototypes.entity[drill.name]
-    local allowed_effects = drill_proto and drill_proto.allowed_effects or nil
-    local allowed_categories = drill_proto and drill_proto.allowed_module_categories or nil
-
-    local module_names = {}
-    local module_captions = {}
-
-    for mod_name, mod_proto in pairs(all_modules) do
-        local category_ok = true
-        if allowed_categories then
-            category_ok = (allowed_categories[mod_proto.category] == true)
-        end
-
-        local effect_ok = true
-        if allowed_effects and mod_proto.module_effects then
-            for effect_name, _ in pairs(mod_proto.module_effects) do
-                if not allowed_effects[effect_name] then
-                    effect_ok = false
-                    break
-                end
-            end
-        end
-
-        if category_ok and effect_ok then
-            module_names[#module_names + 1] = mod_name
-            module_captions[#module_captions + 1] = mod_proto.localised_name
-        end
-    end
-
-    -- Sort by name for consistent ordering
-    local indices = {}
-    for i = 1, #module_names do indices[i] = i end
-    table.sort(indices, function(a, b) return module_names[a] < module_names[b] end)
-
-    local sorted_names = {}
-    local sorted_captions = {}
-    for _, idx in ipairs(indices) do
-        sorted_names[#sorted_names + 1] = module_names[idx]
-        sorted_captions[#sorted_captions + 1] = module_captions[idx]
-    end
-
-    return sorted_names, sorted_captions
-end
-
---- Add quality selector to the GUI (Space Age only).
+--- Add a quality dropdown inline in a row.
 --- @param parent LuaGuiElement
---- @param settings table Player settings
-function gui._add_quality_selector(parent, settings)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-quality-header"},
-        style = "caption_label",
-    }
-
-    -- Get all quality prototypes sorted by level
-    local qualities = {}
-    for name, quality in pairs(prototypes.quality) do
-        if not quality.hidden then
-            qualities[#qualities + 1] = {name = name, localised_name = quality.localised_name, level = quality.level}
-        end
-    end
-    table.sort(qualities, function(a, b) return a.level < b.level end)
-
+--- @param prefix string Prefix for the dropdown name (e.g., "belt", "pole", "beacon")
+--- @param current_quality string|nil Currently selected quality name
+function gui._add_inline_quality_dropdown(parent, prefix, current_quality)
+    local qualities = gui._get_quality_list()
     local quality_names = {}
     local quality_captions = {}
     local selected_index = 1
+
     for i, q in ipairs(qualities) do
         quality_names[i] = q.name
-        quality_captions[i] = q.localised_name
-        if settings.quality and settings.quality == q.name then
+        quality_captions[i] = {"", "[quality=" .. q.name .. "] ", q.localised_name}
+        if current_quality and current_quality == q.name then
             selected_index = i
         end
     end
 
     local dropdown = parent.add{
         type = "drop-down",
-        name = "mineore_quality_dropdown",
+        name = "mineore_quality_" .. prefix,
         items = quality_captions,
         selected_index = selected_index,
     }
-    dropdown.style.horizontally_stretchable = true
+    dropdown.style.width = 120
     dropdown.tags = {quality_names = quality_names}
+end
+
+--- Get sorted list of visible quality prototypes.
+--- @return table[] Array of {name, localised_name, level}
+function gui._get_quality_list()
+    local qualities = {}
+    for name, quality in pairs(prototypes.quality) do
+        if not quality.hidden then
+            qualities[#qualities + 1] = {
+                name = name,
+                localised_name = quality.localised_name,
+                level = quality.level,
+            }
+        end
+    end
+    table.sort(qualities, function(a, b) return a.level < b.level end)
+    return qualities
+end
+
+--- Get all transport belt prototype names sorted by speed.
+--- @return string[] Array of belt prototype names
+function gui._get_transport_belt_types()
+    local belts = prototypes.get_entity_filtered({{filter = "type", type = "transport-belt"}})
+    local belt_list = {}
+    for name, proto in pairs(belts) do
+        belt_list[#belt_list + 1] = {name = name, speed = proto.belt_speed or 0}
+    end
+    table.sort(belt_list, function(a, b) return a.speed < b.speed end)
+
+    local names = {}
+    for _, b in ipairs(belt_list) do
+        names[#names + 1] = b.name
+    end
+    return names
+end
+
+--- Get all electric pole prototype names sorted by supply area.
+--- @return string[] Array of pole prototype names
+function gui._get_electric_pole_types()
+    local poles = prototypes.get_entity_filtered({{filter = "type", type = "electric-pole"}})
+    local pole_list = {}
+    for name, proto in pairs(poles) do
+        pole_list[#pole_list + 1] = {
+            name = name,
+            supply_area = proto.supply_area_distance or 0,
+        }
+    end
+    table.sort(pole_list, function(a, b) return a.supply_area < b.supply_area end)
+
+    local names = {}
+    for _, p in ipairs(pole_list) do
+        names[#names + 1] = p.name
+    end
+    return names
+end
+
+--- Get all beacon prototype names.
+--- @return string[] Array of beacon prototype names
+function gui._get_beacon_types()
+    local beacons = prototypes.get_entity_filtered({{filter = "type", type = "beacon"}})
+    local beacon_list = {}
+    for name, _ in pairs(beacons) do
+        beacon_list[#beacon_list + 1] = name
+    end
+    table.sort(beacon_list)
+    return beacon_list
 end
 
 --- Read the current GUI selections and return a settings table.
 --- @param player LuaPlayer
---- @return table|nil settings {drill_name, placement_mode, direction, remember}
+--- @return table|nil settings
 function gui.read_settings(player)
     local frame = player.gui.screen[FRAME_NAME]
     if not frame then return nil end
@@ -510,11 +777,41 @@ function gui.read_settings(player)
         settings.resource_name = resource_names[res_dropdown.selected_index]
     end
 
-    -- Read drill selection
-    local dropdown = inner.mineore_drill_dropdown
-    if dropdown and dropdown.selected_index > 0 then
-        local drill_names = dropdown.tags.drill_names
-        settings.drill_name = drill_names[dropdown.selected_index]
+    -- Read drill selection (from icon buttons)
+    settings.drill_name = gui._read_selector_group(inner, "drill_selector_flow", "drill")
+
+    -- Read belt selection (belt_selector_flow is nested inside belt_selector_row)
+    local belt_row = inner.belt_selector_row
+    if belt_row then
+        local belt_flow = belt_row.belt_selector_flow
+        settings.belt_name = gui._read_selector_from_flow(belt_flow, "belt")
+    end
+
+    -- Read pole selection
+    local pole_row = inner.pole_selector_row
+    if pole_row then
+        local pole_flow = pole_row.pole_selector_flow
+        settings.pole_name = gui._read_selector_from_flow(pole_flow, "pole")
+    end
+
+    -- Read beacon selection
+    local beacon_row = inner.beacon_selector_row
+    if beacon_row then
+        local beacon_flow = beacon_row.beacon_selector_flow
+        settings.beacon_name = gui._read_selector_from_flow(beacon_flow, "beacon")
+    end
+
+    -- Read beacon module
+    local beacon_mod_row = inner.beacon_module_row
+    if beacon_mod_row then
+        local mod_btn = beacon_mod_row.mineore_beacon_module_btn
+        if mod_btn and mod_btn.elem_value then
+            settings.beacon_module_name = mod_btn.elem_value
+        end
+        local count_dd = beacon_mod_row.mineore_beacon_module_count
+        if count_dd then
+            settings.beacon_module_count = count_dd.selected_index
+        end
     end
 
     -- Read placement mode
@@ -526,24 +823,22 @@ function gui.read_settings(player)
         end
     end
 
-    -- Read direction
-    local directions = {"north", "south", "east", "west"}
-    local dir_flow = inner.direction_flow
-    for _, dir in ipairs(directions) do
-        local radio = dir_flow["mineore_dir_" .. dir]
-        if radio and radio.state then
-            settings.direction = dir
-            break
+    -- Read belt orientation
+    local orient_flow = inner.belt_orientation_flow
+    if orient_flow then
+        if orient_flow.mineore_orient_NS and orient_flow.mineore_orient_NS.state then
+            settings.belt_orientation = "NS"
+        elseif orient_flow.mineore_orient_EW and orient_flow.mineore_orient_EW.state then
+            settings.belt_orientation = "EW"
         end
     end
 
-    -- Read module selection
+    -- Read drill module selection
     local mod_flow = inner.module_flow
     if mod_flow then
-        local mod_dropdown = mod_flow.mineore_module_dropdown
-        if mod_dropdown and mod_dropdown.selected_index > 1 then
-            local module_names = mod_dropdown.tags.module_names
-            settings.module_name = module_names[mod_dropdown.selected_index - 1]
+        local mod_btn = mod_flow.mineore_drill_module_btn
+        if mod_btn and mod_btn.elem_value then
+            settings.module_name = mod_btn.elem_value
         end
 
         local count_dropdown = mod_flow.mineore_module_count
@@ -552,11 +847,13 @@ function gui.read_settings(player)
         end
     end
 
-    -- Read quality selection (Space Age only)
-    local quality_dropdown = inner.mineore_quality_dropdown
-    if quality_dropdown and quality_dropdown.selected_index > 0 then
-        local quality_names = quality_dropdown.tags.quality_names
-        settings.quality = quality_names[quality_dropdown.selected_index]
+    -- Read per-entity quality selections (Space Age only)
+    if script.feature_flags.quality then
+        settings.belt_quality = gui._read_quality_dropdown(belt_row, "belt")
+        settings.pole_quality = gui._read_quality_dropdown(pole_row, "pole")
+        settings.beacon_quality = gui._read_quality_dropdown(beacon_row, "beacon")
+        -- Use belt quality as the general quality fallback, or "normal"
+        settings.quality = settings.belt_quality or "normal"
     end
 
     -- Read remember checkbox
@@ -566,6 +863,73 @@ function gui.read_settings(player)
     end
 
     return settings
+end
+
+--- Read a quality dropdown value from a parent flow.
+--- @param parent LuaGuiElement|nil
+--- @param prefix string
+--- @return string|nil quality name
+function gui._read_quality_dropdown(parent, prefix)
+    if not parent then return nil end
+    local dropdown = parent["mineore_quality_" .. prefix]
+    if dropdown and dropdown.selected_index > 0 then
+        local quality_names = dropdown.tags.quality_names
+        return quality_names[dropdown.selected_index]
+    end
+    return nil
+end
+
+--- Read the selected entity name from a flow of selector buttons.
+--- @param flow LuaGuiElement The flow containing the buttons
+--- @param group string The selector group name
+--- @return string|nil Selected entity name, or nil/"" for none
+function gui._read_selector_from_flow(flow, group)
+    if not flow then return nil end
+    for _, child in pairs(flow.children) do
+        if child.tags and child.tags.selector_group == group then
+            -- Check if this button has the selected style
+            if child.style and child.style.name == "slot_sized_button_pressed" then
+                local name = child.tags.entity_name
+                if name == "" then return nil end
+                return name
+            end
+        end
+    end
+    return nil
+end
+
+--- Read the selected entity from a direct child flow (legacy helper).
+--- @param parent LuaGuiElement
+--- @param flow_name string
+--- @param group string
+--- @return string|nil
+function gui._read_selector_group(parent, flow_name, group)
+    local flow = parent[flow_name]
+    return gui._read_selector_from_flow(flow, group)
+end
+
+--- Handle click on a locked choose-elem-button to toggle selection.
+--- Updates the pressed/unpressed style for the group.
+--- @param element LuaGuiElement The clicked element
+--- @return boolean handled Whether this was a selector click
+function gui.handle_selector_click(element)
+    if not element or not element.valid then return false end
+    local tags = element.tags
+    if not tags or not tags.selector_group then return false end
+
+    local group = tags.selector_group
+    local parent = element.parent
+
+    -- Unselect all siblings in the same group
+    for _, sibling in pairs(parent.children) do
+        if sibling.tags and sibling.tags.selector_group == group then
+            sibling.style = "slot_sized_button"
+        end
+    end
+
+    -- Select the clicked button
+    element.style = "slot_sized_button_pressed"
+    return true
 end
 
 --- Handle radio button state changes (uncheck siblings in the same group).
@@ -587,12 +951,12 @@ function gui.handle_radio_change(element)
         return
     end
 
-    -- Direction radios
-    if name:find("^mineore_dir_") then
+    -- Belt orientation radios
+    if name:find("^mineore_orient_") then
         local parent = element.parent
-        local directions = {"north", "south", "east", "west"}
-        for _, dir in ipairs(directions) do
-            local sibling = parent["mineore_dir_" .. dir]
+        local orientations = {"NS", "EW"}
+        for _, orient in ipairs(orientations) do
+            local sibling = parent["mineore_orient_" .. orient]
             if sibling and sibling ~= element then
                 sibling.state = false
             end

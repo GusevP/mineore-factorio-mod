@@ -123,23 +123,23 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Modify: `locale/en/locale.cfg`
 - Modify: `control.lua`
 
-- [ ] Replace drill dropdown with a row of locked `choose-elem-button` elements (one per compatible drill), following P.U.M.P. pattern
-- [ ] Add belt type selector: row of locked `choose-elem-button` for belt types (transport-belt, fast-transport-belt, etc.) plus a "none" sprite-button to skip belt placement
-- [ ] Add underground belt selector: automatically paired with the selected belt type (or let user override)
-- [ ] Add pole/substation selector: row of locked `choose-elem-button` for electric poles and substations plus a "none" sprite-button
-- [ ] Add beacon selector: row of locked `choose-elem-button` for beacon types plus a "none" sprite-button
-- [ ] Add beacon module selector: a single unlocked `choose-elem-button` (elem_type="item", filtered to modules compatible with the selected beacon)
-- [ ] Rework drill module selector from dropdown to unlocked `choose-elem-button`
-- [ ] Add quality dropdowns per entity row using rich text quality icons (e.g., `[quality=normal]`), following P.U.M.P. pattern
-- [ ] Update `gui.read_settings()` to read all new selectors (belt, pole, beacon, beacon module, quality per entity type)
-- [ ] Handle `on_gui_click` for locked choose-elem-buttons (toggle pressed/unpressed style to show selection)
-- [ ] Handle `on_gui_elem_changed` for unlocked module choose-elem-buttons
-- [ ] Remove old dropdown-based resource selector -- resources are shown as info only; the single selected resource flows from the scan
-- [ ] Keep placement mode radio buttons (Productivity/Normal/Efficient)
-- [ ] Remove direction selector -- direction is now implicit (drills always face the center belt line)
-- [ ] Add belt orientation selector: radio buttons for belt running North-South vs East-West
-- [ ] Update all locale strings for new GUI elements
-- [ ] Verify: GUI shows icon buttons for all entity types, selections work correctly
+- [x] Replace drill dropdown with a row of locked `choose-elem-button` elements (one per compatible drill), following P.U.M.P. pattern
+- [x] Add belt type selector: row of locked `choose-elem-button` for belt types (transport-belt, fast-transport-belt, etc.) plus a "none" sprite-button to skip belt placement
+- [x] Add underground belt selector: automatically paired with the selected belt type (or let user override)
+- [x] Add pole/substation selector: row of locked `choose-elem-button` for electric poles and substations plus a "none" sprite-button
+- [x] Add beacon selector: row of locked `choose-elem-button` for beacon types plus a "none" sprite-button
+- [x] Add beacon module selector: a single unlocked `choose-elem-button` (elem_type="item", filtered to modules compatible with the selected beacon)
+- [x] Rework drill module selector from dropdown to unlocked `choose-elem-button`
+- [x] Add quality dropdowns per entity row using rich text quality icons (e.g., `[quality=normal]`), following P.U.M.P. pattern
+- [x] Update `gui.read_settings()` to read all new selectors (belt, pole, beacon, beacon module, quality per entity type)
+- [x] Handle `on_gui_click` for locked choose-elem-buttons (toggle pressed/unpressed style to show selection)
+- [x] Handle `on_gui_elem_changed` for unlocked module choose-elem-buttons
+- [x] Remove old dropdown-based resource selector -- resources are shown as info only; the single selected resource flows from the scan
+- [x] Keep placement mode radio buttons (Productivity/Normal/Efficient)
+- [x] Remove direction selector -- direction is now implicit (drills always face the center belt line)
+- [x] Add belt orientation selector: radio buttons for belt running North-South vs East-West
+- [x] Update all locale strings for new GUI elements
+- [x] Verify: GUI shows icon buttons for all entity types, selections work correctly
 
 ### Task 6: Wire up new GUI settings to placer pipeline
 

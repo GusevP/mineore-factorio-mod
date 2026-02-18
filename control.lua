@@ -133,18 +133,27 @@ script.on_event(defines.events.on_player_selected_area, function(event)
     config_gui.create(player, scan_results, player_data)
 end)
 
--- Handle alt-selection (shift-drag to remove ghost miners)
+-- Handle alt-selection (shift-drag to remove ghost entities)
 script.on_event(defines.events.on_player_alt_selected_area, function(event)
     if event.item ~= SELECTION_TOOL_NAME then return end
     local player = game.get_player(event.player_index)
     if not player then return end
+
+    -- Remove ghost mining drills, transport belts, electric poles, and beacons
+    local removable_types = {
+        ["mining-drill"] = true,
+        ["transport-belt"] = true,
+        ["underground-belt"] = true,
+        ["electric-pole"] = true,
+        ["beacon"] = true,
+    }
 
     local removed = 0
     for _, entity in pairs(event.entities) do
         if entity.valid and entity.name == "entity-ghost" then
             local ghost_name = entity.ghost_name
             local ghost_proto = prototypes.entity[ghost_name]
-            if ghost_proto and ghost_proto.type == "mining-drill" then
+            if ghost_proto and removable_types[ghost_proto.type] then
                 entity.destroy()
                 removed = removed + 1
             end
@@ -166,7 +175,7 @@ end)
 
 -- GUI event handlers
 
--- Handle button clicks (Place, Cancel, Close)
+-- Handle button clicks (Place, Cancel, Close, and icon selector buttons)
 script.on_event(defines.events.on_gui_click, function(event)
     local element = event.element
     if not element or not element.valid then return end
@@ -174,6 +183,11 @@ script.on_event(defines.events.on_gui_click, function(event)
 
     local player = game.get_player(event.player_index)
     if not player then return end
+
+    -- Handle locked choose-elem-button clicks (icon selectors)
+    if config_gui.handle_selector_click(element) then
+        return
+    end
 
     if element.name == "mineore_close_button" or element.name == "mineore_cancel_button" then
         config_gui.destroy(player)
@@ -188,7 +202,7 @@ script.on_event(defines.events.on_gui_click, function(event)
 
             config_gui.destroy(player)
 
-            -- Place ghost drills using calculated grid positions
+            -- Place ghost entities using calculated grid positions
             if player_data.last_scan then
                 placer.place(player, player_data.last_scan, settings)
             end
@@ -197,7 +211,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
--- Handle radiobutton changes (placement mode and direction)
+-- Handle radiobutton changes (placement mode and belt orientation)
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
     local element = event.element
     if not element or not element.valid then return end
@@ -212,6 +226,14 @@ script.on_event(defines.events.on_gui_selection_state_changed, function(event)
     if not element or not element.valid then return end
     if not config_gui.is_mineore_element(element) then return end
     -- No additional action needed - selection is read when Place is clicked
+end)
+
+-- Handle choose-elem-button value changes (unlocked module pickers)
+script.on_event(defines.events.on_gui_elem_changed, function(event)
+    local element = event.element
+    if not element or not element.valid then return end
+    if not config_gui.is_mineore_element(element) then return end
+    -- No additional action needed - value is read when Place is clicked
 end)
 
 -- Handle ESC key closing the GUI
