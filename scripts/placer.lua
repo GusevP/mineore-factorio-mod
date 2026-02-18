@@ -37,9 +37,12 @@ function placer.place(player, scan_results, settings)
     end
 
     -- Filter resource groups if a specific resource type was selected
-    local resource_groups = scan_results.resource_groups
-    if settings.resource_name and resource_groups[settings.resource_name] then
-        resource_groups = {[settings.resource_name] = resource_groups[settings.resource_name]}
+    local all_resource_groups = scan_results.resource_groups
+    local resource_groups = all_resource_groups
+    local selected_resource = nil
+    if settings.resource_name and all_resource_groups[settings.resource_name] then
+        resource_groups = {[settings.resource_name] = all_resource_groups[settings.resource_name]}
+        selected_resource = settings.resource_name
     end
 
     -- Calculate grid positions with paired rows and belt gaps
@@ -49,7 +52,9 @@ function placer.place(player, scan_results, settings)
         scan_results.bounds,
         settings.placement_mode,
         belt_orientation,
-        resource_groups
+        resource_groups,
+        all_resource_groups,
+        selected_resource
     )
 
     local positions = result.positions

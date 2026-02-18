@@ -78,6 +78,25 @@ local function build_resource_set(resource_groups)
     return set
 end
 
+--- Build a lookup set of resource tile positions for all ore types EXCEPT the selected one.
+--- Used to filter out drills whose mining area would overlap foreign ore.
+--- @param resource_groups table Full (unfiltered) map of resource_name -> {positions={...}, ...}
+--- @param selected_resource string|nil The selected ore name to exclude from the foreign set
+--- @return table<string, true> Set keyed by "x,y" strings for foreign ore tiles
+local function build_foreign_resource_set(resource_groups, selected_resource)
+    local set = {}
+    for name, group in pairs(resource_groups) do
+        if name ~= selected_resource then
+            for _, pos in ipairs(group.positions) do
+                local tx = math.floor(pos.x)
+                local ty = math.floor(pos.y)
+                set[tx .. "," .. ty] = true
+            end
+        end
+    end
+    return set
+end
+
 --- Check if a drill placed at the given center position would overlap
 --- at least one resource tile.
 --- @param cx number Drill center x
@@ -99,6 +118,27 @@ local function has_resources_in_mining_area(cx, cy, radius, resource_set)
     return false
 end
 
+--- Check if a drill placed at the given center position would overlap
+--- any tile from a foreign ore type.
+--- @param cx number Drill center x
+--- @param cy number Drill center y
+--- @param radius number Mining drill radius
+--- @param foreign_set table Set of "x,y" foreign ore positions
+--- @return boolean true if the mining area overlaps foreign ore
+local function has_foreign_ore_in_mining_area(cx, cy, radius, foreign_set)
+    local r = math.floor(radius)
+    for dx = -r, r do
+        for dy = -r, r do
+            local tx = math.floor(cx) + dx
+            local ty = math.floor(cy) + dy
+            if foreign_set[tx .. "," .. ty] then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 --- Calculate all drill placement positions in paired rows with belt gaps.
 ---
 --- Drills are arranged in pairs of rows/columns facing each other with a center
@@ -110,11 +150,19 @@ end
 --- @param bounds table {left_top={x,y}, right_bottom={x,y}} selection bounds
 --- @param mode string Placement mode: "productivity", "normal", "efficient"
 --- @param belt_orientation string "NS" (belt runs north-south) or "EW" (belt runs east-west)
---- @param resource_groups table Resource groups from scan results (already filtered to selected resource)
+--- @param resource_groups table Resource groups from scan results (already filtered to selected resource for the "has ore" check)
+--- @param all_resource_groups table|nil Full unfiltered resource groups (for foreign ore filtering). If nil, no foreign ore filtering is applied.
+--- @param selected_resource string|nil The selected ore name. If nil, no foreign ore filtering.
 --- @return table {positions=array, belt_lines=array}
-function calculator.calculate_positions(drill, bounds, mode, belt_orientation, resource_groups)
+function calculator.calculate_positions(drill, bounds, mode, belt_orientation, resource_groups, all_resource_groups, selected_resource)
     local spacing_along, spacing_across, row_offset = calculator.get_spacing(drill, mode)
     local resource_set = build_resource_set(resource_groups)
+
+    -- Build foreign ore set for filtering when a specific ore is selected
+    local foreign_set = nil
+    if all_resource_groups and selected_resource then
+        foreign_set = build_foreign_resource_set(all_resource_groups, selected_resource)
+    end
 
     local body_w = drill.width
     local body_h = drill.height
@@ -179,7 +227,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
 
             local x = start_x + x_offset
             while x <= end_x do
-                if has_resources_in_mining_area(x, y_top, radius, resource_set) then
+                if has_resources_in_mining_area(x, y_top, radius, resource_set)
+                    and not (foreign_set and has_foreign_ore_in_mining_area(x, y_top, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x, y = y_top},
                         direction = defines.direction.south,
@@ -194,7 +243,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
             -- Place bottom row (faces north)
             x = start_x + x_offset
             while x <= end_x do
-                if has_resources_in_mining_area(x, y_bottom, radius, resource_set) then
+                if has_resources_in_mining_area(x, y_bottom, radius, resource_set)
+                    and not (foreign_set and has_foreign_ore_in_mining_area(x, y_bottom, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x, y = y_bottom},
                         direction = defines.direction.north,
@@ -268,7 +318,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
             -- Place left column (faces east)
             local y = start_y + y_offset
             while y <= end_y do
-                if has_resources_in_mining_area(x_left, y, radius, resource_set) then
+                if has_resources_in_mining_area(x_left, y, radius, resource_set)
+                    and not (foreign_set and has_foreign_ore_in_mining_area(x_left, y, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x_left, y = y},
                         direction = defines.direction.east,
@@ -282,7 +333,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
             -- Place right column (faces west)
             y = start_y + y_offset
             while y <= end_y do
-                if has_resources_in_mining_area(x_right, y, radius, resource_set) then
+                if has_resources_in_mining_area(x_right, y, radius, resource_set)
+                    and not (foreign_set and has_foreign_ore_in_mining_area(x_right, y, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x_right, y = y},
                         direction = defines.direction.west,

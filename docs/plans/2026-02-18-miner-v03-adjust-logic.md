@@ -127,13 +127,13 @@ Files:
 function and position filtering)
 • Possibly modify: scripts/resource_scanner.lua (if multi-ore data needs
 enrichment)
-[ ] When a specific ore is selected (not "all"), check each candidate drill
+[x] When a specific ore is selected (not "all"), check each candidate drill
 position's full mining area
-[ ] If the mining area contains any tiles of a different ore type, skip that
+[x] If the mining area contains any tiles of a different ore type, skip that
 drill position
-[ ] Build a resource tile set per ore type from the scan data to enable this
+[x] Build a resource tile set per ore type from the scan data to enable this
 check
-[ ] Keep existing behavior when "all" ores are selected (place drill if any
+[x] Keep existing behavior when "all" ores are selected (place drill if any
 resource overlaps)
 [ ] Manual test: select iron ore on a patch bordering copper - drills near
 the boundary should not be placed if their mining area overlaps copper
