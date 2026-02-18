@@ -158,10 +158,10 @@ substations
 fall back to placing in the pole-slot rows only
 [x] Ensure poles don't collide with drills, belts, or underground belts
 [x] Remove support for larger poles like substations (2x2) and big electric poles
-[ ] Manual test: place with small wooden pole (1x1) - should work as before
-[ ] Manual test: place with medium electric pole (1x1) - should work as
+[x] Manual test: place with small wooden pole (1x1) - should work as before
+[x] Manual test: place with medium electric pole (1x1) - should work as
 before
-[ ] Manual test: place with substation (2x2) - should place in freed rows
+[x] Manual test: place with substation (2x2) - should place in freed rows
 between drill groups
 
 ### Task 3: Adjust beacon placement logic
