@@ -29,8 +29,8 @@ function pole_placer.get_pole_info(pole_name)
 
     return {
         name = pole_name,
-        supply_area_distance = proto.supply_area_distance,
-        max_wire_distance = proto.max_wire_distance,
+        supply_area_distance = proto.get_supply_area_distance(),
+        max_wire_distance = proto.get_max_wire_distance(),
         width = width,
         height = height,
     }

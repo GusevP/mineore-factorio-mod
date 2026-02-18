@@ -127,7 +127,7 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Modify: `control.lua`
 - Modify: `scripts/gui.lua`
 
-- [ ] Fix the error "
+- [x] Fix the error "
       Error while running event mineore::on_player_selected_area (ID 57)
       LuaEntityPrototype doesn't contain key supply_area_distance.
       stack traceback:

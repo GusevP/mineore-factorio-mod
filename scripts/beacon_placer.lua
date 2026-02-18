@@ -35,7 +35,7 @@ function beacon_placer.get_beacon_info(beacon_name)
 
     return {
         name = beacon_name,
-        supply_area_distance = proto.supply_area_distance,
+        supply_area_distance = proto.get_supply_area_distance(),
         width = width,
         height = height,
     }

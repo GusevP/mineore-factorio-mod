@@ -736,7 +736,7 @@ function gui._get_electric_pole_types()
     for name, proto in pairs(poles) do
         pole_list[#pole_list + 1] = {
             name = name,
-            supply_area = proto.supply_area_distance or 0,
+            supply_area = proto.get_supply_area_distance() or 0,
         }
     end
     table.sort(pole_list, function(a, b) return a.supply_area < b.supply_area end)
