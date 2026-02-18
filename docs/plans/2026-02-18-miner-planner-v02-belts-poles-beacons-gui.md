@@ -171,14 +171,14 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Modify: `scripts/placer.lua`
 - Modify: `control.lua`
 
-- [ ] Update placer.place() to accept and pass through new settings: belt_name, underground_belt_name, pole_name, beacon_name, beacon_module_name, belt_quality, pole_quality, beacon_quality
-- [ ] Orchestrate placement order: drills first, then belts, then poles, then beacons
-- [ ] Accumulate blocked positions through the pipeline so later placements don't collide with earlier ones
-- [ ] Update control.lua GUI event handlers for new element types (on_gui_click for choose-elem-buttons, on_gui_elem_changed for module pickers)
-- [ ] Update "remember settings" to include all new settings
-- [ ] Update alt-selection (shift-drag) to also remove ghost belts, poles, and beacons placed in the selection area
-- [ ] Update flying text feedback to include counts for each entity type placed
-- [ ] Verify: full pipeline works end-to-end -- select ore, configure in GUI, place all entity types
+- [x] Update placer.place() to accept and pass through new settings: belt_name, underground_belt_name, pole_name, beacon_name, beacon_module_name, belt_quality, pole_quality, beacon_quality
+- [x] Orchestrate placement order: drills first, then belts, then poles, then beacons
+- [x] Accumulate blocked positions through the pipeline so later placements don't collide with earlier ones
+- [x] Update control.lua GUI event handlers for new element types (on_gui_click for choose-elem-buttons, on_gui_elem_changed for module pickers)
+- [x] Update "remember settings" to include all new settings
+- [x] Update alt-selection (shift-drag) to also remove ghost belts, poles, and beacons placed in the selection area
+- [x] Update flying text feedback to include counts for each entity type placed
+- [x] Verify: full pipeline works end-to-end -- select ore, configure in GUI, place all entity types
 
 ### Task 7: Add mod settings for beacons
 

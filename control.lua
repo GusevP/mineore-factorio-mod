@@ -122,6 +122,28 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         end
 
         if drill_still_valid then
+            -- Clear remembered entity names whose prototypes no longer exist
+            if settings.belt_name and not prototypes.entity[settings.belt_name] then
+                settings.belt_name = nil
+                settings.belt_quality = nil
+            end
+            if settings.pole_name and not prototypes.entity[settings.pole_name] then
+                settings.pole_name = nil
+                settings.pole_quality = nil
+            end
+            if settings.beacon_name and not prototypes.entity[settings.beacon_name] then
+                settings.beacon_name = nil
+                settings.beacon_quality = nil
+                settings.beacon_module_name = nil
+                settings.beacon_module_count = nil
+            end
+            if settings.module_name and not prototypes.item[settings.module_name] then
+                settings.module_name = nil
+            end
+            if settings.beacon_module_name and not prototypes.item[settings.beacon_module_name] then
+                settings.beacon_module_name = nil
+            end
+
             -- Skip GUI, go straight to placement
             player.print({"mineore.using-remembered-settings"})
             placer.place(player, scan_results, settings)

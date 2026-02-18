@@ -125,11 +125,17 @@ function placer.place(player, scan_results, settings)
         end
     end
 
-    -- Place belts between paired drill rows if belt type is configured
+    -- Placement pipeline: drills -> belts -> poles -> beacons
+    -- Each step places ghost entities on the surface. Later steps use
+    -- surface.can_place_entity to avoid collisions with earlier ghosts.
+    -- The beacon placer also builds an explicit blocked tile set for
+    -- efficient pre-filtering of candidate positions.
+    local gap = calculator.get_pair_gap()
+
+    -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0
     local belts_skipped = 0
     if settings.belt_name and settings.belt_name ~= "" and #result.belt_lines > 0 then
-        local gap = calculator.get_pair_gap()
         belts_placed, belts_skipped = belt_placer.place(
             surface, force, player,
             result.belt_lines,
@@ -140,11 +146,10 @@ function placer.place(player, scan_results, settings)
         )
     end
 
-    -- Place poles/substations in the gaps between paired drill rows
+    -- Step 3: Place poles/substations in the gaps between paired drill rows
     local poles_placed = 0
     local poles_skipped = 0
     if settings.pole_name and settings.pole_name ~= "" and #result.belt_lines > 0 then
-        local gap = calculator.get_pair_gap()
         poles_placed, poles_skipped = pole_placer.place(
             surface, force, player,
             result.belt_lines,
@@ -155,11 +160,10 @@ function placer.place(player, scan_results, settings)
         )
     end
 
-    -- Place beacons around the drill layout (last entity placement step)
+    -- Step 4: Place beacons on the outer edges of drill pairs (last step)
     local beacons_placed = 0
     local beacons_skipped = 0
     if settings.beacon_name and settings.beacon_name ~= "" and #positions > 0 then
-        local gap = calculator.get_pair_gap()
         local max_beacons = settings.max_beacons_per_drill or 4
         beacons_placed, beacons_skipped = beacon_placer.place(
             surface, force, player,
