@@ -76,18 +76,18 @@ poles like substations (2x2) and big electric poles.
 Files:
 
 • Modify: scripts/pole_placer.lua
-[ ] Read pole prototype width/height at runtime (already reads
+[x] Read pole prototype width/height at runtime (already reads
 supply_area_distance and max_wire_distance)
-[ ] For poles wider than 1 tile, calculate placement positions accounting
+[x] For poles wider than 1 tile, calculate placement positions accounting
 for the pole occupying multiple tiles in the gap
-[ ] If the pole is too wide to fit in the 2-tile gap between drill pairs,
+[x] If the pole is too wide to fit in the 2-tile gap between drill pairs,
 place it in the free rows between drill groups (the rows freed up by
 underground belts - the "Pole" slot in layout patterns)
-[ ] Adjust spacing calculation to account for larger supply areas of
+[x] Adjust spacing calculation to account for larger supply areas of
 substations
-[ ] Handle the case where a substation is selected but gap is too narrow -
+[x] Handle the case where a substation is selected but gap is too narrow -
 fall back to placing in the pole-slot rows only
-[ ] Ensure poles don't collide with drills, belts, or underground belts
+[x] Ensure poles don't collide with drills, belts, or underground belts
 [ ] Manual test: place with small wooden pole (1x1) - should work as before
 [ ] Manual test: place with medium electric pole (1x1) - should work as
 before

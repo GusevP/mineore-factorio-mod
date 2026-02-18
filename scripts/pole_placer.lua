@@ -10,6 +10,10 @@
 --
 -- For NS orientation: poles are placed along the vertical gap, spaced vertically
 -- For EW orientation: poles are placed along the horizontal gap, spaced horizontally
+--
+-- Multi-tile poles (e.g., 2x2 substations) are centered in the gap. If the pole
+-- is too wide to fit in the free rows (middle gap rows not occupied by belts),
+-- can_place_entity will reject the placement and the pole is skipped.
 
 local pole_placer = {}
 
@@ -40,35 +44,22 @@ end
 ---
 --- The spacing is limited by two constraints:
 ---   1. Supply coverage: each drill must be within the pole's supply area.
----      The supply area is a square centered on the pole with side length
----      2 * supply_area_distance + 1 (for 1x1 poles) or larger for bigger poles.
----      Along the belt line direction, the effective reach is supply_area_distance.
----      Two consecutive poles can cover drills between them if their supply areas overlap.
----      Max spacing for full coverage = 2 * supply_area_distance + 1 (the supply diameter).
----      But we want no gaps, so spacing <= 2 * supply_area_distance + 1.
+---      Two consecutive poles placed at distance D apart will have overlapping
+---      supply areas if D <= 2 * supply_area_distance. We use this as the
+---      supply constraint.
 ---
----   2. Wire connectivity: consecutive poles must be within max_wire_distance of each other.
----      So spacing <= max_wire_distance.
+---   2. Wire connectivity: consecutive poles must be within max_wire_distance
+---      of each other.
 ---
---- We use the minimum of these two constraints, rounded down to an integer for clean placement.
+--- We use the minimum of these two constraints, rounded down to an integer.
 ---
 --- @param pole_info table Pole prototype info from get_pole_info()
 --- @return number spacing Maximum spacing between pole centers along the belt line
 function pole_placer.calculate_spacing(pole_info)
-    -- Supply area coverage along the belt line direction
-    -- supply_area_distance is the reach from the pole center in each direction
-    -- Two consecutive poles placed at distance D apart will have overlapping supply areas
-    -- if D <= 2 * supply_area_distance (they share coverage at the midpoint)
-    -- We use the full diameter for coverage (slightly conservative)
     local supply_spacing = math.floor(2 * pole_info.supply_area_distance)
-
-    -- Wire reach constraint
     local wire_spacing = math.floor(pole_info.max_wire_distance)
-
-    -- Use the more restrictive constraint
     local spacing = math.min(supply_spacing, wire_spacing)
 
-    -- Ensure at least 1 tile spacing
     if spacing < 1 then
         spacing = 1
     end
@@ -109,12 +100,12 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
     for _, belt_line in ipairs(belt_lines) do
         if belt_line.orientation == "NS" then
             local p, s = pole_placer._place_ns_poles(
-                surface, force, player, belt_line, half_h, spacing, pole_name, quality, gap)
+                surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
             placed = placed + p
             skipped = skipped + s
         elseif belt_line.orientation == "EW" then
             local p, s = pole_placer._place_ew_poles(
-                surface, force, player, belt_line, half_w, spacing, pole_name, quality, gap)
+                surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
             placed = placed + p
             skipped = skipped + s
         end
@@ -125,34 +116,43 @@ end
 
 --- Place poles along a north-south oriented belt line.
 --- Poles are placed vertically along the gap at calculated intervals.
+--- The x-position is the center of the gap, snapped to the correct tile
+--- alignment for the pole's width.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
 --- @param belt_line table Belt line metadata from calculator
 --- @param half_h number Half the drill height
 --- @param spacing number Distance between pole centers
---- @param pole_name string Pole prototype name
+--- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
 --- @param gap number Gap size in tiles
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, spacing, pole_name, quality, gap)
+function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
     local placed = 0
     local skipped = 0
 
-    -- The belt line center x is the midpoint of the gap
+    -- For NS belts, the gap spans the x-axis. x_center is the midpoint.
+    -- For odd-width poles (1x1, 3x3): center on x_center (tile-centered)
+    -- For even-width poles (2x2): snap so the pole straddles the gap center
     local x_center = belt_line.x
 
     -- y extent: from the top edge of the first drill to the bottom edge of the last drill
     local y_start = belt_line.y_min - half_h
     local y_end = belt_line.y_max + half_h
 
-    -- Place first pole near the start, then at regular intervals
-    -- Start at the first position that's within the drill extent
     local y = y_start + spacing / 2
     while y <= y_end do
-        local pos = {x = x_center, y = y}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_name, pos, quality)
+        -- Snap y to tile center for proper alignment based on pole height
+        local snap_y
+        if pole_info.height % 2 == 0 then
+            snap_y = math.floor(y)  -- even-height: place on tile boundary
+        else
+            snap_y = math.floor(y) + 0.5  -- odd-height: place on tile center
+        end
+        local pos = {x = x_center, y = snap_y}
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
         placed = placed + p
         skipped = skipped + s
         y = y + spacing
@@ -163,33 +163,41 @@ end
 
 --- Place poles along an east-west oriented belt line.
 --- Poles are placed horizontally along the gap at calculated intervals.
+--- The y-position is the center of the gap, snapped to the correct tile
+--- alignment for the pole's height.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
 --- @param belt_line table Belt line metadata from calculator
 --- @param half_w number Half the drill width
 --- @param spacing number Distance between pole centers
---- @param pole_name string Pole prototype name
+--- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
 --- @param gap number Gap size in tiles
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, spacing, pole_name, quality, gap)
+function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
     local placed = 0
     local skipped = 0
 
-    -- The belt line center y is the midpoint of the gap
+    -- For EW belts, the gap spans the y-axis. y_center is the midpoint.
     local y_center = belt_line.y
 
     -- x extent: from the left edge of the first drill to the right edge of the last drill
     local x_start = belt_line.x_min - half_w
     local x_end = belt_line.x_max + half_w
 
-    -- Place first pole near the start, then at regular intervals
     local x = x_start + spacing / 2
     while x <= x_end do
-        local pos = {x = x, y = y_center}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_name, pos, quality)
+        -- Snap x to tile center for proper alignment based on pole width
+        local snap_x
+        if pole_info.width % 2 == 0 then
+            snap_x = math.floor(x)  -- even-width: place on tile boundary
+        else
+            snap_x = math.floor(x) + 0.5  -- odd-width: place on tile center
+        end
+        local pos = {x = snap_x, y = y_center}
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
         placed = placed + p
         skipped = skipped + s
         x = x + spacing
