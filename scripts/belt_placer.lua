@@ -1,18 +1,56 @@
 -- Belt Placer - Places ghost transport belts between paired miner rows
 --
--- With gap=2 between paired drill rows, there are two tile columns (or rows)
--- in the gap. Both get transport belts running in the same direction.
--- The drills on each side output directly onto the adjacent belt tile.
+-- Layout patterns based on drill body size (gap = drill body size in across direction):
 --
--- For NS orientation (belt runs north-south):
+-- Pattern 1 (2x2 drills, gap=2): Plain transport belts on both gap rows
 --   [Drill =>] [Belt v] [Belt v] [<= Drill]
---   Left drills output east onto the left belt column
---   Right drills output west onto the right belt column
 --
--- For EW orientation (belt runs east-west):
---   Same concept rotated 90 degrees.
+-- Pattern 3 (3x3 drills, gap=3): Belts on outer rows, middle free for poles
+--   [Drill =>] [Belt v] [Pole slot] [Belt v] [<= Drill]
+--   Drills drop items onto the adjacent gap tile (outer row), middle is free.
+--
+-- Pattern 4 (5x5+ drills, gap=body_size): Belts on outer rows, middle free
+--   [Drill =>] [Belt v] [free] ... [free] [Belt v] [<= Drill]
 
 local belt_placer = {}
+
+--- Derive underground belt prototype name from a transport belt name.
+--- Factorio convention: "transport-belt" -> "underground-belt"
+---                      "fast-transport-belt" -> "fast-underground-belt"
+--- @param belt_name string Transport belt prototype name
+--- @return string|nil Underground belt prototype name, or nil if not found
+function belt_placer._get_underground_name(belt_name)
+    local underground_name = string.gsub(belt_name, "transport%-belt", "underground-belt")
+    if prototypes.entity[underground_name] then
+        return underground_name
+    end
+    return nil
+end
+
+--- Determine what to place on each gap row/column.
+--- @param gap number Gap size in tiles
+--- @return table Array of {offset, type} where type is "belt" or "free"
+function belt_placer._get_gap_layout(gap)
+    if gap <= 2 then
+        -- Pattern 1: all columns get plain belts
+        local layout = {}
+        for i = 0, gap - 1 do
+            layout[#layout + 1] = {offset = i, type = "belt"}
+        end
+        return layout
+    end
+
+    -- Pattern 3/4: outer columns get belts, middle is free (for poles)
+    local layout = {}
+    for i = 0, gap - 1 do
+        if i == 0 or i == gap - 1 then
+            layout[#layout + 1] = {offset = i, type = "belt"}
+        else
+            layout[#layout + 1] = {offset = i, type = "free"}
+        end
+    end
+    return layout
+end
 
 --- Place ghost transport belts along the gap between paired drill rows.
 --- @param surface LuaSurface The game surface
@@ -61,7 +99,7 @@ function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_
 end
 
 --- Place belts for a north-south oriented belt line.
---- Belt runs vertically. Two columns of belts in the gap, both going south.
+--- Belt runs vertically. Columns in the gap get belts or are left free based on layout pattern.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -77,22 +115,23 @@ function belt_placer._place_ns_belts(surface, force, player, belt_line, half_h, 
     local placed = 0
     local skipped = 0
 
-    -- belt_line.x is the center of the gap (between two tile columns)
-    -- With gap=2, the two belt tile columns are at x-0.5 and x+0.5
-    -- For gap=N, belt tiles span from x - gap/2 + 0.5 to x + gap/2 - 0.5
     local x_center = belt_line.x
     local y_start = math.floor(belt_line.y_min - half_h)
     local y_end = math.ceil(belt_line.y_max + half_h) - 1
 
-    -- Place belts on each gap tile column
-    for tile_offset = 0, gap - 1 do
-        local x_tile = math.floor(x_center - gap / 2) + tile_offset + 0.5
+    local layout = belt_placer._get_gap_layout(gap)
 
-        for y = y_start, y_end do
-            local pos = {x = x_tile, y = y + 0.5}
-            local p, s = belt_placer._place_ghost(surface, force, player, belt_name, pos, belt_direction, quality)
-            placed = placed + p
-            skipped = skipped + s
+    for _, slot in ipairs(layout) do
+        if slot.type == "belt" then
+            local x_tile = math.floor(x_center - gap / 2) + slot.offset + 0.5
+
+            for y = y_start, y_end do
+                local pos = {x = x_tile, y = y + 0.5}
+                local p, s = belt_placer._place_ghost(
+                    surface, force, player, belt_name, pos, belt_direction, quality)
+                placed = placed + p
+                skipped = skipped + s
+            end
         end
     end
 
@@ -100,7 +139,7 @@ function belt_placer._place_ns_belts(surface, force, player, belt_line, half_h, 
 end
 
 --- Place belts for an east-west oriented belt line.
---- Belt runs horizontally. Two rows of belts in the gap, both going east.
+--- Belt runs horizontally. Rows in the gap get belts or are left free based on layout pattern.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -120,15 +159,19 @@ function belt_placer._place_ew_belts(surface, force, player, belt_line, half_w, 
     local x_start = math.floor(belt_line.x_min - half_w)
     local x_end = math.ceil(belt_line.x_max + half_w) - 1
 
-    -- Place belts on each gap tile row
-    for tile_offset = 0, gap - 1 do
-        local y_tile = math.floor(y_center - gap / 2) + tile_offset + 0.5
+    local layout = belt_placer._get_gap_layout(gap)
 
-        for x = x_start, x_end do
-            local pos = {x = x + 0.5, y = y_tile}
-            local p, s = belt_placer._place_ghost(surface, force, player, belt_name, pos, belt_direction, quality)
-            placed = placed + p
-            skipped = skipped + s
+    for _, slot in ipairs(layout) do
+        if slot.type == "belt" then
+            local y_tile = math.floor(y_center - gap / 2) + slot.offset + 0.5
+
+            for x = x_start, x_end do
+                local pos = {x = x + 0.5, y = y_tile}
+                local p, s = belt_placer._place_ghost(
+                    surface, force, player, belt_name, pos, belt_direction, quality)
+                placed = placed + p
+                skipped = skipped + s
+            end
         end
     end
 

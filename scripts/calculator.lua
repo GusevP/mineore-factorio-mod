@@ -28,16 +28,37 @@ function calculator.get_spacing(drill, mode)
     return mining_diameter, mining_diameter, 0
 end
 
---- Calculate the gap size between paired drill rows.
---- The gap must fit: underground belt entrance + center belt + underground belt exit.
---- For now, the gap is a fixed 2 tiles (one underground belt in, one out, belt in center
---- shares the tile with one of them or is separate).
---- Actually, the minimum gap is just 2 tiles: the drill outputs directly to the belt line
---- which is 1 tile wide, but we need space for underground belts to create room for poles.
---- Gap = 2 (underground entrance tile + underground exit tile, belt runs on same tiles)
+--- Calculate the gap size between paired drill rows based on drill body size.
+---
+--- Layout patterns by drill size (in the across-belt direction):
+---   2x2 drills: gap=2, both rows get plain transport belts (Pattern 1)
+---   3x3 drills: gap=3, outer rows get belts, middle row is free for poles (Pattern 3)
+---   5x5+ drills: gap=body_size, outer rows get belts, middle rows free (Pattern 4)
+---
+--- The gap equals the drill body size in the across-belt direction. Drills
+--- output onto the adjacent gap tile (outer row), so belts are only needed
+--- on the two outer rows. Middle rows are left free for pole placement.
+---
+--- @param drill table Drill info with width and height
+--- @param belt_orientation string "NS" or "EW"
 --- @return number gap_tiles Number of tiles between the edges of paired drill rows
-function calculator.get_pair_gap()
-    return 2
+function calculator.get_pair_gap(drill, belt_orientation)
+    if not drill then
+        return 2
+    end
+    -- For NS orientation, the gap is across the x-axis (use drill width)
+    -- For EW orientation, the gap is across the y-axis (use drill height)
+    local body_across
+    if belt_orientation == "EW" then
+        body_across = drill.height
+    else
+        body_across = drill.width
+    end
+    -- Minimum gap of 2 for 2x2 drills
+    if body_across < 2 then
+        return 2
+    end
+    return body_across
 end
 
 --- Build a lookup set of resource tile positions for fast membership testing.
@@ -98,7 +119,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
     local body_w = drill.width
     local body_h = drill.height
     local radius = drill.mining_drill_radius
-    local gap = calculator.get_pair_gap()
+    local gap = calculator.get_pair_gap(drill, belt_orientation)
 
     local half_w = body_w / 2
     local half_h = body_h / 2
@@ -292,6 +313,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_orientation, r
     return {
         positions = positions,
         belt_lines = belt_lines,
+        gap = gap,
     }
 end
 

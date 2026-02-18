@@ -130,7 +130,7 @@ function placer.place(player, scan_results, settings)
     -- surface.can_place_entity to avoid collisions with earlier ghosts.
     -- The beacon placer also builds an explicit blocked tile set for
     -- efficient pre-filtering of candidate positions.
-    local gap = calculator.get_pair_gap()
+    local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0
