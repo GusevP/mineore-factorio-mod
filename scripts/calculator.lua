@@ -4,7 +4,7 @@ local calculator = {}
 
 --- Calculate the grid spacing for a given drill and placement mode.
 --- @param drill table Drill info from resource_scanner (width, height, mining_drill_radius)
---- @param mode string "productivity", "normal", or "efficient"
+--- @param mode string "productivity", "loose", or "efficient"
 --- @return number spacing_along Spacing along the belt line between drill centers
 --- @return number spacing_across Spacing across the belt line (between pairs)
 --- @return number offset Row offset for staggered placement (0 for non-staggered)
@@ -18,8 +18,19 @@ function calculator.get_spacing(drill, mode)
     if mode == "productivity" then
         return body_w, body_h, 0
 
+    elseif mode == "loose" then
+        -- Respect one drill's mining zone: body_size + mining_radius
+        local mining_radius = math.floor(radius)
+        local spacing_along = body_w + mining_radius
+        local spacing_across = body_h + mining_radius
+        return spacing_along, spacing_across, 0
+
     elseif mode == "normal" then
-        return mining_diameter, mining_diameter, 0
+        -- Legacy: treat as "loose"
+        local mining_radius = math.floor(radius)
+        local spacing_along = body_w + mining_radius
+        local spacing_across = body_h + mining_radius
+        return spacing_along, spacing_across, 0
 
     elseif mode == "efficient" then
         return mining_diameter, mining_diameter, math.floor(mining_diameter / 2)
@@ -149,7 +160,7 @@ end
 ---
 --- @param drill table Drill info from resource_scanner
 --- @param bounds table {left_top={x,y}, right_bottom={x,y}} selection bounds
---- @param mode string Placement mode: "productivity", "normal", "efficient"
+--- @param mode string Placement mode: "productivity", "loose", "efficient"
 --- @param belt_direction string "north", "south", "east", or "west" (belt flow direction)
 --- @param resource_groups table Resource groups from scan results (already filtered to selected resource for the "has ore" check)
 --- @param all_resource_groups table|nil Full unfiltered resource groups (for foreign ore filtering). If nil, no foreign ore filtering is applied.

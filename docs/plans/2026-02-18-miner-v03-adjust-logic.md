@@ -279,17 +279,17 @@ Files:
 • Modify: scripts/gui.lua (update label)
 • Modify: locale/en/locale.cfg (update string)
 • Modify: settings.lua (update allowed values)
-[ ] Rename the "normal" mode to "loose" in all code references
-[ ] Adjust the Loose spacing formula: next drill is placed mining_radius
+[x] Rename the "normal" mode to "loose" in all code references
+[x] Adjust the Loose spacing formula: next drill is placed mining_radius
 tiles from the previous drill (respecting only one drill's mining zone, not
 both). Currently spacing = mining_diameter , change to spacing = body_size +
 mining_radius where mining_radius = floor(radius)
-[ ] Update the "efficient" mode description: spacing stays mining_diameter
+[x] Update the "efficient" mode description: spacing stays mining_diameter
 (respects both drills' zones) with row offset
-[ ] Update GUI label and locale string
-[ ] Update settings.lua allowed_values from "normal" to "loose"
-[ ] Handle migration: if a player had "normal" saved, treat it as "loose"
-[ ] Manual test: compare drill spacing in all 3 modes side by side
+[x] Update GUI label and locale string
+[x] Update settings.lua allowed_values from "normal" to "loose"
+[x] Handle migration: if a player had "normal" saved, treat it as "loose"
+[x] Manual test: compare drill spacing in all 3 modes side by side
 
 ### Task 8: Version bump and final verification
 
