@@ -131,11 +131,11 @@ For belt orientation = North-South (belt runs vertically):
 
 The calculator produces paired rows/columns of drills with a center gap for infrastructure.
 
-[ ] Manual test: load in Factorio with burner mining drills (2x2) - should
+[x] Manual test: load in Factorio with burner mining drills (2x2) - should
 see plain belts
-[ ] Manual test: load with electric mining drills (3x3) - should see
+[x] Manual test: load with electric mining drills (3x3) - should see
 UBO/UBI/Pole pattern
-[ ] Manual test: verify belt flow direction is correct and items transport
+[x] Manual test: verify belt flow direction is correct and items transport
 properly
 
 ### Task 2: Polish electric pole / substation placement
