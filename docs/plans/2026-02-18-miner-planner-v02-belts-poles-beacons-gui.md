@@ -103,16 +103,16 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Create: `scripts/beacon_placer.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] Create beacon_placer module that places beacons around the mining drill layout
-- [ ] Use a greedy coverage approach (inspired by P.U.M.P.): find positions where a beacon affects the most drills, place there, repeat
-- [ ] Respect beacon prototype's supply_area_distance (effect radius) and collision_box
-- [ ] Avoid placing beacons where they would collide with drills, belts, or poles already in the plan
-- [ ] Maintain a "blocked positions" set that accumulates as drills, belts, poles are placed
-- [ ] Support configurable max beacons per drill (from settings)
-- [ ] Set beacon module requests on ghost entities using insert_plan (same pattern as drill modules)
-- [ ] Accept beacon module type and count from GUI settings
-- [ ] Integrate beacon placement into placer.place() flow as the last entity placement step
-- [ ] Verify: ghost beacons placed around drill rows, modules set correctly
+- [x] Create beacon_placer module that places beacons around the mining drill layout
+- [x] Use a greedy coverage approach (inspired by P.U.M.P.): find positions where a beacon affects the most drills, place there, repeat
+- [x] Respect beacon prototype's supply_area_distance (effect radius) and collision_box
+- [x] Avoid placing beacons where they would collide with drills, belts, or poles already in the plan
+- [x] Maintain a "blocked positions" set that accumulates as drills, belts, poles are placed
+- [x] Support configurable max beacons per drill (from settings)
+- [x] Set beacon module requests on ghost entities using insert_plan (same pattern as drill modules)
+- [x] Accept beacon module type and count from GUI settings
+- [x] Integrate beacon placement into placer.place() flow as the last entity placement step
+- [x] Verify: ghost beacons placed around drill rows, modules set correctly
 
 ### Task 5: Rewrite GUI with icon-based selectors
 

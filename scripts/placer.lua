@@ -3,6 +3,7 @@
 local calculator = require("scripts.calculator")
 local belt_placer = require("scripts.belt_placer")
 local pole_placer = require("scripts.pole_placer")
+local beacon_placer = require("scripts.beacon_placer")
 
 local placer = {}
 
@@ -154,21 +155,44 @@ function placer.place(player, scan_results, settings)
         )
     end
 
+    -- Place beacons around the drill layout (last entity placement step)
+    local beacons_placed = 0
+    local beacons_skipped = 0
+    if settings.beacon_name and settings.beacon_name ~= "" and #positions > 0 then
+        local gap = calculator.get_pair_gap()
+        local max_beacons = settings.max_beacons_per_drill or 4
+        beacons_placed, beacons_skipped = beacon_placer.place(
+            surface, force, player,
+            positions,
+            drill,
+            result.belt_lines,
+            settings.beacon_name,
+            settings.beacon_quality or settings.quality or "normal",
+            settings.beacon_module_name,
+            settings.beacon_module_count,
+            max_beacons,
+            gap
+        )
+    end
+
     -- Show feedback to the player
     if placed > 0 then
-        if belts_placed > 0 and poles_placed > 0 then
+        -- Build a summary of what was placed
+        local extras = {}
+        if belts_placed > 0 then
+            extras[#extras + 1] = belts_placed .. " belts"
+        end
+        if poles_placed > 0 then
+            extras[#extras + 1] = poles_placed .. " poles"
+        end
+        if beacons_placed > 0 then
+            extras[#extras + 1] = beacons_placed .. " beacons"
+        end
+
+        if #extras > 0 then
+            local extras_text = table.concat(extras, ", ")
             player.create_local_flying_text({
-                text = {"mineore.placed-miners-belts-poles", placed, belts_placed, poles_placed},
-                create_at_cursor = true,
-            })
-        elseif belts_placed > 0 then
-            player.create_local_flying_text({
-                text = {"mineore.placed-miners-and-belts", placed, belts_placed},
-                create_at_cursor = true,
-            })
-        elseif poles_placed > 0 then
-            player.create_local_flying_text({
-                text = {"mineore.placed-miners-and-poles", placed, poles_placed},
+                text = {"mineore.placed-miners-and-extras", placed, extras_text},
                 create_at_cursor = true,
             })
         elseif skipped > 0 then
