@@ -250,25 +250,25 @@ belt flow)
 direction)
 • Modify: scripts/placer.lua (pass direction through pipeline)
 • Modify: locale/en/locale.cfg (new tooltip strings for direction buttons)
-[ ] In gui.lua, replace the NS/EW radio buttons with 4 icon buttons using
+[x] In gui.lua, replace the NS/EW radio buttons with 4 icon buttons using
 Factorio's built-in arrow sprites (e.g., utility/indication_arrow )
-[ ] Store selected direction as one of: "north" , "south" , "east" ,
+[x] Store selected direction as one of: "north" , "south" , "east" ,
 "west" in settings
-[ ] Map directions to belt flow: North = belt flows up, South = belt flows
+[x] Map directions to belt flow: North = belt flows up, South = belt flows
 down, West = belt flows left, East = belt flows right
-[ ] N and S share the same drill column layout (vertical pairs) but with
+[x] N and S share the same drill column layout (vertical pairs) but with
 opposite belt directions; same for W and E (horizontal pairs)
-[ ] Update calculator to flip drill facing directions based on selected
+[x] Update calculator to flip drill facing directions based on selected
 direction (e.g., South: left drills face east, right face west; North: left
 drills face west, right face east)
-[ ] Update belt_placer to set belt direction matching the selected direction
-[ ] Update pole_placer and beacon_placer to use the correct axis based on
+[x] Update belt_placer to set belt direction matching the selected direction
+[x] Update pole_placer and beacon_placer to use the correct axis based on
 direction
-[ ] Maintain backward compatibility: existing saved settings with "NS"/"EW"
+[x] Maintain backward compatibility: existing saved settings with "NS"/"EW"
 should map to "south"/"east" respectively
-[ ] Manual test: place miners in each of the 4 directions and verify belt
+[x] Manual test: place miners in each of the 4 directions and verify belt
 flow, drill facing, and pole/beacon positions are correct
-[ ] Manual test: verify the GUI shows 4 arrow buttons and highlights the
+[x] Manual test: verify the GUI shows 4 arrow buttons and highlights the
 selected one
 
 ### Task 7: Rename "Normal" mode to "Loose" and adjust spacing

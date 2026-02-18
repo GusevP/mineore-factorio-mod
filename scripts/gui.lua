@@ -131,8 +131,8 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Belt orientation selector
-    gui._add_belt_orientation_selector(inner, settings)
+    -- Belt direction selector (N/S/E/W)
+    gui._add_belt_direction_selector(inner, settings)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -555,40 +555,50 @@ function gui._add_mode_selector(parent, settings)
     end
 end
 
---- Add belt orientation selector (NS vs EW).
+--- Add belt direction selector (4 arrow buttons for N/S/E/W).
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_belt_orientation_selector(parent, settings)
+function gui._add_belt_direction_selector(parent, settings)
     parent.add{
         type = "label",
-        caption = {"mineore.gui-belt-orientation-header"},
+        caption = {"mineore.gui-belt-direction-header"},
         style = "caption_label",
     }
 
-    local current = settings.belt_orientation or "NS"
+    -- Migrate legacy belt_orientation to direction
+    local current = settings.belt_direction
+    if not current then
+        local orient = settings.belt_orientation
+        if orient == "NS" then
+            current = "south"
+        elseif orient == "EW" then
+            current = "east"
+        else
+            current = "south"
+        end
+    end
 
     local flow = parent.add{
         type = "flow",
-        name = "belt_orientation_flow",
+        name = "belt_direction_flow",
         direction = "horizontal",
     }
-    flow.style.horizontal_spacing = 8
+    flow.style.horizontal_spacing = 4
 
-    flow.add{
-        type = "radiobutton",
-        name = "mineore_orient_NS",
-        caption = {"mineore.gui-orient-ns"},
-        tooltip = {"mineore.gui-orient-ns-tooltip"},
-        state = (current == "NS"),
-    }
-
-    flow.add{
-        type = "radiobutton",
-        name = "mineore_orient_EW",
-        caption = {"mineore.gui-orient-ew"},
-        tooltip = {"mineore.gui-orient-ew-tooltip"},
-        state = (current == "EW"),
-    }
+    local directions = {"north", "south", "west", "east"}
+    for _, dir in ipairs(directions) do
+        local btn = flow.add{
+            type = "sprite-button",
+            name = "mineore_dir_" .. dir,
+            caption = {"mineore.gui-dir-" .. dir .. "-icon"},
+            tooltip = {"mineore.gui-dir-" .. dir .. "-tooltip"},
+            style = "slot_sized_button",
+        }
+        btn.tags = {selector_group = "direction", direction = dir}
+        if dir == current then
+            btn.style = "slot_sized_button_pressed"
+        end
+    end
 end
 
 --- Add drill module selector as choose-elem-button + count dropdown.
@@ -823,14 +833,24 @@ function gui.read_settings(player)
         end
     end
 
-    -- Read belt orientation
-    local orient_flow = inner.belt_orientation_flow
-    if orient_flow then
-        if orient_flow.mineore_orient_NS and orient_flow.mineore_orient_NS.state then
-            settings.belt_orientation = "NS"
-        elseif orient_flow.mineore_orient_EW and orient_flow.mineore_orient_EW.state then
-            settings.belt_orientation = "EW"
+    -- Read belt direction (N/S/E/W icon buttons)
+    local dir_flow = inner.belt_direction_flow
+    if dir_flow then
+        for _, child in pairs(dir_flow.children) do
+            if child.tags and child.tags.selector_group == "direction"
+                and child.style and child.style.name == "slot_sized_button_pressed" then
+                settings.belt_direction = child.tags.direction
+                break
+            end
         end
+    end
+    -- Derive belt_orientation from direction for backward compatibility
+    if settings.belt_direction == "north" or settings.belt_direction == "south" then
+        settings.belt_orientation = "NS"
+    elseif settings.belt_direction == "west" or settings.belt_direction == "east" then
+        settings.belt_orientation = "EW"
+    else
+        settings.belt_orientation = "NS"
     end
 
     -- Read drill module selection
@@ -951,19 +971,7 @@ function gui.handle_radio_change(element)
         return
     end
 
-    -- Belt orientation radios
-    if name:find("^mineore_orient_") then
-        local parent = element.parent
-        local orientations = {"NS", "EW"}
-        for _, orient in ipairs(orientations) do
-            local sibling = parent["mineore_orient_" .. orient]
-            if sibling and sibling ~= element then
-                sibling.state = false
-            end
-        end
-        element.state = true
-        return
-    end
+    -- Belt direction buttons are handled by handle_selector_click, not here
 end
 
 --- Check if a GUI element belongs to this mod's config GUI.

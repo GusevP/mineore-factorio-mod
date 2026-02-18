@@ -112,12 +112,24 @@ function placer.place(player, scan_results, settings)
     end
 
     -- Calculate grid positions with paired rows and belt gaps
-    local belt_orientation = settings.belt_orientation or "NS"
+    -- Derive belt direction: prefer new belt_direction, fall back to legacy belt_orientation
+    local belt_direction = settings.belt_direction
+    if not belt_direction then
+        local orient = settings.belt_orientation or "NS"
+        if orient == "NS" then
+            belt_direction = "south"
+        elseif orient == "EW" then
+            belt_direction = "east"
+        else
+            belt_direction = "south"
+        end
+    end
+
     local result = calculator.calculate_positions(
         drill,
         scan_results.bounds,
         settings.placement_mode,
-        belt_orientation,
+        belt_direction,
         resource_groups,
         all_resource_groups,
         selected_resource
@@ -138,6 +150,7 @@ function placer.place(player, scan_results, settings)
         return 0, 0
     end
     local force = scan_results.force_name
+    local belt_orientation = calculator.direction_to_orientation(belt_direction)
     local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
     -- Step 0: Demolish obstacles in the placement zone before placing ghosts
@@ -216,7 +229,8 @@ function placer.place(player, scan_results, settings)
             drill,
             settings.belt_name,
             settings.belt_quality or settings.quality or "normal",
-            gap
+            gap,
+            belt_direction
         )
     end
 
