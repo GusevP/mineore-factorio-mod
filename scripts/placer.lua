@@ -39,14 +39,17 @@ function placer.place(player, scan_results, settings)
         resource_groups = {[settings.resource_name] = resource_groups[settings.resource_name]}
     end
 
-    -- Calculate grid positions
-    local positions = calculator.calculate_positions(
+    -- Calculate grid positions with paired rows and belt gaps
+    local belt_orientation = settings.belt_orientation or "NS"
+    local result = calculator.calculate_positions(
         drill,
         scan_results.bounds,
         settings.placement_mode,
-        settings.direction,
+        belt_orientation,
         resource_groups
     )
+
+    local positions = result.positions
 
     if #positions == 0 then
         player.create_local_flying_text({
