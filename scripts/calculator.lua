@@ -109,16 +109,23 @@ local function has_resources_in_mining_area(cx, cy, radius, resource_set)
 end
 
 --- Check if a drill placed at the given center position would overlap
---- any tile from a foreign ore type.
+--- any tile from a foreign ore type, considering both the drill body
+--- footprint and the mining zone.
 --- @param cx number Drill center x
 --- @param cy number Drill center y
+--- @param body_w number Drill body width
+--- @param body_h number Drill body height
 --- @param radius number Mining drill radius
 --- @param foreign_set table Set of "x,y" foreign ore positions
---- @return boolean true if the mining area overlaps foreign ore
-local function has_foreign_ore_in_mining_area(cx, cy, radius, foreign_set)
-    local r = math.floor(radius)
-    for dx = -r, r do
-        for dy = -r, r do
+--- @return boolean true if the body or mining area overlaps foreign ore
+local function has_foreign_ore_overlap(cx, cy, body_w, body_h, radius, foreign_set)
+    -- The extent covers the drill body + mining zone beyond the body edge.
+    -- Use the larger of half-body and floor(radius) on each axis to ensure
+    -- both the physical footprint and the mining area are checked.
+    local rx = math.max(math.ceil(body_w / 2), math.floor(radius))
+    local ry = math.max(math.ceil(body_h / 2), math.floor(radius))
+    for dx = -rx, rx do
+        for dy = -ry, ry do
             local tx = math.floor(cx) + dx
             local ty = math.floor(cy) + dy
             if foreign_set[tx .. "," .. ty] then
@@ -230,7 +237,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
             local x = start_x + x_offset
             while x <= end_x do
                 if has_resources_in_mining_area(x, y_top, radius, resource_set)
-                    and not (foreign_set and has_foreign_ore_in_mining_area(x, y_top, radius, foreign_set)) then
+                    and not (foreign_set and has_foreign_ore_overlap(x, y_top, body_w, body_h, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x, y = y_top},
                         direction = defines.direction.south,
@@ -247,7 +254,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
             x = start_x + x_offset
             while x <= end_x do
                 if has_resources_in_mining_area(x, y_bottom, radius, resource_set)
-                    and not (foreign_set and has_foreign_ore_in_mining_area(x, y_bottom, radius, foreign_set)) then
+                    and not (foreign_set and has_foreign_ore_overlap(x, y_bottom, body_w, body_h, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x, y = y_bottom},
                         direction = defines.direction.north,
@@ -331,7 +338,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
             local y = start_y + y_offset
             while y <= end_y do
                 if has_resources_in_mining_area(x_left, y, radius, resource_set)
-                    and not (foreign_set and has_foreign_ore_in_mining_area(x_left, y, radius, foreign_set)) then
+                    and not (foreign_set and has_foreign_ore_overlap(x_left, y, body_w, body_h, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x_left, y = y},
                         direction = defines.direction.east,
@@ -347,7 +354,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
             y = start_y + y_offset
             while y <= end_y do
                 if has_resources_in_mining_area(x_right, y, radius, resource_set)
-                    and not (foreign_set and has_foreign_ore_in_mining_area(x_right, y, radius, foreign_set)) then
+                    and not (foreign_set and has_foreign_ore_overlap(x_right, y, body_w, body_h, radius, foreign_set)) then
                     positions[#positions + 1] = {
                         position = {x = x_right, y = y},
                         direction = defines.direction.west,

@@ -206,10 +206,10 @@ drill position
 check
 [x] Keep existing behavior when "all" ores are selected (place drill if any
 resource overlaps)
-[ ] Skip placing drill if it size with zone overlap wrong ore.
-[ ] Manual test: select iron ore on a patch bordering copper - drills near
+[x] Skip placing drill if it size with zone overlap wrong ore.
+[x] Manual test: select iron ore on a patch bordering copper - drills near
 the boundary should not be placed if their mining area overlaps copper
-[ ] Manual test: select "all" - should place drills as before with no
+[x] Manual test: select "all" - should place drills as before with no
 filtering
 
 ### Task 5: Demolish obstacles in the planned placement zone
