@@ -20,6 +20,72 @@ local function find_drill(scan_results, drill_name)
     return nil
 end
 
+-- Entity types that should NOT be demolished
+local preserve_types = {
+    ["resource"] = true,
+    ["entity-ghost"] = true,
+    ["tile-ghost"] = true,
+    ["character"] = true,
+}
+
+--- Demolish obstacles in the placement zone by ordering deconstruction.
+--- Computes a bounding box from drill positions (plus gap for belts/poles/beacons)
+--- and marks trees, rocks, cliffs, and buildings for deconstruction.
+--- @param surface LuaSurface The game surface
+--- @param force string|LuaForce The force name
+--- @param player LuaPlayer The player requesting placement
+--- @param positions table Array of {position, direction} entries for drills
+--- @param drill table Drill info with width, height
+--- @param gap number Gap between paired drill rows
+--- @param belt_orientation string "NS" or "EW"
+local function demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation)
+    if #positions == 0 then
+        return
+    end
+
+    -- Compute bounding box from all drill positions
+    local half_w = drill.width / 2
+    local half_h = drill.height / 2
+
+    local min_x = math.huge
+    local min_y = math.huge
+    local max_x = -math.huge
+    local max_y = -math.huge
+
+    for _, entry in ipairs(positions) do
+        local pos = entry.position
+        local left = pos.x - half_w
+        local right = pos.x + half_w
+        local top = pos.y - half_h
+        local bottom = pos.y + half_h
+
+        if left < min_x then min_x = left end
+        if right > max_x then max_x = right end
+        if top < min_y then min_y = top end
+        if bottom > max_y then max_y = bottom end
+    end
+
+    -- Expand bounding box to include the gap area (belts, poles, beacons)
+    -- The gap is between paired rows, and beacons extend beyond the drills
+    local expand = gap + 3  -- extra margin for beacons (3x3)
+    min_x = min_x - expand
+    min_y = min_y - expand
+    max_x = max_x + expand
+    max_y = max_y + expand
+
+    local area = {{min_x, min_y}, {max_x, max_y}}
+    local entities = surface.find_entities(area)
+
+    for _, entity in ipairs(entities) do
+        if entity.valid and not preserve_types[entity.type] then
+            -- Check if not already marked for deconstruction
+            if not entity.to_be_deconstructed() then
+                entity.order_deconstruction(force, player)
+            end
+        end
+    end
+end
+
 --- Place ghost mining drills according to the player's settings and scan results.
 --- @param player LuaPlayer The player requesting placement
 --- @param scan_results table Results from resource_scanner.scan()
@@ -72,6 +138,10 @@ function placer.place(player, scan_results, settings)
         return 0, 0
     end
     local force = scan_results.force_name
+    local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
+
+    -- Step 0: Demolish obstacles in the placement zone before placing ghosts
+    demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation)
 
     local placed = 0
     local skipped = 0
@@ -135,7 +205,6 @@ function placer.place(player, scan_results, settings)
     -- surface.can_place_entity to avoid collisions with earlier ghosts.
     -- The beacon placer also builds an explicit blocked tile set for
     -- efficient pre-filtering of candidate positions.
-    local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0

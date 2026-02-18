@@ -148,15 +148,15 @@ zone for deconstruction before placing ghosts.
 Files:
 
 • Modify: scripts/placer.lua (add demolition step before ghost placement)
-[ ] After calculating all positions (drills + belts + poles + beacons),
+[x] After calculating all positions (drills + belts + poles + beacons),
 compute the full bounding box of the placement zone
-[ ] Find all entities in that zone that would block placement: trees,
+[x] Find all entities in that zone that would block placement: trees,
 rocks/stones, cliffs, and player buildings
-[ ] For each blocking entity, order deconstruction ( entity.
+[x] For each blocking entity, order deconstruction ( entity.
 order_deconstruction() ) so construction bots will clear them
-[ ] Run demolition before ghost placement so can_place_entity checks are
+[x] Run demolition before ghost placement so can_place_entity checks are
 more accurate
-[ ] Do NOT demolish resource entities (ores) or other ghost entities
+[x] Do NOT demolish resource entities (ores) or other ghost entities
 [ ] Manual test: place miners in an area with trees - trees should get
 marked for deconstruction
 [ ] Manual test: ensure ores and existing ghost entities are not affected
