@@ -151,16 +151,12 @@ function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines
 end
 
 --- Generate targeted beacon candidate positions alongside drill columns/rows.
---- Instead of a full grid, candidates are placed specifically on the outer edges
---- of each drill pair where the plan diagram shows beacons should go.
+--- Candidates are placed on the outer edges of each drill pair.
 ---
---- For NS belt orientation:
----   Candidates are in columns to the left and right of each drill pair,
----   at each drill y-position.
----
---- For EW belt orientation:
----   Candidates are in rows above and below each drill pair,
----   at each drill x-position.
+--- For drills where the beacon fits exactly (e.g. 3x3 drill with 3x3 beacon),
+--- one candidate is generated per drill position. For bigger drills (5x5+),
+--- candidates are filled densely along the column at beacon-sized intervals
+--- so multiple beacons can cover a single drill.
 ---
 --- @param drill_positions table Array of drill placements
 --- @param drill_info table Drill info {width, height}
@@ -177,9 +173,20 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
     local half_dh = drill_info.height / 2
     local half_bw = beacon_info.width / 2
     local half_bh = beacon_info.height / 2
+    local beacon_w = beacon_info.width
+    local beacon_h = beacon_info.height
 
     local candidates = {}
     local seen = {}  -- avoid duplicate positions
+
+    --- Add a candidate at (cx, cy) if not already seen.
+    local function add_candidate(cx, cy)
+        local key = cx .. "," .. cy
+        if not seen[key] then
+            seen[key] = true
+            candidates[#candidates + 1] = {x = cx, y = cy}
+        end
+    end
 
     for _, belt_line in ipairs(belt_lines) do
         if belt_line.orientation == "NS" then
@@ -191,27 +198,26 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             local beacon_left_x = left_col_x - half_dw - half_bw
             local beacon_right_x = right_col_x + half_dw + half_bw
 
-            -- Collect unique drill y-positions from this pair
-            local y_positions = {}
+            -- Find the y-extent of drills in this pair
+            local y_min, y_max
             for _, entry in ipairs(drill_positions) do
                 local ex = entry.position.x
-                -- Check if this drill belongs to this pair's left or right column
                 if math.abs(ex - left_col_x) < 0.1 or math.abs(ex - right_col_x) < 0.1 then
-                    y_positions[entry.position.y] = true
+                    local ey = entry.position.y
+                    if not y_min or ey < y_min then y_min = ey end
+                    if not y_max or ey > y_max then y_max = ey end
                 end
             end
 
-            -- Generate candidates at each y-position on both sides
-            for y, _ in pairs(y_positions) do
-                local key_l = beacon_left_x .. "," .. y
-                if not seen[key_l] then
-                    seen[key_l] = true
-                    candidates[#candidates + 1] = {x = beacon_left_x, y = y}
-                end
-                local key_r = beacon_right_x .. "," .. y
-                if not seen[key_r] then
-                    seen[key_r] = true
-                    candidates[#candidates + 1] = {x = beacon_right_x, y = y}
+            if y_min then
+                -- Fill beacon column from drill extent top to bottom at beacon-sized steps
+                local col_top = y_min - half_dh + half_bh
+                local col_bottom = y_max + half_dh - half_bh
+                local y = col_top
+                while y <= col_bottom + 0.01 do
+                    add_candidate(beacon_left_x, y)
+                    add_candidate(beacon_right_x, y)
+                    y = y + beacon_h
                 end
             end
 
@@ -224,26 +230,26 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             local beacon_top_y = top_row_y - half_dh - half_bh
             local beacon_bottom_y = bottom_row_y + half_dh + half_bh
 
-            -- Collect unique drill x-positions from this pair
-            local x_positions = {}
+            -- Find the x-extent of drills in this pair
+            local x_min, x_max
             for _, entry in ipairs(drill_positions) do
                 local ey = entry.position.y
                 if math.abs(ey - top_row_y) < 0.1 or math.abs(ey - bottom_row_y) < 0.1 then
-                    x_positions[entry.position.x] = true
+                    local ex = entry.position.x
+                    if not x_min or ex < x_min then x_min = ex end
+                    if not x_max or ex > x_max then x_max = ex end
                 end
             end
 
-            -- Generate candidates at each x-position on both sides
-            for x, _ in pairs(x_positions) do
-                local key_t = x .. "," .. beacon_top_y
-                if not seen[key_t] then
-                    seen[key_t] = true
-                    candidates[#candidates + 1] = {x = x, y = beacon_top_y}
-                end
-                local key_b = x .. "," .. beacon_bottom_y
-                if not seen[key_b] then
-                    seen[key_b] = true
-                    candidates[#candidates + 1] = {x = x, y = beacon_bottom_y}
+            if x_min then
+                -- Fill beacon row from drill extent left to right at beacon-sized steps
+                local row_left = x_min - half_dw + half_bw
+                local row_right = x_max + half_dw - half_bw
+                local x = row_left
+                while x <= row_right + 0.01 do
+                    add_candidate(x, beacon_top_y)
+                    add_candidate(x, beacon_bottom_y)
+                    x = x + beacon_w
                 end
             end
         end

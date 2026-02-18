@@ -104,12 +104,12 @@ Files:
 • Modify: scripts/beacon_placer.lua
 • Modify: scripts/calculator.lua (if beacon candidate generation needs
 more drill layout info)
-[ ] For 3x3 drills with 3x3 beacons: one beacon column on each side, beacon
+[x] For 3x3 drills with 3x3 beacons: one beacon column on each side, beacon
 y-positions align with drill rows (Pattern 3)
-[ ] For bigger drills (5x5+): fill beacon columns with as many beacons as
+[x] For bigger drills (5x5+): fill beacon columns with as many beacons as
 fit along the drill column length (e.g., 2-3 beacons per 5x5 drill)
-[ ] Ensure beacons don't overlap with each other or with drills/belts
-[ ] Verify the greedy algorithm still respects max-beacons-per-drill and
+[x] Ensure beacons don't overlap with each other or with drills/belts
+[x] Verify the greedy algorithm still respects max-beacons-per-drill and
 preferred-beacons-per-drill settings
 [ ] Manual test: 3x3 drills with beacons enabled - beacons should form clean
 columns on both sides
