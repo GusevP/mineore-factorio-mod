@@ -210,11 +210,14 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             end
 
             if y_min then
-                -- Fill beacon column from drill extent top to bottom at beacon-sized steps
+                -- Fill beacon column from first drill top edge to last drill bottom edge.
+                -- Start the first beacon so its top edge aligns with the first drill's top edge,
+                -- then step by beacon height. Continue until we've covered past the last drill's
+                -- bottom edge to ensure complete fill with no gaps.
                 local col_top = y_min - half_dh + half_bh
-                local col_bottom = y_max + half_dh - half_bh
+                local extent_bottom = y_max + half_dh  -- bottom edge of last drill
                 local y = col_top
-                while y <= col_bottom + 0.01 do
+                while (y - half_bh) < extent_bottom - 0.01 do
                     add_candidate(beacon_left_x, y)
                     add_candidate(beacon_right_x, y)
                     y = y + beacon_h
@@ -242,11 +245,14 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             end
 
             if x_min then
-                -- Fill beacon row from drill extent left to right at beacon-sized steps
+                -- Fill beacon row from first drill left edge to last drill right edge.
+                -- Start the first beacon so its left edge aligns with the first drill's left edge,
+                -- then step by beacon width. Continue until we've covered past the last drill's
+                -- right edge to ensure complete fill with no gaps.
                 local row_left = x_min - half_dw + half_bw
-                local row_right = x_max + half_dw - half_bw
+                local extent_right = x_max + half_dw  -- right edge of last drill
                 local x = row_left
-                while x <= row_right + 0.01 do
+                while (x - half_bw) < extent_right - 0.01 do
                     add_candidate(x, beacon_top_y)
                     add_candidate(x, beacon_bottom_y)
                     x = x + beacon_w

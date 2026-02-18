@@ -178,13 +178,13 @@ more drill layout info)
 y-positions align with drill rows (Pattern 3)
 [x] For bigger drills (5x5+): fill beacon columns with as many beacons as
 fit along the drill column length (e.g., 2-3 beacons per 5x5 drill)
-[ ] Fix the beacon placement as they don't fill the all available space in a column/row bu the have to fill it.
+[x] Fix the beacon placement as they don't fill the all available space in a column/row bu the have to fill it.
 [x] Ensure beacons don't overlap with each other or with drills/belts
 [x] Verify the greedy algorithm still respects max-beacons-per-drill and
 preferred-beacons-per-drill settings
-[ ] Manual test: 3x3 drills with beacons enabled - beacons should form clean
+[x] Manual test: 3x3 drills with beacons enabled - beacons should form clean
 columns on both sides
-[ ] Manual test: verify beacon supply areas cover the drills they're meant
+[x] Manual test: verify beacon supply areas cover the drills they're meant
 to boost
 
 ### Task 4: Fix drill placement to respect ore selection
