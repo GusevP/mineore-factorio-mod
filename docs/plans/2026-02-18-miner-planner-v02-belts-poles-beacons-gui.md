@@ -112,7 +112,30 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - [x] Set beacon module requests on ghost entities using insert_plan (same pattern as drill modules)
 - [x] Accept beacon module type and count from GUI settings
 - [x] Integrate beacon placement into placer.place() flow as the last entity placement step
+- [x] Verify the beacon placement logic: If beacons selected to place it should be placed between drill column/row. Like
+  ```
+  [Beacon][Drill =>] [Underground belt entrance] ... [Underground belt exit] [<= Drill][Beacon]
+                          [Pole/Substation in gap]     [Belt]
+  [Beacon][Drill =>] [Underground belt entrance] ... [Underground belt exit] [<= Drill][Beacon]
+  ```
 - [x] Verify: ghost beacons placed around drill rows, modules set correctly
+
+### Task 4.1: Fix existing errors
+
+**Files:**
+
+- Modify: `control.lua`
+- Modify: `scripts/gui.lua`
+
+- [ ] Fix the error "
+      Error while running event mineore::on_player_selected_area (ID 57)
+      LuaEntityPrototype doesn't contain key supply_area_distance.
+      stack traceback:
+      [C]: in function '**index'
+      **mineore**/scripts/gui.lua:739: in function '\_get_electric_pole_types'
+      **mineore**/scripts/gui.lua:379: in function '\_add_pole_selector'
+      **mineore**/scripts/gui.lua:117: in function 'create'
+      **mineore**/control.lua:133: in function <**mineore\_\_/control.lua:75>"
 
 ### Task 5: Rewrite GUI with icon-based selectors
 
