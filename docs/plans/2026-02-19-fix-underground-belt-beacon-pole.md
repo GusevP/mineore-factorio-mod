@@ -41,10 +41,10 @@ Fix three bugs in the miner planner placement pipeline:
 **Files:**
 - Modify: `scripts/beacon_placer.lua`
 
-- [ ] In the greedy placement loop, change the scoring logic: instead of scoring only drills that haven't hit max_beacons_per_drill, always score a candidate as 1 (valid position) so that all non-colliding positions get filled
-- [ ] The max_beacons_per_drill limit should still be respected as a preference hint, but should not prevent placing beacons in empty physical space - once all drills have enough beacons, continue placing remaining valid candidates that don't collide
-- [ ] Alternative simpler approach: after the greedy scored loop finishes, do a second pass over remaining valid candidates and place any that don't collide with existing placements (ignoring drill beacon counts)
-- [ ] Manual test: place 3x3 drills with beacons - beacons should fill the entire column/row length alongside the drills with no gaps
+- [x] In the greedy placement loop, change the scoring logic: instead of scoring only drills that haven't hit max_beacons_per_drill, always score a candidate as 1 (valid position) so that all non-colliding positions get filled
+- [x] The max_beacons_per_drill limit should still be respected as a preference hint, but should not prevent placing beacons in empty physical space - once all drills have enough beacons, continue placing remaining valid candidates that don't collide
+- [x] Alternative simpler approach: after the greedy scored loop finishes, do a second pass over remaining valid candidates and place any that don't collide with existing placements (ignoring drill beacon counts)
+- [x] Manual test: place 3x3 drills with beacons - beacons should fill the entire column/row length alongside the drills with no gaps
 
 ### Task 3: Restrict poles to 1x1 only and verify pole position near UBI
 

@@ -323,42 +323,11 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
     local placed = 0
     local skipped = 0
 
-    -- Greedy loop: place beacons one at a time at the best scoring position
-    while true do
-        local best_score = 0
-        local best_idx = nil
-        local best_affected = nil
-
-        for i = 1, candidate_count do
-            local cand = valid_candidates[i]
-            if cand then  -- nil entries are removed candidates
-                local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions)
-
-                -- Score = number of drills that still have room for more beacons
-                local score = 0
-                for _, drill_idx in ipairs(affected) do
-                    if drill_beacon_count[drill_idx] < max_beacons_per_drill then
-                        score = score + 1
-                    end
-                end
-
-                if score > best_score then
-                    best_score = score
-                    best_idx = i
-                    best_affected = affected
-                end
-            end
-        end
-
-        -- No more beneficial positions
-        if best_score == 0 or not best_idx then
-            break
-        end
-
-        local cand = valid_candidates[best_idx]
+    -- Helper: attempt to place a beacon ghost at a candidate position.
+    -- Returns true if placed, false if skipped. Updates blocked set on success.
+    local function try_place_beacon(cand)
         local pos = {x = cand.x, y = cand.y}
 
-        -- Try to place the ghost
         local can_place = surface.can_place_entity({
             name = beacon_name,
             position = pos,
@@ -402,30 +371,94 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
 
             placed = placed + 1
 
-            -- Update drill beacon counts
-            for _, drill_idx in ipairs(best_affected) do
-                drill_beacon_count[drill_idx] = drill_beacon_count[drill_idx] + 1
-            end
-
             -- Block the tiles occupied by this beacon for future candidates
             local bw_half = beacon_info.width / 2
             local bh_half = beacon_info.height / 2
             block_entity_tiles(blocked, cand.x, cand.y, bw_half, bh_half)
+            return true
         else
             skipped = skipped + 1
+            return false
+        end
+    end
+
+    -- Greedy loop: place beacons one at a time, prioritizing positions that
+    -- benefit drills that haven't reached their max_beacons_per_drill limit.
+    while true do
+        local best_score = 0
+        local best_idx = nil
+        local best_affected = nil
+
+        for i = 1, candidate_count do
+            local cand = valid_candidates[i]
+            if cand then  -- nil entries are removed candidates
+                local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions)
+
+                -- Score = number of drills that still have room for more beacons
+                local score = 0
+                for _, drill_idx in ipairs(affected) do
+                    if drill_beacon_count[drill_idx] < max_beacons_per_drill then
+                        score = score + 1
+                    end
+                end
+
+                if score > best_score then
+                    best_score = score
+                    best_idx = i
+                    best_affected = affected
+                end
+            end
+        end
+
+        -- No more positions that benefit unsaturated drills
+        if best_score == 0 or not best_idx then
+            break
+        end
+
+        local cand = valid_candidates[best_idx]
+        local was_placed = try_place_beacon(cand)
+
+        if was_placed then
+            -- Update drill beacon counts
+            for _, drill_idx in ipairs(best_affected) do
+                drill_beacon_count[drill_idx] = drill_beacon_count[drill_idx] + 1
+            end
         end
 
         -- Remove this candidate (placed or skipped)
         valid_candidates[best_idx] = nil
 
         -- Remove other candidates that now collide with the placed beacon
-        if can_place then
+        if was_placed then
             for i = 1, candidate_count do
                 local c = valid_candidates[i]
                 if c and beacon_collides(c.x, c.y, beacon_info, blocked) then
                     valid_candidates[i] = nil
                 end
             end
+        end
+    end
+
+    -- Fill pass: place beacons in all remaining valid positions to ensure
+    -- full column/row coverage, even if all drills are already saturated.
+    for i = 1, candidate_count do
+        local cand = valid_candidates[i]
+        if cand then
+            -- Re-check collision since blocked set may have changed
+            if not beacon_collides(cand.x, cand.y, beacon_info, blocked) then
+                local was_placed = try_place_beacon(cand)
+
+                -- Remove other candidates that now collide with the placed beacon
+                if was_placed then
+                    for j = i + 1, candidate_count do
+                        local c = valid_candidates[j]
+                        if c and beacon_collides(c.x, c.y, beacon_info, blocked) then
+                            valid_candidates[j] = nil
+                        end
+                    end
+                end
+            end
+            valid_candidates[i] = nil
         end
     end
 
