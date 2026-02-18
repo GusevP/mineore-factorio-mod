@@ -51,9 +51,9 @@ Fix three bugs in the miner planner placement pipeline:
 **Files:**
 - Modify: `scripts/gui.lua`
 
-- [ ] In `_get_electric_pole_types`, filter out poles where width > 1 or height > 1 (remove substations and big electric poles from the selector)
-- [ ] Manual test: open the GUI and verify only 1x1 poles appear (small electric pole, medium electric pole)
-- [ ] Manual test: place drills with poles and underground belts - verify poles are correctly placed in the pole slot row (next to where UBI is placed), not overlapping belts
+- [x] In `_get_electric_pole_types`, filter out poles where width > 1 or height > 1 (remove substations and big electric poles from the selector)
+- [x] Manual test: open the GUI and verify only 1x1 poles appear (small electric pole, medium electric pole)
+- [x] Manual test: place drills with poles and underground belts - verify poles are correctly placed in the pole slot row (next to where UBI is placed), not overlapping belts
 
 ### Task 4: Final verification
 

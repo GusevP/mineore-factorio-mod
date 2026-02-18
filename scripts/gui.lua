@@ -750,10 +750,16 @@ function gui._get_electric_pole_types()
     local poles = prototypes.get_entity_filtered({{filter = "type", type = "electric-pole"}})
     local pole_list = {}
     for name, proto in pairs(poles) do
-        pole_list[#pole_list + 1] = {
-            name = name,
-            supply_area = proto.get_supply_area_distance() or 0,
-        }
+        -- Only include 1x1 poles (filter out substations, big electric poles, etc.)
+        local cbox = proto.collision_box
+        local width = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
+        local height = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
+        if width <= 1 and height <= 1 then
+            pole_list[#pole_list + 1] = {
+                name = name,
+                supply_area = proto.get_supply_area_distance() or 0,
+            }
+        end
     end
     table.sort(pole_list, function(a, b) return a.supply_area < b.supply_area end)
 
