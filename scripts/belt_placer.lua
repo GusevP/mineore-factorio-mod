@@ -40,6 +40,16 @@ local function direction_to_define(belt_direction)
     return defines.direction.south
 end
 
+--- Return the opposite direction (rotated 180 degrees).
+--- @param dir defines.direction
+--- @return defines.direction
+local opposite_direction = {
+    [defines.direction.north] = defines.direction.south,
+    [defines.direction.south] = defines.direction.north,
+    [defines.direction.east] = defines.direction.west,
+    [defines.direction.west] = defines.direction.east,
+}
+
 --- Place ghost transport belts along the gap between paired drill rows.
 --- For 2x2 drills: plain belts fill the belt column.
 --- For 3x3+ drills: underground belts (UBI/UBO) at drill output positions.
@@ -177,10 +187,11 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
     local placed = 0
     local skipped = 0
 
-    -- Both UBI (entrance/input) and UBO (exit/output) face the belt flow direction.
-    -- The belt_to_ground_type ("input"/"output") distinguishes them.
+    -- UBI (entrance/input) faces the belt flow direction.
+    -- UBO (exit/output) faces the opposite direction (rotated 180 degrees)
+    -- so the underground pair connects properly.
     local ubi_dir = belt_dir_define
-    local ubo_dir = belt_dir_define
+    local ubo_dir = opposite_direction[belt_dir_define]
 
     local drill_positions = belt_line.drill_along_positions or {}
 
