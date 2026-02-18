@@ -85,16 +85,16 @@ The calculator produces paired rows/columns of drills with a center gap for infr
 - Create: `scripts/pole_placer.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] Create pole_placer module that places electric poles or substations in the gaps between paired drill rows
-- [ ] Use the gap positions from calculator output to determine where poles can go
-- [ ] For small poles (1x1): place at intervals based on supply_area_distance to cover all drills
-- [ ] For substations (2x2): place at intervals based on supply area, accounting for larger collision box
-- [ ] Calculate optimal pole spacing to ensure all drills are within supply range
-- [ ] Use wire reach to ensure poles can connect to each other in a chain
-- [ ] Read pole prototype data at runtime: supply_area_distance, max_wire_distance, collision_box size
-- [ ] Use `surface.can_place_entity` before placing, skip if blocked
-- [ ] Integrate pole placement call into placer.place() flow after belt placement
-- [ ] Verify: ghost poles appear in gaps, all drills would be powered
+- [x] Create pole_placer module that places electric poles or substations in the gaps between paired drill rows
+- [x] Use the gap positions from calculator output to determine where poles can go
+- [x] For small poles (1x1): place at intervals based on supply_area_distance to cover all drills
+- [x] For substations (2x2): place at intervals based on supply area, accounting for larger collision box
+- [x] Calculate optimal pole spacing to ensure all drills are within supply range
+- [x] Use wire reach to ensure poles can connect to each other in a chain
+- [x] Read pole prototype data at runtime: supply_area_distance, max_wire_distance, collision_box size
+- [x] Use `surface.can_place_entity` before placing, skip if blocked
+- [x] Integrate pole placement call into placer.place() flow after belt placement
+- [x] Verify: ghost poles appear in gaps, all drills would be powered
 
 ### Task 4: Beacon placement logic
 

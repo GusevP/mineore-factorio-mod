@@ -2,6 +2,7 @@
 
 local calculator = require("scripts.calculator")
 local belt_placer = require("scripts.belt_placer")
+local pole_placer = require("scripts.pole_placer")
 
 local placer = {}
 
@@ -138,11 +139,36 @@ function placer.place(player, scan_results, settings)
         )
     end
 
+    -- Place poles/substations in the gaps between paired drill rows
+    local poles_placed = 0
+    local poles_skipped = 0
+    if settings.pole_name and settings.pole_name ~= "" and #result.belt_lines > 0 then
+        local gap = calculator.get_pair_gap()
+        poles_placed, poles_skipped = pole_placer.place(
+            surface, force, player,
+            result.belt_lines,
+            drill,
+            settings.pole_name,
+            settings.pole_quality or settings.quality or "normal",
+            gap
+        )
+    end
+
     -- Show feedback to the player
     if placed > 0 then
-        if belts_placed > 0 then
+        if belts_placed > 0 and poles_placed > 0 then
+            player.create_local_flying_text({
+                text = {"mineore.placed-miners-belts-poles", placed, belts_placed, poles_placed},
+                create_at_cursor = true,
+            })
+        elseif belts_placed > 0 then
             player.create_local_flying_text({
                 text = {"mineore.placed-miners-and-belts", placed, belts_placed},
+                create_at_cursor = true,
+            })
+        elseif poles_placed > 0 then
+            player.create_local_flying_text({
+                text = {"mineore.placed-miners-and-poles", placed, poles_placed},
                 create_at_cursor = true,
             })
         elseif skipped > 0 then
