@@ -296,9 +296,9 @@ mining_radius where mining_radius = floor(radius)
 Files:
 
 • Modify: info.json (bump version to 0.3.0)
-[ ] Bump version to 0.3.0 in info.json
-[ ] Verify all 6 features work together in combination
-[ ] Test with different drill sizes (2x2 burner, 3x3 electric)
-[ ] Test with and without beacons
-[ ] Test with different pole types
-[ ] Test all 4 directions
+[x] Bump version to 0.3.0 in info.json
+[x] Verify all 6 features work together in combination
+[x] Test with different drill sizes (2x2 burner, 3x3 electric)
+[x] Test with and without beacons
+[x] Test with different pole types
+[x] Test all 4 directions
