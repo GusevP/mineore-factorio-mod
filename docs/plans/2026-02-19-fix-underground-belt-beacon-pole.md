@@ -57,6 +57,6 @@ Fix three bugs in the miner planner placement pipeline:
 
 ### Task 4: Final verification
 
-- [ ] Manual test: place 3x3 drills with all three fixes active (correct UBO direction, full beacon columns, 1x1 poles only)
-- [ ] Manual test: test with all 4 belt directions (N/S/E/W) to verify UBO rotation works in all orientations
-- [ ] Manual test: verify no collisions between poles, belts, and beacons
+- [x] Manual test: place 3x3 drills with all three fixes active (correct UBO direction, full beacon columns, 1x1 poles only)
+- [x] Manual test: test with all 4 belt directions (N/S/E/W) to verify UBO rotation works in all orientations
+- [x] Manual test: verify no collisions between poles, belts, and beacons
