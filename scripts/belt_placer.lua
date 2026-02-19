@@ -14,6 +14,8 @@
 --   [Drill =>] [UBI]  [<= Drill]
 --   [Drill =>] [Pole] [<= Drill]
 
+local ghost_util = require("scripts.ghost_util")
+
 local belt_placer = {}
 
 --- Derive underground belt prototype name from a transport belt name.
@@ -272,27 +274,11 @@ end
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
 function belt_placer._place_ghost(surface, force, player, entity_name, position, direction, quality)
-    local can_place = surface.can_place_entity({
-        name = entity_name,
-        position = position,
-        direction = direction,
-        force = force,
-        build_check_type = defines.build_check_type.ghost_place,
-    })
-
-    if can_place then
-        surface.create_entity({
-            name = "entity-ghost",
-            inner_name = entity_name,
-            position = position,
-            direction = direction,
-            force = force,
-            player = player,
-            quality = quality,
-        })
+    local _, was_placed = ghost_util.place_ghost(
+        surface, force, player, entity_name, position, direction, quality)
+    if was_placed then
         return 1, 0
     end
-
     return 0, 1
 end
 
@@ -308,28 +294,12 @@ end
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
 function belt_placer._place_underground_ghost(surface, force, player, entity_name, position, direction, quality, belt_to_ground_type)
-    local can_place = surface.can_place_entity({
-        name = entity_name,
-        position = position,
-        direction = direction,
-        force = force,
-        build_check_type = defines.build_check_type.ghost_place,
-    })
-
-    if can_place then
-        surface.create_entity({
-            name = "entity-ghost",
-            inner_name = entity_name,
-            position = position,
-            direction = direction,
-            force = force,
-            player = player,
-            quality = quality,
-            belt_to_ground_type = belt_to_ground_type,
-        })
+    local _, was_placed = ghost_util.place_ghost(
+        surface, force, player, entity_name, position, direction, quality,
+        {belt_to_ground_type = belt_to_ground_type})
+    if was_placed then
         return 1, 0
     end
-
     return 0, 1
 end
 

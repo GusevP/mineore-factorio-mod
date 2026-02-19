@@ -19,6 +19,8 @@
 --
 -- Beacon prototype data (supply_area_distance, collision_box) is read at runtime.
 
+local ghost_util = require("scripts.ghost_util")
+
 local beacon_placer = {}
 
 --- Get prototype data for a beacon entity.
@@ -402,23 +404,10 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
     local function try_place_beacon(cand)
         local pos = {x = cand.x, y = cand.y}
 
-        local can_place = surface.can_place_entity({
-            name = beacon_name,
-            position = pos,
-            force = force,
-            build_check_type = defines.build_check_type.ghost_place,
-        })
+        local ghost, was_placed = ghost_util.place_ghost(
+            surface, force, player, beacon_name, pos, nil, quality)
 
-        if can_place then
-            local ghost = surface.create_entity({
-                name = "entity-ghost",
-                inner_name = beacon_name,
-                position = pos,
-                force = force,
-                player = player,
-                quality = quality,
-            })
-
+        if was_placed then
             -- Set module requests on the beacon ghost
             if ghost and ghost.valid and beacon_module_name and beacon_module_name ~= "" then
                 local count = beacon_module_count or 1

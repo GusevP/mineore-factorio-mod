@@ -4,6 +4,7 @@ local calculator = require("scripts.calculator")
 local belt_placer = require("scripts.belt_placer")
 local pole_placer = require("scripts.pole_placer")
 local beacon_placer = require("scripts.beacon_placer")
+local ghost_util = require("scripts.ghost_util")
 
 local placer = {}
 
@@ -163,26 +164,11 @@ function placer.place(player, scan_results, settings)
         local pos = entry.position
         local dir = entry.direction
 
-        -- Check if the ghost can be placed at this position
-        local can_place = surface.can_place_entity({
-            name = drill.name,
-            position = pos,
-            direction = dir,
-            force = force,
-            build_check_type = defines.build_check_type.ghost_place,
-        })
+        local ghost, was_placed = ghost_util.place_ghost(
+            surface, force, player, drill.name, pos, dir,
+            settings.quality or "normal")
 
-        if can_place then
-            local ghost = surface.create_entity({
-                name = "entity-ghost",
-                inner_name = drill.name,
-                position = pos,
-                direction = dir,
-                force = force,
-                player = player,
-                quality = settings.quality or "normal",
-            })
-
+        if was_placed then
             -- Set module requests on the ghost if configured
             if ghost and ghost.valid and settings.module_name then
                 local count = settings.module_count or 1

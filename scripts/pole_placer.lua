@@ -15,6 +15,8 @@
 -- is too wide to fit in the free rows (middle gap rows not occupied by belts),
 -- can_place_entity will reject the placement and the pole is skipped.
 
+local ghost_util = require("scripts.ghost_util")
+
 local pole_placer = {}
 
 --- Get prototype data for an electric pole entity.
@@ -316,25 +318,11 @@ end
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
 function pole_placer._place_ghost(surface, force, player, entity_name, position, quality)
-    local can_place = surface.can_place_entity({
-        name = entity_name,
-        position = position,
-        force = force,
-        build_check_type = defines.build_check_type.ghost_place,
-    })
-
-    if can_place then
-        surface.create_entity({
-            name = "entity-ghost",
-            inner_name = entity_name,
-            position = position,
-            force = force,
-            player = player,
-            quality = quality,
-        })
+    local _, was_placed = ghost_util.place_ghost(
+        surface, force, player, entity_name, position, nil, quality)
+    if was_placed then
         return 1, 0
     end
-
     return 0, 1
 end
 

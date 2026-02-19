@@ -101,13 +101,13 @@ Currently, each placer checks `surface.can_place_entity` with `ghost_place` buil
   2. Order those entities for deconstruction
   3. Then place the ghost (which should succeed since ghosts ignore deconstructed entities, or re-check after marking)
 
-- [ ] Create a shared helper function (in `placer.lua` or a new utility) that: given a position and entity prototype, finds conflicting entities using `surface.find_entities_filtered` in the entity's bounding box, orders them for deconstruction, then places the ghost
-- [ ] Update drill placement in `placer.lua` to use this helper instead of skip-on-fail
-- [ ] Update `belt_placer._place_ghost` and `belt_placer._place_underground_ghost` to demolish conflicts before placement
-- [ ] Update `pole_placer._place_ghost` to demolish conflicts before placement
-- [ ] Update `beacon_placer.try_place_beacon` to demolish conflicts before placement
-- [ ] Handle the character entity specially: the character cannot be deconstructed, so if the character is blocking a position, mark for deconstruction everything else in that tile and still place the ghost (the ghost_place check ignores characters for ghost placement in Factorio 2.0)
-- [ ] Remove the initial broad `demolish_obstacles` function since per-position demolition replaces it, OR keep it for clearing trees/rocks in the broader area and add per-position demolition for the actual entity footprints
+- [x] Create a shared helper function (in `placer.lua` or a new utility) that: given a position and entity prototype, finds conflicting entities using `surface.find_entities_filtered` in the entity's bounding box, orders them for deconstruction, then places the ghost
+- [x] Update drill placement in `placer.lua` to use this helper instead of skip-on-fail
+- [x] Update `belt_placer._place_ghost` and `belt_placer._place_underground_ghost` to demolish conflicts before placement
+- [x] Update `pole_placer._place_ghost` to demolish conflicts before placement
+- [x] Update `beacon_placer.try_place_beacon` to demolish conflicts before placement
+- [x] Handle the character entity specially: the character cannot be deconstructed, so if the character is blocking a position, mark for deconstruction everything else in that tile and still place the ghost (the ghost_place check ignores characters for ghost placement in Factorio 2.0)
+- [x] Remove the initial broad `demolish_obstacles` function since per-position demolition replaces it, OR keep it for clearing trees/rocks in the broader area and add per-position demolition for the actual entity footprints
 
 ### Task 5: Verify all changes work together
 
