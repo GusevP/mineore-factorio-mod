@@ -1,17 +1,18 @@
--- Beacon Placer - Places ghost beacons alongside mining drill columns/rows
+-- Beacon Placer - Places ghost beacons interleaved between mining drill columns/rows
 --
--- Beacons are placed on the outer sides of each drill pair:
---   [Beacon][Drill =>] [belt gap] [<= Drill][Beacon]
+-- Beacons are shared between adjacent drill pairs:
+--   [Beacon][Drill][belt][Drill][Beacon][Drill][belt][Drill][Beacon]
+--   ^outer                      ^shared                     ^outer
 --
 -- For NS belt orientation (vertical belt):
---   - Left beacon column: immediately left of the left drill column
---   - Right beacon column: immediately right of the right drill column
---   - Beacons are placed at each drill y-position along the column
+--   - Beacon columns are placed between adjacent drill pairs (shared by both)
+--   - Plus one beacon column on the far left and far right outer edges
+--   - Beacons fill vertically along each column at beacon-height intervals
 --
 -- For EW belt orientation (horizontal belt):
---   - Top beacon row: immediately above the top drill row
---   - Bottom beacon row: immediately below the bottom drill row
---   - Beacons are placed at each drill x-position along the row
+--   - Beacon rows are placed between adjacent drill pairs (shared by both)
+--   - Plus one beacon row on the top and bottom outer edges
+--   - Beacons fill horizontally along each row at beacon-width intervals
 --
 -- Uses a greedy coverage algorithm within each column/row to respect
 -- max_beacons_per_drill limits and avoid collisions.
@@ -150,13 +151,14 @@ function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines
     return blocked
 end
 
---- Generate targeted beacon candidate positions alongside drill columns/rows.
---- Candidates are placed on the outer edges of each drill pair.
+--- Generate targeted beacon candidate positions between drill columns/rows.
+--- Beacons are interleaved between adjacent drill pairs so that each beacon
+--- column/row is shared by the pairs on either side. The outermost edges
+--- also get beacon columns/rows.
 ---
---- For drills where the beacon fits exactly (e.g. 3x3 drill with 3x3 beacon),
---- one candidate is generated per drill position. For bigger drills (5x5+),
---- candidates are filled densely along the column at beacon-sized intervals
---- so multiple beacons can cover a single drill.
+--- Layout (NS example):
+---   [Beacon][Drill][belt][Drill][Beacon][Drill][belt][Drill][Beacon]
+---   ^outer                      ^shared                     ^outer
 ---
 --- @param drill_positions table Array of drill placements
 --- @param drill_info table Drill info {width, height}
@@ -188,15 +190,17 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
         end
     end
 
-    for _, belt_line in ipairs(belt_lines) do
-        if belt_line.orientation == "NS" then
-            -- Derive left and right drill column x-centers from belt line
+    local orientation = belt_lines[1].orientation
+
+    if orientation == "NS" then
+        -- Collect per-pair info: outer edges and y-extent
+        -- Sort belt lines by x position to get left-to-right order
+        local pair_infos = {}
+        for _, belt_line in ipairs(belt_lines) do
             local left_col_x = belt_line.x - gap / 2 - half_dw
             local right_col_x = belt_line.x + gap / 2 + half_dw
-
-            -- Beacon x positions: adjacent to outer edges of drill columns
-            local beacon_left_x = left_col_x - half_dw - half_bw
-            local beacon_right_x = right_col_x + half_dw + half_bw
+            local left_outer = left_col_x - half_dw   -- left edge of left drill column
+            local right_outer = right_col_x + half_dw  -- right edge of right drill column
 
             -- Find the y-extent of drills in this pair
             local y_min, y_max
@@ -210,28 +214,65 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             end
 
             if y_min then
-                -- Fill beacon column from first drill top edge to last drill bottom edge.
-                -- Start the first beacon so its top edge aligns with the first drill's top edge,
-                -- then step by beacon height. Continue until we've covered past the last drill's
-                -- bottom edge to ensure complete fill with no gaps.
-                local col_top = y_min - half_dh + half_bh
-                local extent_bottom = y_max + half_dh  -- bottom edge of last drill
+                pair_infos[#pair_infos + 1] = {
+                    left_outer = left_outer,
+                    right_outer = right_outer,
+                    y_min = y_min,
+                    y_max = y_max,
+                }
+            end
+        end
+
+        -- Sort pairs left to right
+        table.sort(pair_infos, function(a, b) return a.left_outer < b.left_outer end)
+
+        -- Compute beacon column x-positions:
+        -- 1. Leftmost outer edge
+        -- 2. Between each adjacent pair (midpoint of right edge of pair i and left edge of pair i+1)
+        -- 3. Rightmost outer edge
+        local beacon_x_positions = {}
+        if #pair_infos > 0 then
+            -- Leftmost beacon column: adjacent to the left outer edge of the first pair
+            beacon_x_positions[#beacon_x_positions + 1] = pair_infos[1].left_outer - half_bw
+
+            -- Shared beacon columns between adjacent pairs
+            for i = 1, #pair_infos - 1 do
+                local mid_x = (pair_infos[i].right_outer + pair_infos[i + 1].left_outer) / 2
+                beacon_x_positions[#beacon_x_positions + 1] = mid_x
+            end
+
+            -- Rightmost beacon column: adjacent to the right outer edge of the last pair
+            beacon_x_positions[#beacon_x_positions + 1] = pair_infos[#pair_infos].right_outer + half_bw
+        end
+
+        -- Global y-extent across all pairs
+        local global_y_min, global_y_max
+        for _, info in ipairs(pair_infos) do
+            if not global_y_min or info.y_min < global_y_min then global_y_min = info.y_min end
+            if not global_y_max or info.y_max > global_y_max then global_y_max = info.y_max end
+        end
+
+        -- Fill each beacon column with candidates
+        if global_y_min then
+            for _, bx in ipairs(beacon_x_positions) do
+                local col_top = global_y_min - half_dh + half_bh
+                local extent_bottom = global_y_max + half_dh
                 local y = col_top
                 while (y - half_bh) < extent_bottom - 0.01 do
-                    add_candidate(beacon_left_x, y)
-                    add_candidate(beacon_right_x, y)
+                    add_candidate(bx, y)
                     y = y + beacon_h
                 end
             end
+        end
 
-        elseif belt_line.orientation == "EW" then
-            -- Derive top and bottom drill row y-centers from belt line
+    elseif orientation == "EW" then
+        -- Collect per-pair info: outer edges and x-extent
+        local pair_infos = {}
+        for _, belt_line in ipairs(belt_lines) do
             local top_row_y = belt_line.y - gap / 2 - half_dh
             local bottom_row_y = belt_line.y + gap / 2 + half_dh
-
-            -- Beacon y positions: adjacent to outer edges of drill rows
-            local beacon_top_y = top_row_y - half_dh - half_bh
-            local beacon_bottom_y = bottom_row_y + half_dh + half_bh
+            local top_outer = top_row_y - half_dh     -- top edge of top drill row
+            local bottom_outer = bottom_row_y + half_dh -- bottom edge of bottom drill row
 
             -- Find the x-extent of drills in this pair
             local x_min, x_max
@@ -245,16 +286,49 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
             end
 
             if x_min then
-                -- Fill beacon row from first drill left edge to last drill right edge.
-                -- Start the first beacon so its left edge aligns with the first drill's left edge,
-                -- then step by beacon width. Continue until we've covered past the last drill's
-                -- right edge to ensure complete fill with no gaps.
-                local row_left = x_min - half_dw + half_bw
-                local extent_right = x_max + half_dw  -- right edge of last drill
+                pair_infos[#pair_infos + 1] = {
+                    top_outer = top_outer,
+                    bottom_outer = bottom_outer,
+                    x_min = x_min,
+                    x_max = x_max,
+                }
+            end
+        end
+
+        -- Sort pairs top to bottom
+        table.sort(pair_infos, function(a, b) return a.top_outer < b.top_outer end)
+
+        -- Compute beacon row y-positions:
+        -- 1. Topmost outer edge
+        -- 2. Between each adjacent pair
+        -- 3. Bottommost outer edge
+        local beacon_y_positions = {}
+        if #pair_infos > 0 then
+            beacon_y_positions[#beacon_y_positions + 1] = pair_infos[1].top_outer - half_bh
+
+            for i = 1, #pair_infos - 1 do
+                local mid_y = (pair_infos[i].bottom_outer + pair_infos[i + 1].top_outer) / 2
+                beacon_y_positions[#beacon_y_positions + 1] = mid_y
+            end
+
+            beacon_y_positions[#beacon_y_positions + 1] = pair_infos[#pair_infos].bottom_outer + half_bh
+        end
+
+        -- Global x-extent across all pairs
+        local global_x_min, global_x_max
+        for _, info in ipairs(pair_infos) do
+            if not global_x_min or info.x_min < global_x_min then global_x_min = info.x_min end
+            if not global_x_max or info.x_max > global_x_max then global_x_max = info.x_max end
+        end
+
+        -- Fill each beacon row with candidates
+        if global_x_min then
+            for _, by in ipairs(beacon_y_positions) do
+                local row_left = global_x_min - half_dw + half_bw
+                local extent_right = global_x_max + half_dw
                 local x = row_left
                 while (x - half_bw) < extent_right - 0.01 do
-                    add_candidate(x, beacon_top_y)
-                    add_candidate(x, beacon_bottom_y)
+                    add_candidate(x, by)
                     x = x + beacon_w
                 end
             end

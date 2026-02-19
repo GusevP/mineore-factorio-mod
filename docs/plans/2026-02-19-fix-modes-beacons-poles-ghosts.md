@@ -54,12 +54,12 @@ New layout (beacons shared between adjacent pairs):
 
 The key insight: beacons between two adjacent drill pairs affect drills on both sides via their supply area. So instead of 4 beacons per pair (2 left + 2 right), adjacent pairs share their inner beacon columns, using 3 beacon columns for 2 pairs instead of 4.
 
-- [ ] Rewrite `generate_candidates` to compute beacon column/row positions between drill pairs rather than on outer edges only
-- [ ] For NS orientation: compute beacon x-positions as the midpoints between adjacent drill pair outer edges, plus the two outermost edges
-- [ ] For EW orientation: same logic but for y-positions between adjacent row pairs
-- [ ] The fill logic (stepping by beacon_height/width along each column/row) remains the same
-- [ ] The greedy coverage algorithm and fill pass remain unchanged - they already handle supply_area_distance correctly
-- [ ] Update the comment header in `beacon_placer.lua` to reflect the new layout
+- [x] Rewrite `generate_candidates` to compute beacon column/row positions between drill pairs rather than on outer edges only
+- [x] For NS orientation: compute beacon x-positions as the midpoints between adjacent drill pair outer edges, plus the two outermost edges
+- [x] For EW orientation: same logic but for y-positions between adjacent row pairs
+- [x] The fill logic (stepping by beacon_height/width along each column/row) remains the same
+- [x] The greedy coverage algorithm and fill pass remain unchanged - they already handle supply_area_distance correctly
+- [x] Update the comment header in `beacon_placer.lua` to reflect the new layout
 
 ### Task 3: 2x2 drill pole gap - add 1-tile gap between drill columns for poles, plus outer edge poles
 
