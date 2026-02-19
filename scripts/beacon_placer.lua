@@ -68,20 +68,24 @@ local function beacon_collides(bx, by, beacon_info, blocked)
 end
 
 --- Get the list of drill indices affected by a beacon at the given position.
---- A beacon affects a drill if the drill's center is within the beacon's supply area.
+--- A beacon affects a drill if the drill's collision box overlaps the beacon's supply area.
+--- In Factorio, supply_area_distance extends from the beacon's collision box edge,
+--- so effective reach from beacon center = supply_area_distance + beacon_half_size.
+--- A drill is affected if its collision box overlaps this area, adding drill_half_size.
 --- @param bx number Beacon center x
 --- @param by number Beacon center y
 --- @param beacon_info table Beacon prototype info
 --- @param drill_positions table Array of drill placements
+--- @param drill_info table Drill info {width, height}
 --- @return table Array of drill indices that would be affected
-local function get_affected_drills(bx, by, beacon_info, drill_positions)
-    local reach = beacon_info.supply_area_distance
+local function get_affected_drills(bx, by, beacon_info, drill_positions, drill_info)
+    local reach_x = beacon_info.supply_area_distance + beacon_info.width / 2 + drill_info.width / 2
+    local reach_y = beacon_info.supply_area_distance + beacon_info.height / 2 + drill_info.height / 2
     local affected = {}
     for i, entry in ipairs(drill_positions) do
         local dx = math.abs(entry.position.x - bx)
         local dy = math.abs(entry.position.y - by)
-        -- Beacon supply area is a square: reach tiles in each direction from beacon center
-        if dx <= reach and dy <= reach then
+        if dx <= reach_x and dy <= reach_y then
             affected[#affected + 1] = i
         end
     end
@@ -455,7 +459,7 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
         for i = 1, candidate_count do
             local cand = valid_candidates[i]
             if cand then  -- nil entries are removed candidates
-                local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions)
+                local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions, drill_info)
 
                 -- Score = number of drills that still have room for more beacons
                 local score = 0

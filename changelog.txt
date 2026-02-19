@@ -8,7 +8,10 @@ Date: 2026-02-19
     - Obstacle demolition: trees, rocks, and cliffs in the placement zone are marked for deconstruction
     - Ore-specific filtering: drills skip positions where mining area overlaps a different ore type
   Changes:
-    - "Normal" placement mode renamed to "Loose" with adjusted spacing formula
+    - Removed "Loose" (formerly "Normal") placement mode; only "Productivity" and "Efficient" modes remain
+    - Beacons now placed between adjacent drill pair columns (shared beacons) instead of outer edges only
+    - Drill pair stride widened when beacons are selected to make room for beacon columns between pairs
+    - Ghost placement now force-places by demolishing conflicting entities instead of skipping blocked positions
     - Pole selector restricted to 1x1 poles only (substations and big electric poles removed)
   Bugfixes:
     - Fixed underground belt output direction to face opposite of input for proper connectivity

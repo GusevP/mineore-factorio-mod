@@ -105,28 +105,9 @@ local function has_resources_in_mining_area(cx, cy, radius, resource_set)
     return false
 end
 
---- Check if a drill placed at the given center position would overlap
---- any tile from a foreign ore type within the drill's mining area.
---- Uses the same mining area definition as has_resources_in_mining_area:
---- floor(radius) extent from floor(cx), floor(cy).
---- @param cx number Drill center x
---- @param cy number Drill center y
---- @param radius number Mining drill radius
---- @param foreign_set table Set of "x,y" foreign ore positions
---- @return boolean true if the mining area overlaps foreign ore
-local function has_foreign_ore_overlap(cx, cy, radius, foreign_set)
-    local r = math.floor(radius)
-    for dx = -r, r do
-        for dy = -r, r do
-            local tx = math.floor(cx) + dx
-            local ty = math.floor(cy) + dy
-            if foreign_set[tx .. "," .. ty] then
-                return true
-            end
-        end
-    end
-    return false
-end
+-- has_foreign_ore_overlap is the same check as has_resources_in_mining_area
+-- but applied to the foreign ore set instead of the selected resource set.
+local has_foreign_ore_overlap = has_resources_in_mining_area
 
 --- Calculate all drill placement positions in paired rows with belt gaps.
 ---
@@ -178,7 +159,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
     local belt_lines = {}
 
     -- For 2x2 drills, add a 1-tile pole gap between adjacent drill pairs
-    local is_small_drill = (body_w <= 2 or body_h <= 2)
+    local is_small_drill = (body_w <= 2 and body_h <= 2)
     local pole_gap = is_small_drill and 1 or 0
 
     -- Track pair edges for computing pole gap and outer edge positions (2x2 drills)
