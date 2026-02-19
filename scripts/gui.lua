@@ -3,7 +3,7 @@
 local gui = {}
 
 local FRAME_NAME = "mineore_config_frame"
-local PLACEMENT_MODES = {"productivity", "loose", "efficient"}
+local PLACEMENT_MODES = {"productivity", "efficient"}
 
 --- Destroy the config GUI for a player if it exists.
 --- @param player LuaPlayer
@@ -27,9 +27,9 @@ function gui.create(player, scan_results, player_data)
     if not settings.placement_mode then
         settings.placement_mode = player.mod_settings["mineore-default-mode"].value
     end
-    -- Migrate legacy "normal" to "loose"
-    if settings.placement_mode == "normal" then
-        settings.placement_mode = "loose"
+    -- Migrate legacy modes to "efficient"
+    if settings.placement_mode == "normal" or settings.placement_mode == "loose" then
+        settings.placement_mode = "efficient"
     end
 
     -- Main frame
@@ -546,7 +546,7 @@ function gui._add_mode_selector(parent, settings)
         style = "caption_label",
     }
 
-    local current_mode = settings.placement_mode or "loose"
+    local current_mode = settings.placement_mode or "efficient"
 
     for _, mode in ipairs(PLACEMENT_MODES) do
         parent.add{

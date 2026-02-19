@@ -22,6 +22,11 @@ script.on_configuration_changed(function()
         if player then
             config_gui.destroy(player)
             player_data.last_scan = nil
+
+            -- Migrate saved "loose" placement mode to "efficient"
+            if player_data.settings and player_data.settings.placement_mode == "loose" then
+                player_data.settings.placement_mode = "efficient"
+            end
         else
             -- Remove data for players that no longer exist
             storage.players[player_index] = nil
