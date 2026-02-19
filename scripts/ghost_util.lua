@@ -57,8 +57,9 @@ function ghost_util.demolish_conflicts(surface, force, player, name, position, d
     end
 end
 
---- Place a ghost entity, demolishing conflicts first if placement would fail.
---- First tries can_place_entity. If it fails, demolishes conflicts and retries.
+--- Place a ghost entity unconditionally after demolishing conflicts.
+--- Always demolishes conflicts first, then forces ghost placement via
+--- create_entity (like Factorio's Ctrl+Shift+Click super-force placement).
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -67,43 +68,30 @@ end
 --- @param direction defines.direction|nil
 --- @param quality string Quality name
 --- @param extra_params table|nil Additional params for create_entity (e.g., belt_to_ground_type)
---- @return LuaEntity|nil ghost The created ghost entity, or nil if placement still failed
+--- @return LuaEntity|nil ghost The created ghost entity, or nil on engine-level failure
 --- @return boolean placed Whether the ghost was placed
 function ghost_util.place_ghost(surface, force, player, entity_name, position, direction, quality, extra_params)
-    local check_params = {
-        name = entity_name,
+    -- Always demolish conflicts first (resources, characters, and existing ghosts are preserved)
+    ghost_util.demolish_conflicts(surface, force, player, entity_name, position, direction)
+
+    local create_params = {
+        name = "entity-ghost",
+        inner_name = entity_name,
         position = position,
         direction = direction,
         force = force,
-        build_check_type = defines.build_check_type.ghost_place,
+        player = player,
+        quality = quality or "normal",
     }
-
-    local can_place = surface.can_place_entity(check_params)
-
-    if not can_place then
-        -- Demolish conflicts and retry
-        ghost_util.demolish_conflicts(surface, force, player, entity_name, position, direction)
-        can_place = surface.can_place_entity(check_params)
+    -- Merge extra params (e.g., belt_to_ground_type)
+    if extra_params then
+        for k, v in pairs(extra_params) do
+            create_params[k] = v
+        end
     end
 
-    if can_place then
-        local create_params = {
-            name = "entity-ghost",
-            inner_name = entity_name,
-            position = position,
-            direction = direction,
-            force = force,
-            player = player,
-            quality = quality or "normal",
-        }
-        -- Merge extra params (e.g., belt_to_ground_type)
-        if extra_params then
-            for k, v in pairs(extra_params) do
-                create_params[k] = v
-            end
-        end
-
-        local ghost = surface.create_entity(create_params)
+    local ghost = surface.create_entity(create_params)
+    if ghost then
         return ghost, true
     end
 
