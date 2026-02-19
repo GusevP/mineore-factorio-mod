@@ -146,8 +146,9 @@ end
 --- @param resource_groups table Resource groups from scan results (already filtered to selected resource for the "has ore" check)
 --- @param all_resource_groups table|nil Full unfiltered resource groups (for foreign ore filtering). If nil, no foreign ore filtering is applied.
 --- @param selected_resource string|nil The selected ore name. If nil, no foreign ore filtering.
+--- @param beacon_width number|nil Width of beacon entity (0 or nil when no beacons selected)
 --- @return table {positions=array, belt_lines=array, gap=number, belt_direction=string}
-function calculator.calculate_positions(drill, bounds, mode, belt_direction, resource_groups, all_resource_groups, selected_resource)
+function calculator.calculate_positions(drill, bounds, mode, belt_direction, resource_groups, all_resource_groups, selected_resource, beacon_width)
     -- Support legacy "NS"/"EW" values
     if belt_direction == "NS" then belt_direction = "south" end
     if belt_direction == "EW" then belt_direction = "east" end
@@ -162,6 +163,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
     if all_resource_groups and selected_resource then
         foreign_set = build_foreign_resource_set(all_resource_groups, selected_resource)
     end
+
+    beacon_width = beacon_width or 0
 
     local body_w = drill.width
     local body_h = drill.height
@@ -191,7 +194,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- Pair stride: distance from one pair center to the next pair center
         -- Each pair consists of two rows of drills separated by a gap
         local pair_height = body_h + gap + body_h
-        local pair_stride = pair_height + (spacing_across - body_h) + pole_gap
+        local pair_stride = pair_height + (spacing_across - body_h) + pole_gap + beacon_width
         -- spacing_across is the distance between drill centers in the across direction
         -- For paired rows, we use it as the spacing from one pair to the next
 
@@ -299,7 +302,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- "along" = y-axis (along the belt), "across" = x-axis (perpendicular)
 
         local pair_width = body_w + gap + body_w
-        local pair_stride = pair_width + (spacing_across - body_w) + pole_gap
+        local pair_stride = pair_width + (spacing_across - body_w) + pole_gap + beacon_width
 
         local start_x = math.floor(bounds.left_top.x) + half_w
         local start_y = math.floor(bounds.left_top.y) + half_h

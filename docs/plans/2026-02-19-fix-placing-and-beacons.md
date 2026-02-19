@@ -92,11 +92,11 @@ The beacon_placer generate_candidates midpoint calculation already
 correctly finds the center of the gap - it just needs an actual gap to
 exist.
 
-[ ] Add a beacon_width parameter to calculator.calculate_positions
+[x] Add a beacon_width parameter to calculator.calculate_positions
 (default 0 when no beacons selected)
-[ ] In placer.lua, look up beacon prototype width when beacon is selected
+[x] In placer.lua, look up beacon prototype width when beacon is selected
 and pass it to calculate_positions
-[ ] In calculate_positions, add beacon_width to pair_stride so that
+[x] In calculate_positions, add beacon_width to pair_stride so that
 adjacent pairs have enough space: pair_stride = pair_width +
 (spacing_across - body_w) + pole_gap + beacon_width
 [ ] Test with productivity mode + beacons: verify beacon columns appear

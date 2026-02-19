@@ -126,6 +126,16 @@ function placer.place(player, scan_results, settings)
         end
     end
 
+    -- Look up beacon width when a beacon is selected, so the calculator
+    -- can widen pair stride to make room for beacon columns between pairs
+    local beacon_width = 0
+    if settings.beacon_name and settings.beacon_name ~= "" then
+        local beacon_info = beacon_placer.get_beacon_info(settings.beacon_name)
+        if beacon_info then
+            beacon_width = beacon_info.width
+        end
+    end
+
     local result = calculator.calculate_positions(
         drill,
         scan_results.bounds,
@@ -133,7 +143,8 @@ function placer.place(player, scan_results, settings)
         belt_direction,
         resource_groups,
         all_resource_groups,
-        selected_resource
+        selected_resource,
+        beacon_width
     )
 
     local positions = result.positions
