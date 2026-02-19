@@ -108,11 +108,11 @@ unchanged (beacon_width = 0)
 
 ### Task 4: Verify all fixes work together
 
-[ ] Manual test: place drills over an existing base with entities - ghosts
+[x] Manual test: place drills over an existing base with entities - ghosts
 should appear everywhere, conflicting entities marked for decon
-[ ] Manual test: select a specific ore type adjacent to a different ore -
+[x] Manual test: select a specific ore type adjacent to a different ore -
 verify no drills are placed where they'd mine the wrong ore
-[ ] Manual test: select a large ore patch that generates 2+ drill pairs -
+[x] Manual test: select a large ore patch that generates 2+ drill pairs -
 verify beacon columns appear between pairs (not just outer edges)
-[ ] Manual test: test both productivity and efficient modes with beacons
-[ ] Verify mod loads without errors
+[x] Manual test: test both productivity and efficient modes with beacons
+[x] Verify mod loads without errors
