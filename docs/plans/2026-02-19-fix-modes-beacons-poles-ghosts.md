@@ -111,11 +111,11 @@ Currently, each placer checks `surface.can_place_entity` with `ghost_place` buil
 
 ### Task 5: Verify all changes work together
 
-- [ ] Manual test: select an ore patch and verify only "productivity" and "efficient" modes appear in GUI
-- [ ] Manual test: verify beacons are placed between drill columns (shared between pairs) not just on outer edges
-- [ ] Manual test: verify 2x2 drills have a pole gap between pairs with poles placed there AND poles on outer edges
-- [ ] Manual test: verify ghosts are placed even when existing entities occupy the positions (entities get marked for deconstruction)
-- [ ] Verify the mod loads without errors (check Factorio log)
+- [x] Manual test: select an ore patch and verify only "productivity" and "efficient" modes appear in GUI
+- [x] Manual test: verify beacons are placed between drill columns (shared between pairs) not just on outer edges
+- [x] Manual test: verify 2x2 drills have a pole gap between pairs with poles placed there AND poles on outer edges
+- [x] Manual test: verify ghosts are placed even when existing entities occupy the positions (entities get marked for deconstruction)
+- [x] Verify the mod loads without errors (check Factorio log)
 
 ### Task 6: Update documentation
 
