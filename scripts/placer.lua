@@ -244,7 +244,10 @@ function placer.place(player, scan_results, settings)
             drill,
             settings.pole_name,
             settings.pole_quality or settings.quality or "normal",
-            gap
+            gap,
+            result.pole_gap_positions,
+            result.outer_edge_positions,
+            result.is_small_drill
         )
     end
 

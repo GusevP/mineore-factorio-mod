@@ -68,6 +68,8 @@ function pole_placer.calculate_spacing(pole_info)
 end
 
 --- Place ghost electric poles along all belt lines.
+--- For 3x3+ drills: poles go in the belt line gap (existing behavior).
+--- For 2x2 drills: poles go in the pole gap columns between pairs AND on outer edges.
 --- @param surface LuaSurface The game surface
 --- @param force string Force name for ghost placement
 --- @param player LuaPlayer The player requesting placement
@@ -76,9 +78,12 @@ end
 --- @param pole_name string Electric pole prototype name
 --- @param pole_quality string Quality name for pole ghosts
 --- @param gap number Gap size between paired rows
+--- @param pole_gap_positions table|nil Cross-axis positions of pole gaps between pairs (2x2 drills)
+--- @param outer_edge_positions table|nil Cross-axis positions of outer edges (2x2 drills)
+--- @param is_small_drill boolean|nil Whether this is a 2x2 (small) drill
 --- @return number placed Count of pole ghosts placed
 --- @return number skipped Count of positions where placement failed
-function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap)
+function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill)
     if not pole_name or pole_name == "" then
         return 0, 0
     end
@@ -97,18 +102,113 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
     local placed = 0
     local skipped = 0
 
-    for _, belt_line in ipairs(belt_lines) do
-        if belt_line.orientation == "NS" then
-            local p, s = pole_placer._place_ns_poles(
-                surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
-            placed = placed + p
-            skipped = skipped + s
-        elseif belt_line.orientation == "EW" then
-            local p, s = pole_placer._place_ew_poles(
-                surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
-            placed = placed + p
-            skipped = skipped + s
+    if is_small_drill then
+        -- 2x2 drills: place poles in pole gap columns between pairs and on outer edges
+        -- Combine pole_gap_positions and outer_edge_positions into one list
+        local all_cross_positions = {}
+        if outer_edge_positions then
+            for _, pos in ipairs(outer_edge_positions) do
+                all_cross_positions[#all_cross_positions + 1] = pos
+            end
         end
+        if pole_gap_positions then
+            for _, pos in ipairs(pole_gap_positions) do
+                all_cross_positions[#all_cross_positions + 1] = pos
+            end
+        end
+
+        -- Determine the along-axis extent from belt lines
+        local along_min, along_max
+        local orientation = belt_lines[1] and belt_lines[1].orientation or "NS"
+
+        for _, belt_line in ipairs(belt_lines) do
+            if orientation == "NS" then
+                if not along_min or belt_line.y_min < along_min then along_min = belt_line.y_min end
+                if not along_max or belt_line.y_max > along_max then along_max = belt_line.y_max end
+            else
+                if not along_min or belt_line.x_min < along_min then along_min = belt_line.x_min end
+                if not along_max or belt_line.x_max > along_max then along_max = belt_line.x_max end
+            end
+        end
+
+        if along_min and along_max then
+            local half_along = orientation == "NS" and half_h or half_w
+            local along_start = along_min - half_along
+            local along_end = along_max + half_along
+
+            for _, cross_pos in ipairs(all_cross_positions) do
+                local p, s = pole_placer._place_pole_column(
+                    surface, force, player, orientation, cross_pos,
+                    along_start, along_end, spacing, pole_info, quality)
+                placed = placed + p
+                skipped = skipped + s
+            end
+        end
+    else
+        -- 3x3+ drills: poles go in the belt line gap (existing behavior)
+        for _, belt_line in ipairs(belt_lines) do
+            if belt_line.orientation == "NS" then
+                local p, s = pole_placer._place_ns_poles(
+                    surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
+                placed = placed + p
+                skipped = skipped + s
+            elseif belt_line.orientation == "EW" then
+                local p, s = pole_placer._place_ew_poles(
+                    surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
+                placed = placed + p
+                skipped = skipped + s
+            end
+        end
+    end
+
+    return placed, skipped
+end
+
+--- Place poles along a column or row at a given cross-axis position.
+--- Used for 2x2 drills where poles go in gap columns between pairs and on outer edges.
+--- @param surface LuaSurface
+--- @param force string
+--- @param player LuaPlayer
+--- @param orientation string "NS" or "EW"
+--- @param cross_pos number The cross-axis position (x for NS, y for EW)
+--- @param along_start number Start of the along-axis extent
+--- @param along_end number End of the along-axis extent
+--- @param spacing number Distance between pole centers
+--- @param pole_info table Pole prototype info
+--- @param quality string Quality name
+--- @return number placed
+--- @return number skipped
+function pole_placer._place_pole_column(surface, force, player, orientation, cross_pos, along_start, along_end, spacing, pole_info, quality)
+    local placed = 0
+    local skipped = 0
+
+    local along = along_start + spacing / 2
+    while along <= along_end do
+        local pos
+        if orientation == "NS" then
+            -- Cross-axis is x, along-axis is y
+            local snap_y
+            if pole_info.height % 2 == 0 then
+                snap_y = math.floor(along)
+            else
+                snap_y = math.floor(along) + 0.5
+            end
+            pos = {x = cross_pos, y = snap_y}
+        else
+            -- Cross-axis is y, along-axis is x
+            local snap_x
+            if pole_info.width % 2 == 0 then
+                snap_x = math.floor(along)
+            else
+                snap_x = math.floor(along) + 0.5
+            end
+            pos = {x = snap_x, y = cross_pos}
+        end
+
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
+        placed = placed + p
+        skipped = skipped + s
+        along = along + spacing
     end
 
     return placed, skipped

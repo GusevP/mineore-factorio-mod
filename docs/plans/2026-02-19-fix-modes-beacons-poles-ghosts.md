@@ -81,11 +81,11 @@ New layout (poles in gaps between pairs AND on outer edges):
   outer edge pole      gap pole                   outer edge pole
 ```
 
-- [ ] In `calculator.lua`, modify the pair stride calculation: for 2x2 drills (body_w <= 2 or body_h <= 2), add 1 extra tile between pairs for the pole gap
-- [ ] Add a `pole_gap_positions` field to the belt_line metadata that stores the x (NS) or y (EW) positions of the pole gaps between pairs
-- [ ] In `pole_placer.lua`, when drill is 2x2: place poles in the pole gap columns/rows between pairs
-- [ ] In `pole_placer.lua`, when drill is 2x2: also place poles along the outer edges (leftmost and rightmost for NS, topmost and bottommost for EW) of the drill array
-- [ ] For 3x3+ drills, pole placement remains unchanged (poles go on the belt gap center)
+- [x] In `calculator.lua`, modify the pair stride calculation: for 2x2 drills (body_w <= 2 or body_h <= 2), add 1 extra tile between pairs for the pole gap
+- [x] Add a `pole_gap_positions` field to the belt_line metadata that stores the x (NS) or y (EW) positions of the pole gaps between pairs
+- [x] In `pole_placer.lua`, when drill is 2x2: place poles in the pole gap columns/rows between pairs
+- [x] In `pole_placer.lua`, when drill is 2x2: also place poles along the outer edges (leftmost and rightmost for NS, topmost and bottommost for EW) of the drill array
+- [x] For 3x3+ drills, pole placement remains unchanged (poles go on the belt gap center)
 
 ### Task 4: Fix ghost placement to demolish conflicting entities
 

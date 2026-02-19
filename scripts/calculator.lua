@@ -179,6 +179,16 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
     local positions = {}
     local belt_lines = {}
 
+    -- For 2x2 drills, add a 1-tile pole gap between adjacent drill pairs
+    local is_small_drill = (body_w <= 2 or body_h <= 2)
+    local pole_gap = is_small_drill and 1 or 0
+
+    -- Track pair edges for computing pole gap and outer edge positions (2x2 drills)
+    -- For EW: pair_top_edges/pair_bottom_edges (y-axis)
+    -- For NS: pair_left_edges/pair_right_edges (x-axis)
+    local pair_edge_min = {}  -- top/left edges
+    local pair_edge_max = {}  -- bottom/right edges
+
     if belt_orientation == "EW" then
         -- Belt runs east-west (horizontal). Paired rows are top (faces south) and bottom (faces north).
         -- "along" = x-axis (along the belt), "across" = y-axis (perpendicular)
@@ -186,7 +196,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- Pair stride: distance from one pair center to the next pair center
         -- Each pair consists of two rows of drills separated by a gap
         local pair_height = body_h + gap + body_h
-        local pair_stride = pair_height + (spacing_across - body_h)
+        local pair_stride = pair_height + (spacing_across - body_h) + pole_gap
         -- spacing_across is the distance between drill centers in the across direction
         -- For paired rows, we use it as the spacing from one pair to the next
 
@@ -280,6 +290,10 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     x = x + spacing_along
                 end
                 belt_lines[#belt_lines + 1] = belt_line
+
+                -- Track pair edges for pole gap computation
+                pair_edge_min[#pair_edge_min + 1] = y_pair_start - half_h
+                pair_edge_max[#pair_edge_max + 1] = y_pair_start + body_h + gap + half_h
             end
 
             y_pair_start = y_pair_start + pair_stride
@@ -290,7 +304,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- "along" = y-axis (along the belt), "across" = x-axis (perpendicular)
 
         local pair_width = body_w + gap + body_w
-        local pair_stride = pair_width + (spacing_across - body_w)
+        local pair_stride = pair_width + (spacing_across - body_w) + pole_gap
 
         local start_x = math.floor(bounds.left_top.x) + half_w
         local start_y = math.floor(bounds.left_top.y) + half_h
@@ -379,10 +393,29 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     y = y + spacing_along
                 end
                 belt_lines[#belt_lines + 1] = belt_line
+
+                -- Track pair edges for pole gap computation
+                pair_edge_min[#pair_edge_min + 1] = x_pair_start - half_w
+                pair_edge_max[#pair_edge_max + 1] = x_pair_start + body_w + gap + half_w
             end
 
             x_pair_start = x_pair_start + pair_stride
             pair_index = pair_index + 1
+        end
+    end
+
+    -- Compute pole gap positions and outer edge positions for 2x2 drills
+    local pole_gap_positions = {}  -- cross-axis positions of pole gaps between pairs
+    local outer_edge_positions = {}  -- cross-axis positions of outer edges (first and last pair)
+
+    if is_small_drill and #belt_lines > 0 and #pair_edge_min > 0 then
+        -- Outer edges: first pair min edge - 0.5, last pair max edge + 0.5
+        outer_edge_positions[#outer_edge_positions + 1] = pair_edge_min[1] - 0.5
+        outer_edge_positions[#outer_edge_positions + 1] = pair_edge_max[#pair_edge_max] + 0.5
+        -- Pole gaps between adjacent pairs: midpoint of gap between pair i max and pair i+1 min
+        for i = 1, #pair_edge_max - 1 do
+            local gap_center = (pair_edge_max[i] + pair_edge_min[i + 1]) / 2
+            pole_gap_positions[#pole_gap_positions + 1] = gap_center
         end
     end
 
@@ -391,6 +424,9 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         belt_lines = belt_lines,
         gap = gap,
         belt_direction = belt_direction,
+        pole_gap_positions = pole_gap_positions,
+        outer_edge_positions = outer_edge_positions,
+        is_small_drill = is_small_drill,
     }
 end
 
