@@ -64,12 +64,12 @@ may be that has_resources_in_mining_area uses floor(radius) while
 has_foreign_ore_overlap uses a different extent - they should use the same
 mining area definition.
 
-[ ] Align has_foreign_ore_overlap to check exactly the same area as
+[x] Align has_foreign_ore_overlap to check exactly the same area as
 has_resources_in_mining_area (both should check floor(radius) extent from
 floor(cx), floor(cy) )
-[ ] Remove the body_w/body_h parameters from has_foreign_ore_overlap since
+[x] Remove the body_w/body_h parameters from has_foreign_ore_overlap since
 the mining area (not body footprint) is what determines which ores get mined
-[ ] Update call sites of has_foreign_ore_overlap to match new signature
+[x] Update call sites of has_foreign_ore_overlap to match new signature
 
 ### Task 3: Widen pair stride to make room for beacons between drill pairs
 
