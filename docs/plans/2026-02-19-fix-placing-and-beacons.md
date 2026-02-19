@@ -99,11 +99,11 @@ and pass it to calculate_positions
 [x] In calculate_positions, add beacon_width to pair_stride so that
 adjacent pairs have enough space: pair_stride = pair_width +
 (spacing_across - body_w) + pole_gap + beacon_width
-[ ] Test with productivity mode + beacons: verify beacon columns appear
+[x] Test with productivity mode + beacons: verify beacon columns appear
 between pairs (not just outer edges)
-[ ] Test with productivity mode without beacons: verify drill layout is
+[x] Test with productivity mode without beacons: verify drill layout is
 unchanged (beacon_width = 0)
-[ ] Test with efficient mode + beacons: verify beacons still work
+[x] Test with efficient mode + beacons: verify beacons still work
 (efficient mode already has large gaps so this should be unaffected)
 
 ### Task 4: Verify all fixes work together
