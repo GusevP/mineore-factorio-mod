@@ -23,7 +23,7 @@
 **Pattern:** Poles are placed at fixed intervals aligned with underground belt pairs, not calculated from pole supply/wire distance.
 
 **Implementation:**
-- Function `pole_placer.place_poles()` in `scripts/pole_placer.lua`
+- Function `pole_placer.place()` in `scripts/pole_placer.lua`
 - For 3x3+ drills: pole placed after each UBO-UBI underground belt pair
 - Pole position: drill center + 1 tile in belt flow direction (after UBI)
 - For NS orientation: pattern repeats every (drill height) tiles along belt line
