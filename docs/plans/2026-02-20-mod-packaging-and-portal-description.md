@@ -65,5 +65,5 @@ Create a shell script to package the mod into a properly formatted .zip file for
 
 ### Task 5: Verify
 
-- [ ] Run `package.sh` and confirm the zip is created with correct structure
-- [ ] Verify zip contents contain `modname_version/` top-level folder with all expected files
+- [x] Run `package.sh` and confirm the zip is created with correct structure
+- [x] Verify zip contents contain `modname_version/` top-level folder with all expected files
