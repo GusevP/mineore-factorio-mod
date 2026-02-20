@@ -42,6 +42,17 @@ local function direction_to_define(belt_direction)
     return defines.direction.south
 end
 
+--- Calculate the opposite direction (180 degree rotation).
+--- @param direction defines.direction
+--- @return defines.direction
+local function opposite_direction(direction)
+    if direction == defines.direction.north then return defines.direction.south end
+    if direction == defines.direction.south then return defines.direction.north end
+    if direction == defines.direction.east then return defines.direction.west end
+    if direction == defines.direction.west then return defines.direction.east end
+    return defines.direction.north
+end
+
 --- Place ghost transport belts along the gap between paired drill rows.
 --- For 2x2 drills: plain belts fill the belt column.
 --- For 3x3+ drills: underground belts (UBI/UBO) at drill output positions.
@@ -182,17 +193,17 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
     local placed = 0
     local skipped = 0
 
-    -- Both UBI (entrance/input) and UBO (exit/output) face the belt flow direction.
-    -- The direction indicates which way items flow through the underground belt.
+    -- UBI (entrance/input) faces the belt flow direction (items enter and flow in this direction).
+    -- UBO (exit/output) faces the opposite direction (180 degrees rotated) for proper sprite connection.
     -- The belt_to_ground_type parameter ("input"/"output") determines which sprite is shown:
     --   - "input" uses UndergroundBeltPrototype.structure.direction_in (entrance visual)
     --   - "output" uses UndergroundBeltPrototype.structure.direction_out (exit visual)
-    -- For a south-flowing belt: both UBO and UBI have direction=south (items move south)
-    -- For a north-flowing belt: both UBO and UBI have direction=north (items move north)
-    -- For an east-flowing belt: both UBO and UBI have direction=east (items move east)
-    -- For a west-flowing belt: both UBO and UBI have direction=west (items move west)
+    -- For a south-flowing belt: UBI has direction=south, UBO has direction=north
+    -- For a north-flowing belt: UBI has direction=north, UBO has direction=south
+    -- For an east-flowing belt: UBI has direction=east, UBO has direction=west
+    -- For a west-flowing belt: UBI has direction=west, UBO has direction=east
     local ubi_dir = belt_dir_define
-    local ubo_dir = belt_dir_define
+    local ubo_dir = opposite_direction(belt_dir_define)
 
     local drill_positions = belt_line.drill_along_positions or {}
 
@@ -205,16 +216,16 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             local ubi_y, ubo_y
             if belt_direction == "south" then
                 -- Belt flows south (items move downward/south):
-                -- - UBO (output) at drill_center - 1, faces south (items exit south)
-                -- - UBI (input) at drill_center, faces south (items enter from north, flow south)
-                -- Both belts face south to move items in the south direction
+                -- - UBO (output) at drill_center - 1, faces north (180 degrees from flow direction)
+                -- - UBI (input) at drill_center, faces south (same as flow direction)
+                -- UBO faces opposite direction for proper entrance/exit sprite connection
                 ubo_y = drill_center - 1
                 ubi_y = drill_center
             else
                 -- Belt flows north (items move upward/north):
-                -- - UBO (output) at drill_center + 1, faces north (items exit north)
-                -- - UBI (input) at drill_center, faces north (items enter from south, flow north)
-                -- Both belts face north to move items in the north direction
+                -- - UBO (output) at drill_center + 1, faces south (180 degrees from flow direction)
+                -- - UBI (input) at drill_center, faces north (same as flow direction)
+                -- UBO faces opposite direction for proper entrance/exit sprite connection
                 ubo_y = drill_center + 1
                 ubi_y = drill_center
             end
@@ -241,16 +252,16 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             local ubi_x, ubo_x
             if belt_direction == "east" then
                 -- Belt flows east (items move rightward/east):
-                -- - UBO (output) at drill_center - 1, faces east (items exit east)
-                -- - UBI (input) at drill_center, faces east (items enter from west, flow east)
-                -- Both belts face east to move items in the east direction
+                -- - UBO (output) at drill_center - 1, faces west (180 degrees from flow direction)
+                -- - UBI (input) at drill_center, faces east (same as flow direction)
+                -- UBO faces opposite direction for proper entrance/exit sprite connection
                 ubo_x = drill_center - 1
                 ubi_x = drill_center
             else
                 -- Belt flows west (items move leftward/west):
-                -- - UBO (output) at drill_center + 1, faces west (items exit west)
-                -- - UBI (input) at drill_center, faces west (items enter from east, flow west)
-                -- Both belts face west to move items in the west direction
+                -- - UBO (output) at drill_center + 1, faces east (180 degrees from flow direction)
+                -- - UBI (input) at drill_center, faces west (same as flow direction)
+                -- UBO faces opposite direction for proper entrance/exit sprite connection
                 ubo_x = drill_center + 1
                 ubi_x = drill_center
             end

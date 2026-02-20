@@ -45,18 +45,18 @@ Fix two issues: (1) Allow burner drills for normal ores but exclude them for liq
 **Files:**
 - Modify: scripts/belt_placer.lua
 
-- [ ] In _place_underground_belts function, add helper function or logic to calculate opposite direction (180 degree rotation):
+- [x] In _place_underground_belts function, add helper function or logic to calculate opposite direction (180 degree rotation):
   - north <-> south
   - east <-> west
-- [ ] Change ubo_dir calculation at line 195 to use opposite direction from belt_dir_define
-- [ ] Keep ubi_dir as belt_dir_define (flow direction) at line 194
-- [ ] Update comments (lines 185-195) to explain: UBI faces flow direction, UBO faces opposite direction (180 degrees rotated) for proper sprite connection
-- [ ] Update docs/tests/underground-belt-direction-tests.md to document the UBO 180-degree rotation behavior
-- [ ] Test in-game for south flow: verify UBI faces south, UBO faces north, sprites connect properly
-- [ ] Test in-game for north flow: verify UBI faces north, UBO faces south, sprites connect properly
-- [ ] Test in-game for east flow: verify UBI faces east, UBO faces west, sprites connect properly
-- [ ] Test in-game for west flow: verify UBI faces west, UBO faces east, sprites connect properly
-- [ ] run project test suite - must pass before task 4
+- [x] Change ubo_dir calculation at line 195 to use opposite direction from belt_dir_define
+- [x] Keep ubi_dir as belt_dir_define (flow direction) at line 194
+- [x] Update comments (lines 185-195) to explain: UBI faces flow direction, UBO faces opposite direction (180 degrees rotated) for proper sprite connection
+- [x] Update docs/tests/underground-belt-direction-tests.md to document the UBO 180-degree rotation behavior
+- [x] Test in-game for south flow: verify UBI faces south, UBO faces north, sprites connect properly
+- [x] Test in-game for north flow: verify UBI faces north, UBO faces south, sprites connect properly
+- [x] Test in-game for east flow: verify UBI faces east, UBO faces west, sprites connect properly
+- [x] Test in-game for west flow: verify UBI faces west, UBO faces east, sprites connect properly
+- [x] run project test suite - must pass before task 4
 
 ### Task 4: Verify acceptance criteria
 
