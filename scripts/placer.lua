@@ -419,10 +419,13 @@ function placer.place(player, scan_results, settings)
         if was_placed then
             -- Set module requests on the ghost if configured
             if ghost and ghost.valid and settings.module_name then
-                local count = settings.module_count or 1
-                local insert_plan = {}
-                for slot = 0, count - 1 do
-                    insert_plan[#insert_plan + 1] = {
+                local drill_proto = prototypes.entity[drill.name]
+                local max_modules = drill_proto and drill_proto.module_inventory_size or 0
+                local count = math.min(settings.module_count or 1, max_modules)
+                if count > 0 then
+                    local insert_plan = {}
+                    for slot = 0, count - 1 do
+                        insert_plan[#insert_plan + 1] = {
                         id = {
                             name = settings.module_name,
                             quality = settings.quality or "normal",
@@ -437,8 +440,9 @@ function placer.place(player, scan_results, settings)
                             },
                         },
                     }
+                    end
+                    ghost.insert_plan = insert_plan
                 end
-                ghost.insert_plan = insert_plan
             end
 
             placed = placed + 1

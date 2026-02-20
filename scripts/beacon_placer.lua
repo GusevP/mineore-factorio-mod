@@ -33,8 +33,8 @@ function beacon_placer.get_beacon_info(beacon_name)
     end
 
     local cbox = proto.collision_box
-    local width = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
-    local height = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
+    local width = math.max(1, math.ceil(cbox.right_bottom.x - cbox.left_top.x))
+    local height = math.max(1, math.ceil(cbox.right_bottom.y - cbox.left_top.y))
 
     return {
         name = beacon_name,
@@ -415,7 +415,9 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
         if was_placed then
             -- Set module requests on the beacon ghost
             if ghost and ghost.valid and beacon_module_name and beacon_module_name ~= "" then
-                local count = beacon_module_count or 1
+                local beacon_proto = prototypes.entity[beacon_info.name]
+                local max_modules = beacon_proto and beacon_proto.module_inventory_size or 0
+                local count = math.min(beacon_module_count or 1, max_modules)
                 local insert_plan = {}
                 for slot = 0, count - 1 do
                     insert_plan[#insert_plan + 1] = {
