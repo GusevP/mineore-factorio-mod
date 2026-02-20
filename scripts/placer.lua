@@ -128,6 +128,11 @@ function placer._recompute_pole_positions(belt_lines, drill, gap)
         return pole_gap_positions, outer_edge_positions
     end
 
+    -- Guard against empty belt_lines array
+    if #belt_lines == 0 then
+        return pole_gap_positions, outer_edge_positions
+    end
+
     local half_w = drill.width / 2
     local half_h = drill.height / 2
     local gap_half = gap / 2
