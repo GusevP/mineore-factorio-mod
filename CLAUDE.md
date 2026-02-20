@@ -2,6 +2,22 @@
 
 ## Architecture Patterns
 
+### Pole Whitelist Pattern
+
+**Pattern:** Pole selector uses explicit whitelist of three compatible pole types.
+
+**Whitelisted poles:**
+- `small-electric-pole` (wooden pole)
+- `kr-small-iron-electric-pole` (Krastorio 2 iron pole, may not exist in all games)
+- `medium-electric-pole`
+
+**Implementation:**
+- Function `gui._get_electric_pole_types()` returns only whitelisted poles that exist in current game
+- Technology-based filtering still applies (pole must be researched to appear)
+- Sorted by supply area distance
+
+**Rationale:** These three pole types work well with the mod's fixed spacing pattern. Larger poles (big electric pole, substations) are excluded.
+
 ### Technology-Based Entity Filtering
 
 **Pattern:** GUI selectors filter entities based on player's force technology research status.

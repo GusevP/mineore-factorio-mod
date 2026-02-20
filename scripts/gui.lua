@@ -1045,17 +1045,21 @@ function gui._get_pipe_types()
     return pipe_list
 end
 
---- Get all electric pole prototype names sorted by supply area.
+--- Get whitelisted electric pole prototype names sorted by supply area.
+--- Only returns three specific pole types that work well with the mod's placement logic.
 --- @return string[] Array of pole prototype names
 function gui._get_electric_pole_types()
-    local poles = prototypes.get_entity_filtered({{filter = "type", type = "electric-pole"}})
+    -- Whitelist of exactly three pole types
+    local whitelist = {
+        "small-electric-pole",
+        "kr-small-iron-electric-pole",
+        "medium-electric-pole",
+    }
+
     local pole_list = {}
-    for name, proto in pairs(poles) do
-        -- Only include 1x1 poles (filter out substations, big electric poles, etc.)
-        local cbox = proto.collision_box
-        local width = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
-        local height = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
-        if width <= 1 and height <= 1 then
+    for _, name in ipairs(whitelist) do
+        local proto = prototypes.entity[name]
+        if proto then
             pole_list[#pole_list + 1] = {
                 name = name,
                 supply_area = proto.get_supply_area_distance() or 0,
