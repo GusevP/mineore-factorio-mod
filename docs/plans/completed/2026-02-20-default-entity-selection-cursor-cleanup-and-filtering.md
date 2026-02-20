@@ -109,6 +109,6 @@ Update default entity selections in the configuration GUI to use electric drill,
 
 ### Task 8: Update documentation
 
-- [ ] Update README.md if user-facing behavior changed (note new defaults and technology-based filtering in Usage section)
-- [ ] Update version in info.json and update changelog.txt
-- [ ] Move this plan to docs/plans/completed/
+- [x] Update README.md if user-facing behavior changed (note new defaults and technology-based filtering in Usage section)
+- [x] Update version in info.json and update changelog.txt
+- [x] Move this plan to docs/plans/completed/

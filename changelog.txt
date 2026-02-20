@@ -1,3 +1,14 @@
+Version: 0.6.0
+Date: 2026-02-20
+  Features:
+    - Technology-based entity filtering: GUI selectors now only show entities whose recipes have been researched
+  Changes:
+    - Default placement mode changed from Efficient to Productivity
+    - Default drill changed to electric mining drill (when researched)
+    - Default electric pole changed to medium electric pole (when researched)
+    - Default pipe set to iron pipe
+    - Cursor is automatically cleared after using the selection tool
+---------------------------------------------------------------------------------------------------
 Version: 0.5.0
 Date: 2026-02-20
   Features:

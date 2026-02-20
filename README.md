@@ -44,12 +44,12 @@ Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does th
 2. Drag-select over an ore patch
 3. In the configuration GUI:
    - Select which resource to place miners on (if multiple ore types were selected)
-   - Choose a mining drill by clicking its icon
+   - Choose a mining drill by clicking its icon (defaults to electric mining drill when researched)
    - Choose a transport belt type (or "none" to skip belts)
-   - Choose an electric pole type (or "none" to skip poles)
+   - Choose an electric pole type (or "none" to skip poles; defaults to medium electric pole when researched)
    - Choose a beacon type (or "none" to skip beacons) and select a module for beacons
-   - Choose a pipe type when mining fluid-requiring resources like uranium ore (or "none" to skip pipes)
-   - Pick a placement mode (Productivity / Efficient)
+   - Choose a pipe type when mining fluid-requiring resources like uranium ore (or "none" to skip pipes; defaults to iron pipe)
+   - Pick a placement mode (defaults to Productivity)
    - Set belt direction (North / South / East / West)
    - Optionally enable "Polite placement" to preserve existing buildings
    - Optionally select drill modules and quality levels per entity type
@@ -58,6 +58,8 @@ Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does th
 5. Your construction bots will build them automatically
 
 To remove placed ghost entities, hold Shift and drag-select over the area.
+
+**Technology filtering:** Entity selectors automatically filter out entities whose recipes haven't been researched yet. Only available entities appear in the GUI selectors.
 
 ## Mod Settings
 
