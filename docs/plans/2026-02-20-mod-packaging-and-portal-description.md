@@ -60,7 +60,8 @@ Create a shell script to package the mod into a properly formatted .zip file for
 **Files:**
 - Modify: `info.json`
 
-- [ ] Set homepage to the GitHub repo URL (if the user provides one) or leave a placeholder comment in the plan
+- [x] Set homepage to the GitHub repo URL (if the user provides one) or leave a placeholder comment in the plan
+  - NOTE: No git remote configured and no GitHub URL provided. Homepage left empty in info.json. Update it manually once the repo is published.
 
 ### Task 5: Verify
 
