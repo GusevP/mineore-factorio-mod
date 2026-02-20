@@ -725,7 +725,7 @@ function gui._add_mode_selector(parent, settings)
         style = "caption_label",
     }
 
-    local current_mode = settings.placement_mode or "efficient"
+    local current_mode = settings.placement_mode or "productivity"
 
     for _, mode in ipairs(PLACEMENT_MODES) do
         parent.add{

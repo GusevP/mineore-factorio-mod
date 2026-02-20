@@ -155,25 +155,49 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             end
         end
 
+        -- Also verify the drill recipe is enabled (technology check)
         if drill_still_valid then
-            -- Clear remembered entity names whose prototypes no longer exist
-            if settings.belt_name and not prototypes.entity[settings.belt_name] then
-                settings.belt_name = nil
-                settings.belt_quality = nil
+            local recipe = player.force.recipes[settings.drill_name]
+            if recipe and not recipe.enabled then
+                drill_still_valid = false
             end
-            if settings.pipe_name and not prototypes.entity[settings.pipe_name] then
-                settings.pipe_name = nil
-                settings.pipe_quality = nil
+        end
+
+        if drill_still_valid then
+            -- Clear remembered entity names whose prototypes no longer exist or aren't researched
+            if settings.belt_name then
+                local proto = prototypes.entity[settings.belt_name]
+                local recipe = player.force.recipes[settings.belt_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.belt_name = nil
+                    settings.belt_quality = nil
+                end
             end
-            if settings.pole_name and not prototypes.entity[settings.pole_name] then
-                settings.pole_name = nil
-                settings.pole_quality = nil
+            if settings.pipe_name then
+                local proto = prototypes.entity[settings.pipe_name]
+                local recipe = player.force.recipes[settings.pipe_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.pipe_name = nil
+                    settings.pipe_quality = nil
+                end
             end
-            if settings.beacon_name and not prototypes.entity[settings.beacon_name] then
-                settings.beacon_name = nil
-                settings.beacon_quality = nil
-                settings.beacon_module_name = nil
-                settings.beacon_module_count = nil
+            if settings.pole_name then
+                local proto = prototypes.entity[settings.pole_name]
+                local recipe = player.force.recipes[settings.pole_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.pole_name = nil
+                    settings.pole_quality = nil
+                end
+            end
+            if settings.beacon_name then
+                local proto = prototypes.entity[settings.beacon_name]
+                local recipe = player.force.recipes[settings.beacon_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.beacon_name = nil
+                    settings.beacon_quality = nil
+                    settings.beacon_module_name = nil
+                    settings.beacon_module_count = nil
+                end
             end
             if settings.module_name and not prototypes.item[settings.module_name] then
                 settings.module_name = nil
