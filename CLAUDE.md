@@ -51,14 +51,15 @@
 
 ### Burner Drill Exclusion Pattern
 
-**Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector.
+**Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector. All other mining drills are included regardless of resource category.
 
 **Implementation:**
-- Function `resource_scanner.find_compatible_drills()` filters out "burner-mining-drill" by name
-- Exclusion happens after category compatibility check: `if can_mine and name ~= "burner-mining-drill" then`
-- Located in `scripts/resource_scanner.lua` at drill compatibility check
+- Function `resource_scanner.find_compatible_drills()` in `scripts/resource_scanner.lua`
+- Simple filter: includes all mining drills except "burner-mining-drill"
+- No category-based filtering - all electric drills are available for all ore types
+- Exclusion check: `if name ~= "burner-mining-drill" then`
 
-**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) and are generally not suitable for automated mining operations. The mod focuses on electric-powered automated mining.
+**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) and are generally not suitable for automated mining operations. The mod focuses on electric-powered automated mining. Category-based filtering was removed to simplify the logic and allow players to choose any electric drill type regardless of ore.
 
 ### Technology-Based Entity Filtering
 
