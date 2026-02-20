@@ -64,9 +64,10 @@ local opposite_direction = {
 --- @param belt_quality string Quality name for belt ghosts
 --- @param gap number Gap size between paired rows (always 1)
 --- @param belt_direction string|nil "north", "south", "east", or "west" (belt flow direction)
+--- @param polite boolean|nil When true, respect polite placement
 --- @return number placed Count of belt ghosts placed
 --- @return number skipped Count of positions where placement failed
-function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_name, belt_quality, gap, belt_direction)
+function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_name, belt_quality, gap, belt_direction, polite)
     if not belt_name or belt_name == "" then
         return 0, 0
     end
@@ -101,11 +102,11 @@ function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_
         if use_underground then
             p, s = belt_placer._place_underground_belts(
                 surface, force, player, belt_line, drill_info,
-                underground_name, belt_name, quality, belt_dir_define, belt_direction)
+                underground_name, belt_name, quality, belt_dir_define, belt_direction, polite)
         else
             p, s = belt_placer._place_plain_belts(
                 surface, force, player, belt_line, drill_info,
-                belt_name, quality, belt_dir_define)
+                belt_name, quality, belt_dir_define, polite)
         end
         placed = placed + p
         skipped = skipped + s
@@ -124,9 +125,10 @@ end
 --- @param belt_name string Belt prototype name
 --- @param quality string Quality name
 --- @param belt_dir_define defines.direction Belt flow direction
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function belt_placer._place_plain_belts(surface, force, player, belt_line, drill_info, belt_name, quality, belt_dir_define)
+function belt_placer._place_plain_belts(surface, force, player, belt_line, drill_info, belt_name, quality, belt_dir_define, polite)
     local placed = 0
     local skipped = 0
 
@@ -139,7 +141,7 @@ function belt_placer._place_plain_belts(surface, force, player, belt_line, drill
         for y = y_start, y_end do
             local pos = {x = x, y = y + 0.5}
             local p, s = belt_placer._place_ghost(
-                surface, force, player, belt_name, pos, belt_dir_define, quality)
+                surface, force, player, belt_name, pos, belt_dir_define, quality, polite)
             placed = placed + p
             skipped = skipped + s
         end
@@ -152,7 +154,7 @@ function belt_placer._place_plain_belts(surface, force, player, belt_line, drill
         for x = x_start, x_end do
             local pos = {x = x + 0.5, y = y}
             local p, s = belt_placer._place_ghost(
-                surface, force, player, belt_name, pos, belt_dir_define, quality)
+                surface, force, player, belt_name, pos, belt_dir_define, quality, polite)
             placed = placed + p
             skipped = skipped + s
         end
@@ -183,9 +185,10 @@ end
 --- @param quality string Quality name
 --- @param belt_dir_define defines.direction Belt flow direction
 --- @param belt_direction string "north", "south", "east", or "west"
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function belt_placer._place_underground_belts(surface, force, player, belt_line, drill_info, underground_name, belt_name, quality, belt_dir_define, belt_direction)
+function belt_placer._place_underground_belts(surface, force, player, belt_line, drill_info, underground_name, belt_name, quality, belt_dir_define, belt_direction, polite)
     local placed = 0
     local skipped = 0
 
@@ -217,14 +220,14 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             -- Place UBO (exit) - note: Factorio underground belt exit has type "output"
             local ubo_pos = {x = x, y = ubo_y}
             local p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output")
+                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
             placed = placed + p
             skipped = skipped + s
 
             -- Place UBI (entrance) - has type "input"
             local ubi_pos = {x = x, y = ubi_y}
             p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input")
+                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
         end
@@ -247,14 +250,14 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             -- Place UBO (exit)
             local ubo_pos = {x = ubo_x, y = y}
             local p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output")
+                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
             placed = placed + p
             skipped = skipped + s
 
             -- Place UBI (entrance)
             local ubi_pos = {x = ubi_x, y = y}
             p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input")
+                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
         end
@@ -271,11 +274,12 @@ end
 --- @param position table {x, y}
 --- @param direction defines.direction
 --- @param quality string Quality name
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
-function belt_placer._place_ghost(surface, force, player, entity_name, position, direction, quality)
+function belt_placer._place_ghost(surface, force, player, entity_name, position, direction, quality, polite)
     local _, was_placed = ghost_util.place_ghost(
-        surface, force, player, entity_name, position, direction, quality)
+        surface, force, player, entity_name, position, direction, quality, nil, polite)
     if was_placed then
         return 1, 0
     end
@@ -291,12 +295,13 @@ end
 --- @param direction defines.direction
 --- @param quality string Quality name
 --- @param belt_to_ground_type string "input" or "output"
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
-function belt_placer._place_underground_ghost(surface, force, player, entity_name, position, direction, quality, belt_to_ground_type)
+function belt_placer._place_underground_ghost(surface, force, player, entity_name, position, direction, quality, belt_to_ground_type, polite)
     local _, was_placed = ghost_util.place_ghost(
         surface, force, player, entity_name, position, direction, quality,
-        {belt_to_ground_type = belt_to_ground_type})
+        {belt_to_ground_type = belt_to_ground_type}, polite)
     if was_placed then
         return 1, 0
     end

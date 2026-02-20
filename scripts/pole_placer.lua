@@ -83,9 +83,10 @@ end
 --- @param pole_gap_positions table|nil Cross-axis positions of pole gaps between pairs (2x2 drills)
 --- @param outer_edge_positions table|nil Cross-axis positions of outer edges (2x2 drills)
 --- @param is_small_drill boolean|nil Whether this is a 2x2 (small) drill
+--- @param polite boolean|nil When true, respect polite placement
 --- @return number placed Count of pole ghosts placed
 --- @return number skipped Count of positions where placement failed
-function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill)
+function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, polite)
     if not pole_name or pole_name == "" then
         return 0, 0
     end
@@ -141,7 +142,7 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
             for _, cross_pos in ipairs(all_cross_positions) do
                 local p, s = pole_placer._place_pole_column(
                     surface, force, player, orientation, cross_pos,
-                    along_start, along_end, spacing, pole_info, quality)
+                    along_start, along_end, spacing, pole_info, quality, polite)
                 placed = placed + p
                 skipped = skipped + s
             end
@@ -151,12 +152,12 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
         for _, belt_line in ipairs(belt_lines) do
             if belt_line.orientation == "NS" then
                 local p, s = pole_placer._place_ns_poles(
-                    surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
+                    surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap, polite)
                 placed = placed + p
                 skipped = skipped + s
             elseif belt_line.orientation == "EW" then
                 local p, s = pole_placer._place_ew_poles(
-                    surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
+                    surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap, polite)
                 placed = placed + p
                 skipped = skipped + s
             end
@@ -178,9 +179,10 @@ end
 --- @param spacing number Distance between pole centers
 --- @param pole_info table Pole prototype info
 --- @param quality string Quality name
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_pole_column(surface, force, player, orientation, cross_pos, along_start, along_end, spacing, pole_info, quality)
+function pole_placer._place_pole_column(surface, force, player, orientation, cross_pos, along_start, along_end, spacing, pole_info, quality, polite)
     local placed = 0
     local skipped = 0
 
@@ -207,7 +209,7 @@ function pole_placer._place_pole_column(surface, force, player, orientation, cro
             pos = {x = snap_x, y = cross_pos}
         end
 
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
         along = along + spacing
@@ -229,9 +231,10 @@ end
 --- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
 --- @param gap number Gap size in tiles
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap)
+function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap, polite)
     local placed = 0
     local skipped = 0
 
@@ -254,7 +257,7 @@ function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, 
             snap_y = math.floor(y) + 0.5  -- odd-height: place on tile center
         end
         local pos = {x = x_center, y = snap_y}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
         y = y + spacing
@@ -276,9 +279,10 @@ end
 --- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
 --- @param gap number Gap size in tiles
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap)
+function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap, polite)
     local placed = 0
     local skipped = 0
 
@@ -299,7 +303,7 @@ function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, 
             snap_x = math.floor(x) + 0.5  -- odd-width: place on tile center
         end
         local pos = {x = snap_x, y = y_center}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality)
+        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
         x = x + spacing
@@ -315,11 +319,12 @@ end
 --- @param entity_name string Prototype name
 --- @param position table {x, y}
 --- @param quality string Quality name
+--- @param polite boolean|nil Polite mode flag
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
-function pole_placer._place_ghost(surface, force, player, entity_name, position, quality)
+function pole_placer._place_ghost(surface, force, player, entity_name, position, quality, polite)
     local _, was_placed = ghost_util.place_ghost(
-        surface, force, player, entity_name, position, nil, quality)
+        surface, force, player, entity_name, position, nil, quality, nil, polite)
     if was_placed then
         return 1, 0
     end

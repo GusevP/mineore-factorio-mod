@@ -263,7 +263,8 @@ function placer.place(player, scan_results, settings)
             settings.belt_name,
             settings.belt_quality or settings.quality or "normal",
             gap,
-            belt_direction
+            belt_direction,
+            polite
         )
     end
 
@@ -297,7 +298,8 @@ function placer.place(player, scan_results, settings)
             gap,
             result.pole_gap_positions,
             result.outer_edge_positions,
-            result.is_small_drill
+            result.is_small_drill,
+            polite
         )
     end
 
@@ -323,7 +325,8 @@ function placer.place(player, scan_results, settings)
             settings.beacon_module_name,
             settings.beacon_module_count,
             effective_limit,
-            gap
+            gap,
+            polite
         )
     end
 

@@ -357,11 +357,12 @@ end
 --- @param beacon_module_count number|nil Number of modules per beacon
 --- @param max_beacons_per_drill number Maximum beacons that can affect any single drill
 --- @param gap number Gap size between paired drill rows
+--- @param polite boolean|nil When true, respect polite placement
 --- @return number placed Count of beacon ghosts placed
 --- @return number skipped Count of positions where placement failed
 function beacon_placer.place(surface, force, player, drill_positions, drill_info,
                              belt_lines, beacon_name, beacon_quality, beacon_module_name,
-                             beacon_module_count, max_beacons_per_drill, gap)
+                             beacon_module_count, max_beacons_per_drill, gap, polite)
     if not beacon_name or beacon_name == "" then
         return 0, 0
     end
@@ -409,7 +410,7 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
         local pos = {x = cand.x, y = cand.y}
 
         local ghost, was_placed = ghost_util.place_ghost(
-            surface, force, player, beacon_name, pos, nil, quality)
+            surface, force, player, beacon_name, pos, nil, quality, nil, polite)
 
         if was_placed then
             -- Set module requests on the beacon ghost
