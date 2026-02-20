@@ -5,7 +5,7 @@ data:extend({
         type = "string-setting",
         name = "mineore-default-mode",
         setting_type = "runtime-per-user",
-        default_value = "efficient",
+        default_value = "productivity",
         allowed_values = {"productivity", "efficient"},
         order = "a",
     },

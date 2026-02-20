@@ -44,10 +44,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 - Modify: `settings.lua`
 - Modify: `scripts/gui.lua` (update fallback if needed)
 
-- [ ] Change default_value for "mineore-default-mode" setting from "efficient" to "productivity" in settings.lua:8
-- [ ] Verify gui.lua:28 fallback mode uses setting value correctly
-- [ ] Write tests for default mode selection in test suite
-- [ ] Run project test suite - must pass before task 3
+- [x] Change default_value for "mineore-default-mode" setting from "efficient" to "productivity" in settings.lua:8
+- [x] Verify gui.lua:28 fallback mode uses setting value correctly
+- [x] Write tests for default mode selection in test suite
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Set default drill to electric-mining-drill
 
