@@ -147,6 +147,18 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
+    -- Polite placement checkbox
+    inner.add{
+        type = "checkbox",
+        name = "mineore_polite_checkbox",
+        caption = {"mineore.gui-polite-placement"},
+        tooltip = {"mineore.gui-polite-tooltip"},
+        state = settings.polite or false,
+    }
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
     -- Remember settings checkbox
     inner.add{
         type = "checkbox",
@@ -884,6 +896,12 @@ function gui.read_settings(player)
         settings.beacon_quality = gui._read_quality_dropdown(beacon_row, "beacon")
         -- Use belt quality as the general quality fallback, or "normal"
         settings.quality = settings.belt_quality or "normal"
+    end
+
+    -- Read polite placement checkbox
+    local polite = inner.mineore_polite_checkbox
+    if polite then
+        settings.polite = polite.state
     end
 
     -- Read remember checkbox
