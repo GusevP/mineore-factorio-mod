@@ -50,10 +50,10 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 **Files:**
 - Modify: `scripts/resource_scanner.lua`
 
-- [ ] In `resource_scanner.scan()`, for each resource group, check if the resource prototype has `mineable_properties.required_fluid`. Store the fluid name and amount in the resource group (e.g., `group.required_fluid = "sulfuric-acid"`, `group.fluid_amount = 10`)
-- [ ] In `find_compatible_drills()`, add `fluidbox_prototypes` info to the drill data - specifically whether the drill has fluid input connections and their positions relative to the drill body. Use `drill.fluidbox_prototypes` from the entity prototype
-- [ ] Write tests verifying fluid requirement detection for resources and drill fluid connection info
-- [ ] Run project test suite - must pass before task 4
+- [x] In `resource_scanner.scan()`, for each resource group, check if the resource prototype has `mineable_properties.required_fluid`. Store the fluid name and amount in the resource group (e.g., `group.required_fluid = "sulfuric-acid"`, `group.fluid_amount = 10`)
+- [x] In `find_compatible_drills()`, add `fluidbox_prototypes` info to the drill data - specifically whether the drill has fluid input connections and their positions relative to the drill body. Use `drill.fluidbox_prototypes` from the entity prototype
+- [x] Write tests verifying fluid requirement detection for resources and drill fluid connection info
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Create pipe_placer module
 

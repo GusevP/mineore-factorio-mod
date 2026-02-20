@@ -18,11 +18,14 @@ function resource_scanner.scan(entities, player)
             local name = entity.name
             if not resource_groups[name] then
                 local proto = prototypes.entity[name]
+                local mineable = proto and proto.mineable_properties
                 resource_groups[name] = {
                     name = name,
                     category = proto and proto.resource_category or "basic-solid",
                     count = 0,
                     positions = {},
+                    required_fluid = mineable and mineable.required_fluid or nil,
+                    fluid_amount = mineable and mineable.fluid_amount or nil,
                 }
             end
             local group = resource_groups[name]
@@ -77,6 +80,21 @@ function resource_scanner.find_compatible_drills(categories)
             local width = math.ceil(collision.right_bottom.x - collision.left_top.x)
             local height = math.ceil(collision.right_bottom.y - collision.left_top.y)
 
+            -- Extract fluid input connections from fluidbox prototypes
+            local fluid_inputs = {}
+            if drill.fluidbox_prototypes then
+                for _, fb in ipairs(drill.fluidbox_prototypes) do
+                    if fb.production_type == "input" or fb.production_type == "input-output" then
+                        for _, conn in ipairs(fb.pipe_connections) do
+                            fluid_inputs[#fluid_inputs + 1] = {
+                                positions = conn.positions,
+                                direction = conn.direction,
+                            }
+                        end
+                    end
+                end
+            end
+
             compatible[#compatible + 1] = {
                 name = name,
                 localised_name = drill.localised_name,
@@ -86,6 +104,8 @@ function resource_scanner.find_compatible_drills(categories)
                 mining_drill_radius = drill.mining_drill_radius,
                 module_inventory_size = drill.module_inventory_size or 0,
                 resource_categories = drill.resource_categories,
+                has_fluid_input = #fluid_inputs > 0,
+                fluid_inputs = fluid_inputs,
             }
         end
     end
