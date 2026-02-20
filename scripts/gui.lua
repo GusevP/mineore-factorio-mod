@@ -5,6 +5,14 @@ local gui = {}
 local FRAME_NAME = "mineore_config_frame"
 local PLACEMENT_MODES = {"productivity", "efficient"}
 
+-- Whitelist of electric pole types compatible with the mod's fixed spacing pattern
+-- Only these three pole types work well with the underground belt placement pattern
+gui.POLE_WHITELIST = {
+    "small-electric-pole",
+    "kr-small-iron-electric-pole",
+    "medium-electric-pole",
+}
+
 --- Destroy the config GUI for a player if it exists.
 --- @param player LuaPlayer
 function gui.destroy(player)
@@ -110,15 +118,66 @@ function gui.create(player, scan_results, player_data)
     end
     table.sort(resource_names)
 
-    if #resource_names > 1 then
-        inner.add{type = "line", direction = "horizontal"}
-        gui._add_resource_selector(inner, resource_names, settings)
-    end
-
     -- Determine which resource is currently selected
     local selected_resource = settings.resource_name
     if not selected_resource or not scan_results.resource_groups[selected_resource] then
         selected_resource = resource_names[1]
+    end
+
+    -- Check if ANY resource has available drills (considering tech and fluid requirements)
+    -- If the selected resource has no drills, try to find one that does
+    local function resource_has_drills(resource_name)
+        local group = scan_results.resource_groups[resource_name]
+        if not group then return false end
+
+        local needs_fluid = group.required_fluid ~= nil
+        local drills_to_check = scan_results.compatible_drills
+
+        if needs_fluid then
+            drills_to_check = {}
+            for _, drill in ipairs(scan_results.compatible_drills) do
+                if drill.has_fluid_input then
+                    drills_to_check[#drills_to_check + 1] = drill
+                end
+            end
+        end
+
+        for _, drill in ipairs(drills_to_check) do
+            if is_entity_available(player, drill.name) then
+                return true
+            end
+        end
+        return false
+    end
+
+    -- If selected resource has no available drills, try to find one that does
+    if not resource_has_drills(selected_resource) then
+        local found_alternative = false
+        for _, resource_name in ipairs(resource_names) do
+            if resource_has_drills(resource_name) then
+                selected_resource = resource_name
+                found_alternative = true
+                break
+            end
+        end
+
+        -- If NO resources have available drills, abort GUI creation
+        if not found_alternative then
+            gui.destroy(player)
+            player.create_local_flying_text({
+                text = {"mineore.no-compatible-drills"},
+                create_at_cursor = true,
+            })
+            return
+        end
+    end
+
+    -- Now add the resource selector with the correct selected_resource
+    if #resource_names > 1 then
+        inner.add{type = "line", direction = "horizontal"}
+        -- Create a temporary settings table with the correct resource_name
+        local selector_settings = {resource_name = selected_resource}
+        gui._add_resource_selector(inner, resource_names, selector_settings)
     end
 
     -- Check if the selected resource requires fluid (affects drill filtering and pipe selector)
@@ -1051,15 +1110,8 @@ end
 --- Only returns three specific pole types that work well with the mod's placement logic.
 --- @return string[] Array of pole prototype names
 function gui._get_electric_pole_types()
-    -- Whitelist of exactly three pole types
-    local whitelist = {
-        "small-electric-pole",
-        "kr-small-iron-electric-pole",
-        "medium-electric-pole",
-    }
-
     local pole_list = {}
-    for _, name in ipairs(whitelist) do
+    for _, name in ipairs(gui.POLE_WHITELIST) do
         local proto = prototypes.entity[name]
         if proto then
             pole_list[#pole_list + 1] = {

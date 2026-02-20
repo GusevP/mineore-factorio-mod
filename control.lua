@@ -57,6 +57,8 @@ end)
 local function give_selection_tool(player)
     if player.clear_cursor() then
         player.cursor_stack.set_stack({name = SELECTION_TOOL_NAME, count = 1})
+    else
+        player.print({"mineore.cursor-not-cleared-warning"})
     end
 end
 
@@ -184,7 +186,15 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             if settings.pole_name then
                 local proto = prototypes.entity[settings.pole_name]
                 local recipe = player.force.recipes[settings.pole_name]
-                if not proto or (recipe and not recipe.enabled) then
+                -- Also verify pole is in the whitelist
+                local in_whitelist = false
+                for _, whitelisted_pole in ipairs(config_gui.POLE_WHITELIST) do
+                    if settings.pole_name == whitelisted_pole then
+                        in_whitelist = true
+                        break
+                    end
+                end
+                if not proto or (recipe and not recipe.enabled) or not in_whitelist then
                     settings.pole_name = nil
                     settings.pole_quality = nil
                 end
