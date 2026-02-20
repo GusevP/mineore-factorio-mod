@@ -58,10 +58,11 @@ Verify that the resource scanner includes burner mining drill in the compatible 
 - Changed: `if can_mine and name ~= "burner-mining-drill" then` to `if can_mine then`
 - Comment updated to indicate GUI now handles burner drill filtering
 
-### GUI Filtering (to be implemented in Task 2)
+### GUI Filtering
 - File: scripts/gui.lua
-- Location: _add_drill_selector function
-- Logic: Filter out burner-mining-drill when needs_fluid is true
+- Location: _add_drill_selector function, lines 389-398
+- Logic: After fluid input filtering, iterate through drills_to_show and exclude burner-mining-drill when needs_fluid is true
+- Implementation: Creates non_burner_drills list, copies all drills except burner-mining-drill, replaces drills_to_show
 - Reason: Burner drills cannot mine liquid-requiring ores
 
 ## Test Results Summary
@@ -71,7 +72,7 @@ Tester: ___________
 
 Test 1 (Scanner - Normal Ore): [ ] Pass [ ] Fail
 Test 2 (Scanner - Liquid Ore): [ ] Pass [ ] Fail
-Test 3 (GUI - Normal Ore): [ ] Pass [ ] Fail (to be tested in Task 2)
-Test 4 (GUI - Liquid Ore): [ ] Pass [ ] Fail (to be tested in Task 2)
+Test 3 (GUI - Normal Ore): [ ] Pass [ ] Fail
+Test 4 (GUI - Liquid Ore): [ ] Pass [ ] Fail
 
 Overall: [ ] All tests passed [ ] Some tests failed

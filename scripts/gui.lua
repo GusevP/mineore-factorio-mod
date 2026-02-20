@@ -386,6 +386,17 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
         -- Don't fall back to incompatible drills
     end
 
+    -- Filter out burner drills for liquid-requiring ores (they cannot mine these ores)
+    if needs_fluid then
+        local non_burner_drills = {}
+        for _, drill in ipairs(drills_to_show) do
+            if drill.name ~= "burner-mining-drill" then
+                non_burner_drills[#non_burner_drills + 1] = drill
+            end
+        end
+        drills_to_show = non_burner_drills
+    end
+
     -- Filter drills by technology availability
     local available_drills = {}
     for _, drill in ipairs(drills_to_show) do

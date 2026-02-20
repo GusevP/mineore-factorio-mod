@@ -32,13 +32,13 @@ Fix two issues: (1) Allow burner drills for normal ores but exclude them for liq
 **Files:**
 - Modify: scripts/gui.lua
 
-- [ ] In _add_drill_selector function around line 387 (after fluid input filtering), add filter to exclude burner-mining-drill when needs_fluid is true
-- [ ] Implementation approach: iterate through drills_to_show and filter out entries where drill.name == "burner-mining-drill" when needs_fluid is true
-- [ ] Add comment explaining burner drills cannot mine liquid-requiring ores
-- [ ] Update docs/tests/burner-drill-ore-compatibility-tests.md with GUI filtering test cases
-- [ ] Test in-game: verify burner drill appears in selector for iron ore (normal ore)
-- [ ] Test in-game: verify burner drill does NOT appear in selector for uranium ore (requires sulfuric acid)
-- [ ] run project test suite - must pass before task 2
+- [x] In _add_drill_selector function around line 387 (after fluid input filtering), add filter to exclude burner-mining-drill when needs_fluid is true
+- [x] Implementation approach: iterate through drills_to_show and filter out entries where drill.name == "burner-mining-drill" when needs_fluid is true
+- [x] Add comment explaining burner drills cannot mine liquid-requiring ores
+- [x] Update docs/tests/burner-drill-ore-compatibility-tests.md with GUI filtering test cases
+- [x] Test in-game: verify burner drill appears in selector for iron ore (normal ore)
+- [x] Test in-game: verify burner drill does NOT appear in selector for uranium ore (requires sulfuric acid)
+- [x] run project test suite - must pass before task 2
 
 ### Task 3: Fix underground belt output direction
 
