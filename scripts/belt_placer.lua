@@ -13,6 +13,19 @@
 --   [Drill =>] [UBO]  [<= Drill]
 --   [Drill =>] [UBI]  [<= Drill]
 --   [Drill =>] [Pole] [<= Drill]
+--
+-- CRITICAL: Underground Belt Type Setting
+-- ========================================
+-- When creating underground belt GHOSTS via surface.create_entity(), you MUST pass
+-- the 'type' parameter ("input" or "output") during creation. The belt_to_ground_type
+-- property is READ-ONLY after creation and cannot be changed.
+--
+-- Example:
+--   surface.create_entity{name = "entity-ghost", inner_name = "underground-belt",
+--                         type = "output", direction = south, ...}
+--
+-- DO NOT try to use ghost.rotate() after creation - it changes the belt_to_ground_type
+-- property value but does NOT update the ghost's visual sprite or functional behavior.
 
 local ghost_util = require("scripts.ghost_util")
 
@@ -167,15 +180,17 @@ end
 --- Place underground belts for 3x3+ drills.
 --- For each drill along the belt line, places underground belt pairs:
 ---   - First drill: only UBI (entrance to underground section)
----   - Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
+---   - Subsequent drills: UBI (entrance to next section) then UBO (exit from previous section)
 --- The 1-tile gap between drill pairs is left free for poles.
 ---
+--- CRITICAL: Underground belt input/output type must be specified during creation.
 --- Both UBI and UBO face the same direction (belt flow direction) for proper auto-connection.
---- The belt_to_ground_type parameter ("input"/"output") determines entrance vs exit behavior.
+--- UBI is created with type="input", UBO is created with type="output".
+--- The belt_to_ground_type property is read-only and cannot be changed after creation.
 ---
 --- For NS orientation (belt flows south):
----   First drill: only UBI at drill_center_y
----   Subsequent drills: UBO at drill_center_y - 1, UBI at drill_center_y
+---   First drill: only UBI at drill_center_y (type="input")
+---   Subsequent drills: UBI at drill_center_y (type="input"), UBO at drill_center_y - 1 (type="output")
 ---
 --- For belt flowing north, UBO/UBI positions are mirrored.
 ---
@@ -234,21 +249,25 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 ubi_y = drill_center
             end
 
-            -- Place UBO (exit) for all drills except the first (first drill has no preceding UBI to connect to)
-            if drill_index > 1 then
-                local ubo_pos = {x = x, y = ubo_y}
-                local p, s = belt_placer._place_underground_ghost(
-                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
-                placed = placed + p
-                skipped = skipped + s
-            end
-
             -- Place UBI (entrance) for all drills
+            -- IMPORTANT: Must pass type="input" explicitly during creation
             local ubi_pos = {x = x, y = ubi_y}
-            local p, s = belt_placer._place_underground_ghost(
+            local ubi_ghost, p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
+
+            -- Place UBO (exit) for all drills except the first
+            -- IMPORTANT: Must pass type="output" explicitly during creation
+            -- The belt_to_ground_type property is read-only, so we can't change it after creation
+            if drill_index > 1 then
+                local ubo_pos = {x = x, y = ubo_y}
+                local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
+                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+
+                placed = placed + p2
+                skipped = skipped + s2
+            end
         end
     else -- EW
         local y = belt_line.y
@@ -274,21 +293,25 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 ubi_x = drill_center
             end
 
-            -- Place UBO (exit) for all drills except the first (first drill has no preceding UBI to connect to)
-            if drill_index > 1 then
-                local ubo_pos = {x = ubo_x, y = y}
-                local p, s = belt_placer._place_underground_ghost(
-                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
-                placed = placed + p
-                skipped = skipped + s
-            end
-
             -- Place UBI (entrance) for all drills
+            -- IMPORTANT: Must pass type="input" explicitly during creation
             local ubi_pos = {x = ubi_x, y = y}
-            p, s = belt_placer._place_underground_ghost(
+            local ubi_ghost, p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
+
+            -- Place UBO (exit) for all drills except the first
+            -- IMPORTANT: Must pass type="output" explicitly during creation
+            -- The belt_to_ground_type property is read-only, so we can't change it after creation
+            if drill_index > 1 then
+                local ubo_pos = {x = ubo_x, y = y}
+                local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
+                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+
+                placed = placed + p2
+                skipped = skipped + s2
+            end
         end
     end
 
@@ -315,7 +338,9 @@ function belt_placer._place_ghost(surface, force, player, entity_name, position,
     return 0, 1
 end
 
---- Place a single underground belt ghost with input/output type.
+--- Place a single underground belt ghost with specified input/output type.
+--- CRITICAL: Underground belt type must be set during creation via the 'type' parameter.
+--- The belt_to_ground_type property is read-only after creation.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -323,18 +348,20 @@ end
 --- @param position table {x, y}
 --- @param direction defines.direction
 --- @param quality string Quality name
---- @param belt_to_ground_type string "input" or "output"
+--- @param belt_type string "input" or "output" - REQUIRED for underground belts
 --- @param polite boolean|nil Polite mode flag
+--- @return LuaEntity|nil ghost The created ghost entity, or nil if placement failed
 --- @return number placed 1 if placed, 0 if not
 --- @return number skipped 1 if skipped, 0 if not
-function belt_placer._place_underground_ghost(surface, force, player, entity_name, position, direction, quality, belt_to_ground_type, polite)
-    local _, was_placed = ghost_util.place_ghost(
+function belt_placer._place_underground_ghost(surface, force, player, entity_name, position, direction, quality, belt_type, polite)
+    local extra_params = belt_type and {type = belt_type} or nil
+    local ghost, was_placed = ghost_util.place_ghost(
         surface, force, player, entity_name, position, direction, quality,
-        {belt_to_ground_type = belt_to_ground_type}, polite)
+        extra_params, polite)
     if was_placed then
-        return 1, 0
+        return ghost, 1, 0
     end
-    return 0, 1
+    return nil, 0, 1
 end
 
 return belt_placer

@@ -98,7 +98,7 @@ end
 --- @param position table {x, y}
 --- @param direction defines.direction|nil
 --- @param quality string Quality name
---- @param extra_params table|nil Additional params for create_entity (e.g., belt_to_ground_type)
+--- @param extra_params table|nil Additional params for create_entity. For underground belts, must include {type = "input"|"output"}
 --- @param polite boolean|nil When true, skip placement if non-natural entities conflict
 --- @return LuaEntity|nil ghost The created ghost entity, or nil on engine-level failure
 --- @return boolean placed Whether the ghost was placed
@@ -118,7 +118,7 @@ function ghost_util.place_ghost(surface, force, player, entity_name, position, d
         player = player,
         quality = quality or "normal",
     }
-    -- Merge extra params (e.g., belt_to_ground_type)
+    -- Merge extra params (e.g., type for underground belts)
     if extra_params then
         for k, v in pairs(extra_params) do
             create_params[k] = v

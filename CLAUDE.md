@@ -32,25 +32,45 @@
 
 **Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The three whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
 
-### Underground Belt Direction Pattern
+### Underground Belt Type Setting Pattern
 
-**Pattern:** Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. The first drill in a sequence gets only UBI, while subsequent drills get both UBO and UBI.
+**Pattern:** Underground belt ghosts must have their input/output type specified during creation using the `type` parameter. Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. The first drill in a sequence gets only UBI, while subsequent drills get both UBI and UBO.
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
+- Function `belt_placer._place_underground_ghost()` accepts `belt_type` parameter ("input" or "output")
+- Function `ghost_util.place_ghost()` passes `type` parameter via `extra_params` to `surface.create_entity()`
 - Both UBI and UBO are set to `belt_dir_define` (the chosen flow direction)
 - For south flow: both UBI and UBO face south
 - For north flow: both UBI and UBO face north
 - For east flow: both UBI and UBO face east
 - For west flow: both UBI and UBO face west
-- Placement pattern: first drill gets only UBI, subsequent drills get UBO then UBI
+- Placement for each drill: UBI created with `type="input"`, UBO created with `type="output"`
+- First drill gets only UBI (no UBO placement)
 
-**Rationale:** Factorio's underground belt auto-connection system requires both entrance and exit to face the same direction. The belt_to_ground_type parameter ("input" vs "output") determines the functional behavior and sprite, not the direction. When both belts face the same direction, Factorio automatically connects them without manual rotation. The first drill only needs UBI (entrance) because there's no previous underground section to exit from. Subsequent drills need UBO (exit from previous section) then UBI (entrance to next section).
+**Critical Implementation Detail:**
+```lua
+-- When creating underground belt ghosts, MUST pass type during creation:
+local ghost = surface.create_entity{
+    name = "entity-ghost",
+    inner_name = "underground-belt",
+    type = "output",  -- REQUIRED: "input" or "output"
+    direction = belt_direction,
+    position = position,
+    force = force,
+    player = player,
+}
+```
+
+**Rationale:** The `belt_to_ground_type` property is read-only after entity creation. Unlike what the API documentation suggests, entity-ghost DOES support a `type` parameter that sets whether the underground belt is input or output. This parameter must be passed during `surface.create_entity()` and cannot be changed afterward. Both UBI and UBO must face the same direction for Factorio's auto-connection system to work. The first drill only needs UBI (entrance) because there's no previous underground section to exit from. Subsequent drills need both UBI (entrance to next section) and UBO (exit from previous section).
 
 **Previous bugs:**
 - Version 0.6.0 and earlier: both UBO and UBI faced the same direction, causing sprite misalignment
 - Version 0.7.0: UBO rotated 180 degrees from flow direction, causing connection issues
-- Fixed in version 0.8.0: both UBO and UBI face same direction, first drill skips UBO placement
+- Version 0.8.0: both UBO and UBI face same direction, first drill skips UBO placement
+- Version 0.9.0 attempt: tried to set `belt_to_ground_type` parameter during creation, but property is read-only
+- Version 0.10.0 attempt: tried to use `ghost.rotate()` to flip UBO from "input" to "output" after creation, but this doesn't update the ghost sprite
+- Fixed in current version: pass `type="output"` parameter during ghost creation for UBO entities
 
 ### Burner Drill Exclusion Pattern
 
