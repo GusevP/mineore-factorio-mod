@@ -74,9 +74,8 @@ function resource_scanner.find_compatible_drills(categories)
             end
         end
 
-        -- Exclude burner-mining-drill - it cannot mine liquid-requiring ores
-        -- and is generally not suitable for automated mining operations
-        if can_mine and name ~= "burner-mining-drill" then
+        -- Burner drill filtering for liquid-requiring ores is now handled by GUI
+        if can_mine then
             local collision = drill.collision_box
             -- Drill physical size from collision box
             local width = math.ceil(collision.right_bottom.x - collision.left_top.x)
