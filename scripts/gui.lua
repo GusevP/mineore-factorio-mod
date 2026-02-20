@@ -14,6 +14,19 @@ function gui.destroy(player)
     end
 end
 
+--- Check if an entity is available to the player (recipe enabled).
+--- @param player LuaPlayer
+--- @param entity_name string
+--- @return boolean
+local function is_entity_available(player, entity_name)
+    local recipe = player.force.recipes[entity_name]
+    if recipe then
+        return recipe.enabled
+    end
+    -- If no recipe exists, entity is available (like basic poles)
+    return true
+end
+
 --- Create and show the configuration GUI after a resource scan.
 --- @param player LuaPlayer
 --- @param scan_results table Results from resource_scanner.scan()
@@ -121,29 +134,29 @@ function gui.create(player, scan_results, player_data)
     inner.add{type = "line", direction = "horizontal"}
 
     -- Drill selector (icon buttons)
-    local effective_drill_name = gui._add_drill_selector(inner, scan_results, settings, needs_fluid)
+    local effective_drill_name = gui._add_drill_selector(inner, scan_results, settings, needs_fluid, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
     -- Belt type selector (icon buttons)
-    gui._add_belt_selector(inner, settings)
+    gui._add_belt_selector(inner, settings, player)
     if needs_fluid then
         inner.add{type = "line", direction = "horizontal"}
-        gui._add_pipe_selector(inner, settings)
+        gui._add_pipe_selector(inner, settings, player)
     end
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
     -- Pole/substation selector (icon buttons)
-    gui._add_pole_selector(inner, settings)
+    gui._add_pole_selector(inner, settings, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
     -- Beacon selector (icon buttons)
-    gui._add_beacon_selector(inner, settings)
+    gui._add_beacon_selector(inner, settings, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -280,7 +293,8 @@ end
 --- @param scan_results table
 --- @param settings table Player settings
 --- @param needs_fluid boolean|nil When true, only show drills with fluid input
-function gui._add_drill_selector(parent, scan_results, settings, needs_fluid)
+--- @param player LuaPlayer
+function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, player)
     parent.add{
         type = "label",
         caption = {"mineore.gui-drill-header"},
@@ -308,6 +322,15 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid)
             drills_to_show = scan_results.compatible_drills
         end
     end
+
+    -- Filter drills by technology availability
+    local available_drills = {}
+    for _, drill in ipairs(drills_to_show) do
+        if is_entity_available(player, drill.name) then
+            available_drills[#available_drills + 1] = drill
+        end
+    end
+    drills_to_show = available_drills
 
     local selected_name = settings.drill_name
     -- Verify remembered drill is still in the filtered list; reset if not
@@ -350,7 +373,8 @@ end
 --- Add belt type selector as locked choose-elem-buttons + "none" sprite-button.
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_belt_selector(parent, settings)
+--- @param player LuaPlayer
+function gui._add_belt_selector(parent, settings, player)
     parent.add{
         type = "label",
         caption = {"mineore.gui-belt-header"},
@@ -379,7 +403,7 @@ function gui._add_belt_selector(parent, settings)
 
     for _, belt_name in ipairs(belt_types) do
         local proto = prototypes.entity[belt_name]
-        if proto then
+        if proto and is_entity_available(player, belt_name) then
             local btn = belt_flow.add{
                 type = "choose-elem-button",
                 name = "mineore_belt_btn_" .. belt_name,
@@ -420,7 +444,8 @@ end
 --- Add pole/substation selector as locked choose-elem-buttons + "none" sprite-button.
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_pole_selector(parent, settings)
+--- @param player LuaPlayer
+function gui._add_pole_selector(parent, settings, player)
     parent.add{
         type = "label",
         caption = {"mineore.gui-pole-header"},
@@ -448,7 +473,7 @@ function gui._add_pole_selector(parent, settings)
 
     for _, pole_name in ipairs(pole_types) do
         local proto = prototypes.entity[pole_name]
-        if proto then
+        if proto and is_entity_available(player, pole_name) then
             local btn = pole_flow.add{
                 type = "choose-elem-button",
                 name = "mineore_pole_btn_" .. pole_name,
@@ -490,7 +515,8 @@ end
 --- plus beacon module selector as unlocked choose-elem-button.
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_beacon_selector(parent, settings)
+--- @param player LuaPlayer
+function gui._add_beacon_selector(parent, settings, player)
     parent.add{
         type = "label",
         caption = {"mineore.gui-beacon-header"},
@@ -518,7 +544,7 @@ function gui._add_beacon_selector(parent, settings)
 
     for _, beacon_name in ipairs(beacon_types) do
         local proto = prototypes.entity[beacon_name]
-        if proto then
+        if proto and is_entity_available(player, beacon_name) then
             local btn = beacon_flow.add{
                 type = "choose-elem-button",
                 name = "mineore_beacon_btn_" .. beacon_name,
@@ -812,7 +838,8 @@ end
 --- Only shown when selected resource requires fluid.
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
-function gui._add_pipe_selector(parent, settings)
+--- @param player LuaPlayer
+function gui._add_pipe_selector(parent, settings, player)
     parent.add{
         type = "label",
         caption = {"mineore.gui-pipe-header"},
@@ -840,7 +867,7 @@ function gui._add_pipe_selector(parent, settings)
 
     for _, pipe_name in ipairs(pipe_types) do
         local proto = prototypes.entity[pipe_name]
-        if proto then
+        if proto and is_entity_available(player, pipe_name) then
             local btn = pipe_flow.add{
                 type = "choose-elem-button",
                 name = "mineore_pipe_btn_" .. pipe_name,
