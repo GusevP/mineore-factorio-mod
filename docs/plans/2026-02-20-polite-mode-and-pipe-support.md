@@ -23,6 +23,7 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 ### Task 1: Add polite mode checkbox to GUI and pass setting through
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 - Modify: `locale/en/locale.cfg`
 
@@ -36,18 +37,21 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 ### Task 2: Implement polite demolition logic
 
 **Files:**
+
 - Modify: `scripts/ghost_util.lua`
 - Modify: `scripts/placer.lua`
 
 - [x] Add a `ghost_util.place_ghost_polite()` function (or add a `polite` parameter to existing `place_ghost`). In polite mode: instead of demolishing all conflicts, only demolish trees (`type == "tree"`) and rocks/stones (`type == "simple-entity"` with appropriate check). If any other conflicting entity exists, skip placement and return nil, false
 - [x] Modify `demolish_obstacles()` in placer.lua: in polite mode, only demolish trees and simple-entities (rocks/stones/cliffs), skip everything else. Add `polite` parameter
 - [x] Pass `settings.polite` from `placer.place()` to both `demolish_obstacles()` and the per-drill placement loop (choosing polite vs force placement)
+- [x] Fix the polite mode demolish elevated rails
 - [x] Write tests for polite placement: verify trees/rocks are demolished, buildings are preserved, drill positions with building conflicts are skipped
 - [x] Run project test suite - must pass before task 3
 
 ### Task 3: Detect fluid requirements in resource scanner
 
 **Files:**
+
 - Modify: `scripts/resource_scanner.lua`
 
 - [x] In `resource_scanner.scan()`, for each resource group, check if the resource prototype has `mineable_properties.required_fluid`. Store the fluid name and amount in the resource group (e.g., `group.required_fluid = "sulfuric-acid"`, `group.fluid_amount = 10`)
@@ -58,6 +62,7 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 ### Task 4: Create pipe_placer module
 
 **Files:**
+
 - Create: `scripts/pipe_placer.lua`
 
 - [x] Create `pipe_placer.lua` following the belt_placer.lua pattern. Main function: `pipe_placer.place(surface, force, player, belt_lines, drill_info, pipe_name, quality, gap, direction)`
@@ -71,6 +76,7 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 ### Task 5: Add pipe selector to GUI and integrate pipe placement
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 - Modify: `scripts/placer.lua`
 - Modify: `locale/en/locale.cfg`

@@ -16,6 +16,14 @@ local no_decon_types = {
     ["character"] = true,
     ["entity-ghost"] = true,
     ["tile-ghost"] = true,
+    -- Elevated rails exist on a different collision layer and don't conflict
+    -- with ground-level entities like mining drills
+    ["elevated-straight-rail"] = true,
+    ["elevated-curved-rail-a"] = true,
+    ["elevated-curved-rail-b"] = true,
+    ["elevated-half-diagonal-rail"] = true,
+    ["rail-ramp"] = true,
+    ["rail-support"] = true,
 }
 
 -- Entity types that polite mode is allowed to demolish (natural obstacles)
