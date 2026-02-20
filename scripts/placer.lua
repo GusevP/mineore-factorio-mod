@@ -192,8 +192,13 @@ function placer.place(player, scan_results, settings)
     local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
     -- Step 0: Demolish obstacles in the placement zone before placing ghosts
+    -- In polite mode, skip the broad pre-pass. Each per-entity ghost placement
+    -- via ghost_util.place_ghost handles polite demolition for its own footprint,
+    -- so only trees/rocks directly under placed entities are cleared.
     local polite = settings.polite or false
-    demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, polite)
+    if not polite then
+        demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, false)
+    end
 
     local placed = 0
     local skipped = 0
