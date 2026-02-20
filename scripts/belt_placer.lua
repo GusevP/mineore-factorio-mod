@@ -42,16 +42,6 @@ local function direction_to_define(belt_direction)
     return defines.direction.south
 end
 
---- Return the opposite direction (rotated 180 degrees).
---- @param dir defines.direction
---- @return defines.direction
-local opposite_direction = {
-    [defines.direction.north] = defines.direction.south,
-    [defines.direction.south] = defines.direction.north,
-    [defines.direction.east] = defines.direction.west,
-    [defines.direction.west] = defines.direction.east,
-}
-
 --- Place ghost transport belts along the gap between paired drill rows.
 --- For 2x2 drills: plain belts fill the belt column.
 --- For 3x3+ drills: underground belts (UBI/UBO) at drill output positions.

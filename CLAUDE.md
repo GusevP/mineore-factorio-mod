@@ -32,6 +32,23 @@
 
 **Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The three whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
 
+### Underground Belt Direction Pattern
+
+**Pattern:** Both UBO (output) and UBI (input) underground belts face the same direction - the belt flow direction.
+
+**Implementation:**
+- Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
+- Both UBO and UBI are set to `belt_dir_define` (the chosen flow direction)
+- Direction determines which way items flow through the underground belt pair
+- For south flow: both belts face south (items move south)
+- For north flow: both belts face north (items move north)
+- For east flow: both belts face east (items move east)
+- For west flow: both belts face west (items move west)
+
+**Rationale:** In Factorio, underground belt direction indicates the flow direction of items, not the facing of entrance/exit. Both pieces of an underground belt pair must face the same direction for items to move through them correctly. The "input" vs "output" type parameter distinguishes entrance from exit, not the direction property.
+
+**Previous bug:** Version 0.6.0 and earlier had UBO facing opposite direction from UBI, which caused underground belts to malfunction. Fixed in version 0.7.0.
+
 ### Burner Drill Exclusion Pattern
 
 **Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector.
@@ -101,6 +118,19 @@ end
 ```
 
 Called immediately after `placer.place()` completes. Checks return value to handle failures (e.g., inventory full).
+
+### Selection Tool Cursor-Only Pattern
+
+**Pattern:** Selection tool is restricted to cursor-only mode and never enters player inventory.
+
+**Implementation:**
+- In `prototypes/selection-tool.lua`, selection tool has `flags = {"only-in-cursor"}`
+- Combined with `hidden = true` to prevent tool from appearing in crafting menus
+- Tool is given to player via `cursor_stack.set_stack()` in `control.lua`
+
+**Rationale:** The selection tool is a utility item that should only exist temporarily in the player's cursor during use. Allowing it to enter inventory would clutter the player's inventory and create confusion about how to use it. The "only-in-cursor" flag is a Factorio engine feature that prevents items from being placed in inventory slots.
+
+**Related:** See Cursor Management pattern for how cursor is cleared after tool use.
 
 ## Configuration Defaults
 

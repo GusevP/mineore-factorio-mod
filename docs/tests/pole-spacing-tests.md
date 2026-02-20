@@ -37,10 +37,10 @@ For each drill along the belt line:
 5. Verify pattern consistency across all drills
 
 ### Pass Criteria
-- [x] Each drill has exactly one pole after its UBI
-- [x] Pole spacing matches drill height (3 tiles)
-- [x] No extra poles between pattern positions
-- [x] All drills powered (poles within supply area)
+- [ ]Each drill has exactly one pole after its UBI
+- [ ]Pole spacing matches drill height (3 tiles)
+- [ ]No extra poles between pattern positions
+- [ ]All drills powered (poles within supply area)
 
 ## Test Case 2: 3x3 Drill NS Orientation - North Flow
 
@@ -62,9 +62,9 @@ For each drill along the belt line:
 3. Verify pattern reversal from south flow case
 
 ### Pass Criteria
-- [x] Each drill has exactly one pole after its UBI (north direction)
-- [x] Pole spacing matches drill height (3 tiles)
-- [x] All drills powered
+- [ ]Each drill has exactly one pole after its UBI (north direction)
+- [ ]Pole spacing matches drill height (3 tiles)
+- [ ]All drills powered
 
 ## Test Case 3: 3x3 Drill EW Orientation - East Flow
 
@@ -91,9 +91,9 @@ For each drill along the belt line:
 3. Verify horizontal alignment
 
 ### Pass Criteria
-- [x] Each drill has exactly one pole after its UBI
-- [x] Pole spacing matches drill width (3 tiles)
-- [x] All drills powered
+- [ ]Each drill has exactly one pole after its UBI
+- [ ]Pole spacing matches drill width (3 tiles)
+- [ ]All drills powered
 
 ## Test Case 4: 3x3 Drill EW Orientation - West Flow
 
@@ -115,9 +115,9 @@ For each drill along the belt line:
 3. Verify pattern reversal from east flow case
 
 ### Pass Criteria
-- [x] Each drill has exactly one pole after its UBI (west direction)
-- [x] Pole spacing matches drill width (3 tiles)
-- [x] All drills powered
+- [ ]Each drill has exactly one pole after its UBI (west direction)
+- [ ]Pole spacing matches drill width (3 tiles)
+- [ ]All drills powered
 
 ## Test Case 5: 2x2 Drill Plain Belt Pattern
 
@@ -141,10 +141,10 @@ Note: This test requires a mod with 2x2 electric drills, as base game only has b
 4. Verify all drills powered and poles connected
 
 ### Pass Criteria
-- [x] Plain belts used (no underground belts)
-- [x] Pole spacing regular and calculated
-- [x] All drills powered
-- [x] All poles within wire reach of each other
+- [ ]Plain belts used (no underground belts)
+- [ ]Pole spacing regular and calculated
+- [ ]All drills powered
+- [ ]All poles within wire reach of each other
 
 ## Test Case 6: Small Electric Pole (1x1)
 
@@ -166,9 +166,9 @@ Note: This test requires a mod with 2x2 electric drills, as base game only has b
 3. Verify 1x1 poles centered on tiles (position ends in .5)
 
 ### Pass Criteria
-- [x] Fixed pattern maintained
-- [x] Poles properly aligned (tile-centered for 1x1)
-- [x] All drills powered
+- [ ]Fixed pattern maintained
+- [ ]Poles properly aligned (tile-centered for 1x1)
+- [ ]All drills powered
 
 ## Test Case 7: Multiple Belt Lines
 
@@ -187,9 +187,9 @@ Note: This test requires a mod with 2x2 electric drills, as base game only has b
 3. Verify pole count matches drill count per line
 
 ### Pass Criteria
-- [x] Each belt line has correct pole pattern
-- [x] No missing or extra poles
-- [x] All drills powered across all lines
+- [ ]Each belt line has correct pole pattern
+- [ ]No missing or extra poles
+- [ ]All drills powered across all lines
 
 ## Regression Tests
 
@@ -205,9 +205,9 @@ The old implementation used calculated spacing based on supply area and wire dis
    - New pattern: one pole per drill, right after UBI
 
 ### Pass Criteria
-- [x] New pattern clearly shows one pole per drill
-- [x] Pole always immediately after UBI (1 tile away)
-- [x] Pattern obviously different from old calculated spacing
+- [ ]New pattern clearly shows one pole per drill
+- [ ]Pole always immediately after UBI (1 tile away)
+- [ ]Pattern obviously different from old calculated spacing
 
 ## Edge Cases
 

@@ -92,10 +92,10 @@ Verify that the default placement mode is "productivity" for new games and new p
 ## Implementation Verification
 
 ### Code Verification
-- [x] settings.lua line 8 has `default_value = "productivity"`
-- [x] scripts/gui.lua line 41 reads `player.mod_settings["mineore-default-mode"].value`
-- [x] Default only applies when `settings.placement_mode` is not already set
-- [x] Legacy modes ("normal", "loose") correctly migrate to "efficient"
+- [ ]settings.lua line 8 has `default_value = "productivity"`
+- [ ]scripts/gui.lua line 41 reads `player.mod_settings["mineore-default-mode"].value`
+- [ ]Default only applies when `settings.placement_mode` is not already set
+- [ ]Legacy modes ("normal", "loose") correctly migrate to "efficient"
 
 ### Test Execution Summary
 - Test 1 (New Game Default): [ ] Pass / [ ] Fail
