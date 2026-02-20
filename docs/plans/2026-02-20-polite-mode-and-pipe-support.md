@@ -39,11 +39,11 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 - Modify: `scripts/ghost_util.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] Add a `ghost_util.place_ghost_polite()` function (or add a `polite` parameter to existing `place_ghost`). In polite mode: instead of demolishing all conflicts, only demolish trees (`type == "tree"`) and rocks/stones (`type == "simple-entity"` with appropriate check). If any other conflicting entity exists, skip placement and return nil, false
-- [ ] Modify `demolish_obstacles()` in placer.lua: in polite mode, only demolish trees and simple-entities (rocks/stones/cliffs), skip everything else. Add `polite` parameter
-- [ ] Pass `settings.polite` from `placer.place()` to both `demolish_obstacles()` and the per-drill placement loop (choosing polite vs force placement)
-- [ ] Write tests for polite placement: verify trees/rocks are demolished, buildings are preserved, drill positions with building conflicts are skipped
-- [ ] Run project test suite - must pass before task 3
+- [x] Add a `ghost_util.place_ghost_polite()` function (or add a `polite` parameter to existing `place_ghost`). In polite mode: instead of demolishing all conflicts, only demolish trees (`type == "tree"`) and rocks/stones (`type == "simple-entity"` with appropriate check). If any other conflicting entity exists, skip placement and return nil, false
+- [x] Modify `demolish_obstacles()` in placer.lua: in polite mode, only demolish trees and simple-entities (rocks/stones/cliffs), skip everything else. Add `polite` parameter
+- [x] Pass `settings.polite` from `placer.place()` to both `demolish_obstacles()` and the per-drill placement loop (choosing polite vs force placement)
+- [x] Write tests for polite placement: verify trees/rocks are demolished, buildings are preserved, drill positions with building conflicts are skipped
+- [x] Run project test suite - must pass before task 3
 
 ### Task 3: Detect fluid requirements in resource scanner
 

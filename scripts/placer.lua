@@ -29,9 +29,17 @@ local preserve_types = {
     ["character"] = true,
 }
 
+-- Entity types that polite mode is allowed to demolish in the obstacle pass
+local polite_obstacle_types = {
+    ["tree"] = true,
+    ["simple-entity"] = true,
+    ["cliff"] = true,
+}
+
 --- Demolish obstacles in the placement zone by ordering deconstruction.
 --- Computes a bounding box from drill positions (plus gap for belts/poles/beacons)
 --- and marks trees, rocks, cliffs, and buildings for deconstruction.
+--- In polite mode, only demolishes trees, rocks, and cliffs.
 --- @param surface LuaSurface The game surface
 --- @param force string|LuaForce The force name
 --- @param player LuaPlayer The player requesting placement
@@ -39,7 +47,8 @@ local preserve_types = {
 --- @param drill table Drill info with width, height
 --- @param gap number Gap between paired drill rows
 --- @param belt_orientation string "NS" or "EW"
-local function demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation)
+--- @param polite boolean|nil When true, only demolish natural obstacles
+local function demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, polite)
     if #positions == 0 then
         return
     end
@@ -79,9 +88,17 @@ local function demolish_obstacles(surface, force, player, positions, drill, gap,
 
     for _, entity in ipairs(entities) do
         if entity.valid and not preserve_types[entity.type] then
-            -- Check if not already marked for deconstruction
-            if not entity.to_be_deconstructed() then
-                entity.order_deconstruction(force, player)
+            if polite then
+                -- In polite mode, only demolish natural obstacles
+                if polite_obstacle_types[entity.type] then
+                    if not entity.to_be_deconstructed() then
+                        entity.order_deconstruction(force, player)
+                    end
+                end
+            else
+                if not entity.to_be_deconstructed() then
+                    entity.order_deconstruction(force, player)
+                end
             end
         end
     end
@@ -166,7 +183,8 @@ function placer.place(player, scan_results, settings)
     local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
     -- Step 0: Demolish obstacles in the placement zone before placing ghosts
-    demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation)
+    local polite = settings.polite or false
+    demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, polite)
 
     local placed = 0
     local skipped = 0
@@ -177,7 +195,7 @@ function placer.place(player, scan_results, settings)
 
         local ghost, was_placed = ghost_util.place_ghost(
             surface, force, player, drill.name, pos, dir,
-            settings.quality or "normal")
+            settings.quality or "normal", nil, polite)
 
         if was_placed then
             -- Set module requests on the ghost if configured
