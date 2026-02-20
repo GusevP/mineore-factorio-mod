@@ -410,26 +410,47 @@ function gui._add_belt_selector(parent, settings, player)
     belt_flow.style.horizontal_spacing = 4
 
     local belt_types = gui._get_transport_belt_types()
-    local selected_belt = settings.belt_name
-    local has_selection = false
 
+    -- Build list of available belts
+    local available_belts = {}
     for _, belt_name in ipairs(belt_types) do
         local proto = prototypes.entity[belt_name]
         if proto and is_entity_available(player, belt_name) then
-            local btn = belt_flow.add{
-                type = "choose-elem-button",
-                name = "mineore_belt_btn_" .. belt_name,
-                elem_type = "entity",
-                entity = belt_name,
-                style = "slot_sized_button",
-                tooltip = proto.localised_name,
-            }
-            btn.locked = true
-            btn.tags = {selector_group = "belt", entity_name = belt_name}
+            available_belts[#available_belts + 1] = belt_name
+        end
+    end
+
+    local selected_belt = settings.belt_name
+    -- Verify remembered belt is still available; reset if not
+    if selected_belt then
+        local found = false
+        for _, belt_name in ipairs(available_belts) do
             if belt_name == selected_belt then
-                btn.style = "slot_sized_button_pressed"
-                has_selection = true
+                found = true
+                break
             end
+        end
+        if not found then
+            selected_belt = nil
+        end
+    end
+
+    local has_selection = false
+    for _, belt_name in ipairs(available_belts) do
+        local proto = prototypes.entity[belt_name]
+        local btn = belt_flow.add{
+            type = "choose-elem-button",
+            name = "mineore_belt_btn_" .. belt_name,
+            elem_type = "entity",
+            entity = belt_name,
+            style = "slot_sized_button",
+            tooltip = proto.localised_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "belt", entity_name = belt_name}
+        if belt_name == selected_belt then
+            btn.style = "slot_sized_button_pressed"
+            has_selection = true
         end
     end
 
@@ -588,26 +609,47 @@ function gui._add_beacon_selector(parent, settings, player)
     beacon_flow.style.horizontal_spacing = 4
 
     local beacon_types = gui._get_beacon_types()
-    local selected_beacon = settings.beacon_name
-    local has_selection = false
 
+    -- Build list of available beacons
+    local available_beacons = {}
     for _, beacon_name in ipairs(beacon_types) do
         local proto = prototypes.entity[beacon_name]
         if proto and is_entity_available(player, beacon_name) then
-            local btn = beacon_flow.add{
-                type = "choose-elem-button",
-                name = "mineore_beacon_btn_" .. beacon_name,
-                elem_type = "entity",
-                entity = beacon_name,
-                style = "slot_sized_button",
-                tooltip = proto.localised_name,
-            }
-            btn.locked = true
-            btn.tags = {selector_group = "beacon", entity_name = beacon_name}
+            available_beacons[#available_beacons + 1] = beacon_name
+        end
+    end
+
+    local selected_beacon = settings.beacon_name
+    -- Verify remembered beacon is still available; reset if not
+    if selected_beacon then
+        local found = false
+        for _, beacon_name in ipairs(available_beacons) do
             if beacon_name == selected_beacon then
-                btn.style = "slot_sized_button_pressed"
-                has_selection = true
+                found = true
+                break
             end
+        end
+        if not found then
+            selected_beacon = nil
+        end
+    end
+
+    local has_selection = false
+    for _, beacon_name in ipairs(available_beacons) do
+        local proto = prototypes.entity[beacon_name]
+        local btn = beacon_flow.add{
+            type = "choose-elem-button",
+            name = "mineore_beacon_btn_" .. beacon_name,
+            elem_type = "entity",
+            entity = beacon_name,
+            style = "slot_sized_button",
+            tooltip = proto.localised_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "beacon", entity_name = beacon_name}
+        if beacon_name == selected_beacon then
+            btn.style = "slot_sized_button_pressed"
+            has_selection = true
         end
     end
 
