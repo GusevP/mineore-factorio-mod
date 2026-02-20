@@ -1,8 +1,8 @@
 {
   "name": "mineore",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "title": "Miner Planner",
-  "author": "pavelgusev",
+  "author": "CrazyFeSS",
   "contact": "",
   "homepage": "",
   "description": "Automates mining drill placement on ore patches with transport belts, electric poles, and beacons. Drag-select an area, configure drills, belts, poles, and beacons via icon-based GUI, then ghost entities are placed in paired-row layouts ready for bots. Supports all drill types, belt tiers, pole types, and resources across all planets.",
