@@ -52,7 +52,7 @@ function pipe_placer.place(surface, force, player, belt_lines, drill_info, pipe_
     for _, belt_line in ipairs(belt_lines) do
         local p, s = pipe_placer._place_pipes_along_line(
             surface, force, player, belt_line, drill_info,
-            pipe_name, nil, quality, belt_direction, polite)
+            pipe_name, nil, quality, belt_direction, gap, polite)
         placed = placed + p
         skipped = skipped + s
     end
@@ -73,10 +73,11 @@ end
 --- @param underground_name string|nil Pipe-to-ground prototype name
 --- @param quality string Quality name
 --- @param belt_direction string Belt flow direction
+--- @param belt_gap number Gap size between paired rows (belt gap)
 --- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, drill_info, pipe_name, underground_name, quality, belt_direction, polite)
+function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, drill_info, pipe_name, underground_name, quality, belt_direction, belt_gap, polite)
     local placed = 0
     local skipped = 0
 
@@ -87,12 +88,15 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
 
     if belt_line.orientation == "NS" then
         -- NS belt: drills in left/right columns, pipes connect along y-axis
-        -- Left column x = belt_line.x - half_drill_w - gap/2
-        -- Right column x = belt_line.x + half_drill_w + gap/2
+        -- Left drill column center = belt_line.x - belt_gap/2 - half_w
+        -- Right drill column center = belt_line.x + belt_gap/2 + half_w
+        -- Pipes go on the outer edges: one tile outside each drill column
         local half_w = drill_info.width / 2
         local half_h = drill_info.height / 2
-        local x_left = belt_line.x - half_w - 0.5
-        local x_right = belt_line.x + half_w + 0.5
+        local left_drill_x = belt_line.x - belt_gap / 2 - half_w
+        local right_drill_x = belt_line.x + belt_gap / 2 + half_w
+        local x_left = left_drill_x - half_w - 0.5
+        local x_right = right_drill_x + half_w + 0.5
 
         -- Place pipes between adjacent drills in each column
         for _, col_x in ipairs({x_left, x_right}) do
@@ -116,10 +120,15 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
         end
     else
         -- EW belt: drills in top/bottom rows, pipes connect along x-axis
+        -- Top drill row center = belt_line.y - belt_gap/2 - half_h
+        -- Bottom drill row center = belt_line.y + belt_gap/2 + half_h
+        -- Pipes go on the outer edges: one tile outside each drill row
         local half_w = drill_info.width / 2
         local half_h = drill_info.height / 2
-        local y_top = belt_line.y - half_h - 0.5
-        local y_bottom = belt_line.y + half_h + 0.5
+        local top_drill_y = belt_line.y - belt_gap / 2 - half_h
+        local bottom_drill_y = belt_line.y + belt_gap / 2 + half_h
+        local y_top = top_drill_y - half_h - 0.5
+        local y_bottom = bottom_drill_y + half_h + 0.5
 
         for _, row_y in ipairs({y_top, y_bottom}) do
             for i = 1, #drill_positions - 1 do
