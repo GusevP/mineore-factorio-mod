@@ -46,7 +46,13 @@ function gui.create(player, scan_results, player_data)
 
     -- Apply default placement mode from mod settings if no previous choice
     if not settings.placement_mode then
-        settings.placement_mode = player.mod_settings["mineore-default-mode"].value
+        local default_mode = player.mod_settings["mineore-default-mode"].value
+        game.print("[DEBUG] Default mode from settings: " .. tostring(default_mode))
+        game.print("[DEBUG] settings.placement_mode before: " .. tostring(settings.placement_mode))
+        settings.placement_mode = default_mode
+        game.print("[DEBUG] settings.placement_mode after: " .. tostring(settings.placement_mode))
+        -- Store the settings with default mode back to gui_draft so it persists during GUI rebuilds
+        player_data.gui_draft = settings
     end
     -- Migrate legacy modes to "efficient"
     if settings.placement_mode == "normal" or settings.placement_mode == "loose" then

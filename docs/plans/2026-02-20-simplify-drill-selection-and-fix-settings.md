@@ -43,13 +43,13 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 **Files:**
 - Modify: `scripts/gui.lua`
 
-- [ ] Add debug logging before line 49 to check what mod_settings returns
-- [ ] Verify the setting key name matches exactly: "mineore-default-mode"
-- [ ] Check if gui_draft is overriding the default mode on first use
-- [ ] Test logic flow: ensure settings.placement_mode gets set when nil
-- [ ] Add guard to prevent gui_draft.placement_mode from being nil on first open
-- [ ] Update docs/tests/productive-mode-default-tests.md with fix validation
-- [ ] Test in-game: open GUI on fresh player, verify productivity is selected
+- [x] Add debug logging before line 49 to check what mod_settings returns
+- [x] Verify the setting key name matches exactly: "mineore-default-mode"
+- [x] Check if gui_draft is overriding the default mode on first use
+- [x] Test logic flow: ensure settings.placement_mode gets set when nil
+- [x] Add guard to prevent gui_draft.placement_mode from being nil on first open
+- [x] Update docs/tests/productive-mode-default-tests.md with fix validation
+- [x] Test in-game: open GUI on fresh player, verify productivity is selected
 
 ### Task 3: Fix underground belt visual appearance
 

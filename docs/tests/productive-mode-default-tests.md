@@ -92,10 +92,18 @@ Verify that the default placement mode is "productivity" for new games and new p
 ## Implementation Verification
 
 ### Code Verification
-- [ ]settings.lua line 8 has `default_value = "productivity"`
-- [ ]scripts/gui.lua line 41 reads `player.mod_settings["mineore-default-mode"].value`
-- [ ]Default only applies when `settings.placement_mode` is not already set
-- [ ]Legacy modes ("normal", "loose") correctly migrate to "efficient"
+- [x] settings.lua line 8 has `default_value = "productivity"`
+- [x] scripts/gui.lua reads `player.mod_settings["mineore-default-mode"].value`
+- [x] Default only applies when `settings.placement_mode` is not already set
+- [x] Legacy modes ("normal", "loose") correctly migrate to "efficient"
+- [x] Fix applied: gui_draft is set when default mode is applied (prevents nil during GUI rebuilds)
+- [x] Debug logging added to verify default mode loading
+
+### Bug Fix Details (2026-02-20)
+**Issue:** Productivity mode default not applying on first GUI open
+**Root Cause:** When default mode was applied to local `settings` table, it wasn't being stored back to `player_data.gui_draft`, causing it to be lost during GUI rebuilds
+**Fix:** Added `player_data.gui_draft = settings` after applying default mode (line ~53 in gui.lua)
+**Verification:** Debug logging added to track default mode loading process
 
 ### Test Execution Summary
 - Test 1 (New Game Default): [ ] Pass / [ ] Fail
