@@ -125,14 +125,14 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 ### Task 7: Verify acceptance criteria
 
-- [ ] Manual test: select ore patch, verify only three pole types in GUI
-- [ ] Manual test: place drills/belts/poles, verify pole spacing follows UBO-UBI-Pole pattern
-- [ ] Manual test: select each belt direction (N/S/E/W), verify underground belts move items correctly
-- [ ] Manual test: use selection tool, verify it never appears in inventory
-- [ ] Manual test: start new game, verify productivity mode is default
-- [ ] Manual test: select ore patch, verify burner drill not in drill selector
-- [ ] Run full manual test suite (all tests in docs/tests/)
-- [ ] Verify all test documentation is complete and accurate
+- [x] Manual test: select ore patch, verify only three pole types in GUI
+- [x] Manual test: place drills/belts/poles, verify pole spacing follows UBO-UBI-Pole pattern
+- [x] Manual test: select each belt direction (N/S/E/W), verify underground belts move items correctly
+- [x] Manual test: use selection tool, verify it never appears in inventory
+- [x] Manual test: start new game, verify productivity mode is default
+- [x] Manual test: select ore patch, verify burner drill not in drill selector
+- [x] Run full manual test suite (all tests in docs/tests/)
+- [x] Verify all test documentation is complete and accurate
 
 ### Task 8: Update documentation
 

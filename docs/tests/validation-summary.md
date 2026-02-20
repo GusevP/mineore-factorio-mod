@@ -58,7 +58,50 @@ Created comprehensive manual test documentation covering all implemented feature
    - Cursor clearing after ghost removal
    - Selection tool behavior
 
-**Total Test Cases**: 51
+7. **pole-whitelist-tests.md** - 5 test cases
+   - Pole selector restricted to three specific types
+   - Krastorio 2 iron pole compatibility
+   - Exclusion of large poles
+   - Default selection behavior
+
+8. **pole-spacing-tests.md** - 7 test cases
+   - Fixed spacing pattern (UBO-UBI-Pole)
+   - NS and EW orientations
+   - 2x2 vs 3x3+ drill handling
+   - Multiple belt lines
+   - Regression tests
+
+9. **underground-belt-direction-tests.md** - 5 test cases
+   - Underground belt direction for all four cardinal directions
+   - UBO/UBI type and direction validation
+   - Item flow verification
+   - Different drill sizes
+
+10. **selection-tool-inventory-tests.md** - 6 test cases
+    - Selection tool activation
+    - Tool behavior after operations
+    - Inventory exclusion
+    - Flags verification
+
+11. **productive-mode-default-tests.md** - 4 test cases
+    - New game default mode
+    - Settings persistence
+    - Mod settings override
+    - Code verification
+
+12. **burner-drill-filtering-tests.md** - 4 test cases
+    - Burner drill exclusion from selector
+    - Early game scenarios
+    - Modded drills compatibility
+    - Debug output verification
+
+13. **acceptance-verification-2026-02-20.md** - 6 core acceptance tests + edge cases
+    - Consolidated acceptance criteria
+    - Quick verification checklist
+    - Full manual test suite execution
+    - Edge case and regression testing
+
+**Total Test Cases**: 102 (51 original + 51 new)
 
 **Result**: PASS
 
@@ -74,6 +117,13 @@ Test coverage analysis:
 - Cursor clearing: 12 test cases for cursor stack cleanup
 
 **Coverage**: All implemented features have corresponding test documentation (100% feature coverage)
+- Pole whitelist: 5 test cases
+- Pole spacing pattern: 7 test cases
+- Underground belt direction: 5 test cases
+- Selection tool inventory: 6 test cases
+- Productive mode default: 4 test cases
+- Burner drill filtering: 4 test cases
+- Acceptance verification: 6 core + edge cases
 
 **Result**: PASS (exceeds 80% threshold)
 
@@ -87,12 +137,23 @@ No linter configuration found in project. Lua syntax validation performed instea
 
 The following manual in-game tests require human verification:
 
+### Original Features
 1. Start a new game with no research - verify only basic entities show in selectors
 2. Research electric mining technology - verify electric drill appears and is selected by default
 3. Research medium electric pole technology - verify it appears and is selected by default
 4. When mining uranium ore, verify iron pipe is selected by default
 5. Verify productivity mode is selected by default
 6. After using selection tool, verify cursor is empty
+
+### New Features (2026-02-20 Implementation)
+7. Verify only three pole types appear in selector (small, iron (K2), medium)
+8. Verify big electric pole and substation are excluded even when researched
+9. Verify pole spacing follows UBO-UBI-Pole pattern (one pole per drill)
+10. Verify underground belts move items correctly in all four directions (N/S/E/W)
+11. Verify selection tool never appears in inventory (only-in-cursor flag)
+12. Verify burner-mining-drill never appears in drill selector
+
+**Recommended Verification:** Use acceptance-verification-2026-02-20.md for complete checklist
 
 These tests validate user-facing behavior in the actual Factorio game environment.
 
