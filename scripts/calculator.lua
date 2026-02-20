@@ -77,7 +77,7 @@ local function build_foreign_resource_set(resource_groups, selected_resource)
             for _, pos in ipairs(group.positions) do
                 local tx = math.floor(pos.x)
                 local ty = math.floor(pos.y)
-                set[tx .. "," .. ty] = true
+                set[string.format("%d,%d", tx, ty)] = true
             end
         end
     end

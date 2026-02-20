@@ -68,11 +68,11 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 - [x] Review direction_to_define() function - ensure correct mapping of user direction choice
 - [x] Review \_place_underground_belts() logic for UBO/UBI placement
-- [x] Fix direction assignment: UBI direction should match belt_direction, UBO direction should be opposite
-- [x] For south flow: UBO faces north (items exit south), UBI faces south (items enter north side)
-- [x] For north flow: UBO faces south (items exit north), UBI faces north (items enter south side)
-- [x] For east flow: UBO faces west (items exit east), UBI faces east (items enter west side)
-- [x] For west flow: UBO faces east (items exit west), UBI faces west (items enter east side)
+- [x] Fix direction assignment: both UBI and UBO directions should match belt_direction
+- [x] For south flow: UBO faces south, UBI faces south (both face direction of item flow)
+- [x] For north flow: UBO faces north, UBI faces north (both face direction of item flow)
+- [x] For east flow: UBO faces east, UBI faces east (both face direction of item flow)
+- [x] For west flow: UBO faces west, UBI faces west (both face direction of item flow)
 - [x] Verify belt_to_ground_type parameter ("input" vs "output") matches Factorio conventions
 - [x] Add inline code comments explaining UBO/UBI direction logic for each cardinal direction
 - [x] Create manual test documentation in docs/tests/underground-belt-direction-tests.md
