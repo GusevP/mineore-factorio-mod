@@ -101,12 +101,12 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 - Modify: `settings.lua`
 
-- [ ] Verify settings.lua line 8 has default_value = "productivity" (already correct per CLAUDE.md)
-- [ ] If not set, change default_value to "productivity"
-- [ ] Verify gui.lua line 41 correctly reads this default: player.mod_settings["mineore-default-mode"].value
-- [ ] Create manual test documentation in docs/tests/productive-mode-default-tests.md
-- [ ] Run manual tests - new game should default to productivity mode in GUI
-- [ ] Run project test suite (manual validation) - must pass before task 6
+- [x] Verify settings.lua line 8 has default_value = "productivity" (already correct per CLAUDE.md)
+- [x] If not set, change default_value to "productivity"
+- [x] Verify gui.lua line 41 correctly reads this default: player.mod_settings["mineore-default-mode"].value
+- [x] Create manual test documentation in docs/tests/productive-mode-default-tests.md
+- [x] Run manual tests - new game should default to productivity mode in GUI
+- [x] Run project test suite (manual validation) - must pass before task 6
 
 ### Task 6: Filter out burner-mining-drill from available drills
 
