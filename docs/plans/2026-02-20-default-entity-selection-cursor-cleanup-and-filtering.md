@@ -103,9 +103,9 @@ Update default entity selections in the configuration GUI to use electric drill,
 - [ ] Manual test: When mining uranium ore, verify iron pipe is selected by default
 - [ ] Manual test: Verify productivity mode is selected by default
 - [ ] Manual test: After using selection tool, verify cursor is empty
-- [ ] Run full test suite with project test command
-- [ ] Run linter if project has one
-- [ ] Verify test coverage meets 80%+
+- [x] Run full test suite with project test command
+- [x] Run linter if project has one
+- [x] Verify test coverage meets 80%+
 
 ### Task 8: Update documentation
 
