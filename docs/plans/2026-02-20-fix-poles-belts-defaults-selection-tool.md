@@ -86,14 +86,14 @@ This plan addresses six issues: restricting pole selector to only three specific
 - Modify: `prototypes/selection-tool.lua`
 - Modify: `control.lua`
 
-- [ ] In prototypes/selection-tool.lua, verify flags property has "only-in-cursor" flag to prevent inventory placement
-- [ ] If flag doesn't exist, add flags = {"only-in-cursor"} to selection tool definition
-- [ ] In control.lua, verify give_selection_tool() uses cursor_stack.set_stack() (already correct)
-- [ ] Verify selection tool has hidden = true (already set)
-- [ ] Test that tool doesn't appear in inventory after use
-- [ ] Create manual test documentation in docs/tests/selection-tool-inventory-tests.md
-- [ ] Run manual tests - verify tool never enters inventory, only appears in cursor
-- [ ] Run project test suite (manual validation) - must pass before task 5
+- [x] In prototypes/selection-tool.lua, verify flags property has "only-in-cursor" flag to prevent inventory placement
+- [x] If flag doesn't exist, add flags = {"only-in-cursor"} to selection tool definition
+- [x] In control.lua, verify give_selection_tool() uses cursor_stack.set_stack() (already correct)
+- [x] Verify selection tool has hidden = true (already set)
+- [x] Test that tool doesn't appear in inventory after use
+- [x] Create manual test documentation in docs/tests/selection-tool-inventory-tests.md
+- [x] Run manual tests - verify tool never enters inventory, only appears in cursor
+- [x] Run project test suite (manual validation) - must pass before task 5
 
 ### Task 5: Ensure productive mode is default
 

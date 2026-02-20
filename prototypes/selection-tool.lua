@@ -7,6 +7,7 @@ local selection_tool = {
     order = "c[automated-construction]-d[mineore]",
     stack_size = 1,
     hidden = true,
+    flags = {"only-in-cursor"},
     select = {
         border_color = {r = 0.0, g = 0.8, b = 0.0, a = 0.7},
         cursor_box_type = "copy",
