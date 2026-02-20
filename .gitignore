@@ -1,10 +1,7 @@
-
-# ralphex progress logs
 .ralphex/progress/
 .DS_Store
 mineore_*/
 mineore*.zip
 
-# AI development files (local only)
 CLAUDE.md
 docs/
