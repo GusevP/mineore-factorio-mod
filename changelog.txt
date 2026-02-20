@@ -1,3 +1,15 @@
+Version: 0.7.0
+Date: 2026-02-20
+  Changes:
+    - Pole selector restricted to three specific pole types: small electric pole (wooden), medium electric pole, and Krastorio 2 small iron pole
+    - Pole placement now uses fixed spacing pattern aligned with underground belt pairs instead of calculated spacing
+    - Poles now placed after each UBO-UBI underground belt pair for consistent power coverage
+    - Underground belt direction logic corrected for all four cardinal directions (North, South, East, West)
+    - Selection tool now has "only-in-cursor" flag to prevent it from entering player inventory
+    - Burner mining drill excluded from available drills in the drill selector
+  Bugfixes:
+    - Fixed underground belt input/output types to ensure items move in correct direction
+---------------------------------------------------------------------------------------------------
 Version: 0.6.0
 Date: 2026-02-20
   Features:

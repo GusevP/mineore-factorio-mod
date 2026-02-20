@@ -136,7 +136,7 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 ### Task 8: Update documentation
 
-- [ ] Update README.md if pole behavior changed significantly
-- [ ] Update CLAUDE.md with new patterns: pole whitelist, fixed pole spacing, burner drill exclusion
-- [ ] Update version in info.json and update changelog.txt
-- [ ] Move this plan to docs/plans/completed/
+- [x] Update README.md if pole behavior changed significantly
+- [x] Update CLAUDE.md with new patterns: pole whitelist, fixed pole spacing, burner drill exclusion
+- [x] Update version in info.json and update changelog.txt
+- [x] Move this plan to docs/plans/completed/

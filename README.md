@@ -14,9 +14,9 @@ Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does th
 - **Transport belt placement** — belts placed in the gap between paired drill rows; underground belts used for 3x3+ drills
 - **Electric pole placement** — 1x1 poles placed at optimal intervals for full power coverage
 - **Beacon placement** — beacons placed between drill pair columns/rows, shared across adjacent pairs, with configurable limits per drill
-- **All drill types** — burner, electric, and big mining drills
+- **Compatible drill types** — electric and big mining drills (burner drills excluded)
 - **All belt tiers** — transport belt, fast, express, turbo, and any modded belts
-- **1x1 electric poles** — small and medium electric poles (substations and big poles excluded due to size constraints)
+- **Compatible electric poles** — small electric pole (wooden), medium electric pole, and Krastorio 2 small iron pole (if available)
 - **All resources** — works with every solid minable resource across all planets (Nauvis, Vulcanus, Fulgora, Gleba)
 - **Icon-based GUI** — choose-elem-button selectors for all entity types (following P.U.M.P. pattern)
 - **Module support** — pre-request modules on ghost drills and beacons (speed, productivity, efficiency, quality)

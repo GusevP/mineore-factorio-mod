@@ -18,6 +18,20 @@
 
 **Rationale:** These three pole types work well with the mod's fixed spacing pattern. Larger poles (big electric pole, substations) are excluded.
 
+### Fixed Pole Spacing Pattern
+
+**Pattern:** Poles are placed at fixed intervals aligned with underground belt pairs, not calculated from pole supply/wire distance.
+
+**Implementation:**
+- Function `pole_placer.place_poles()` in `scripts/pole_placer.lua`
+- For 3x3+ drills: pole placed after each UBO-UBI underground belt pair
+- Pole position: drill center + 1 tile in belt flow direction (after UBI)
+- For NS orientation: pattern repeats every (drill height) tiles along belt line
+- For EW orientation: pattern repeats every (drill width) tiles along belt line
+- For 2x2 drills (plain belts): poles placed at regular drill spacing intervals
+
+**Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The three whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
+
 ### Burner Drill Exclusion Pattern
 
 **Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector.
@@ -110,6 +124,11 @@ Test files located in `docs/tests/`:
 - `default-mode-selection-tests.md` - Productivity mode default
 - `cursor-clearing-tests.md` - Cursor management validation
 - `burner-drill-filtering-tests.md` - Burner drill exclusion validation
+- `pole-whitelist-tests.md` - Pole selector whitelist validation
+- `pole-spacing-tests.md` - Fixed pole spacing pattern validation
+- `underground-belt-direction-tests.md` - Underground belt direction validation
+- `selection-tool-inventory-tests.md` - Selection tool cursor-only validation
+- `productive-mode-default-tests.md` - Productivity mode default validation
 - `manual-acceptance-tests.md` - Full integration tests
 - `validation-summary.md` - Test results summary
 
