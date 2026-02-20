@@ -911,26 +911,63 @@ function gui._add_pipe_selector(parent, settings, player)
     pipe_flow.style.horizontal_spacing = 4
 
     local pipe_types = gui._get_pipe_types()
-    local selected_pipe = settings.pipe_name
-    local has_selection = false
 
+    -- Filter pipes by technology availability
+    local available_pipes = {}
     for _, pipe_name in ipairs(pipe_types) do
         local proto = prototypes.entity[pipe_name]
         if proto and is_entity_available(player, pipe_name) then
-            local btn = pipe_flow.add{
-                type = "choose-elem-button",
-                name = "mineore_pipe_btn_" .. pipe_name,
-                elem_type = "entity",
-                entity = pipe_name,
-                style = "slot_sized_button",
-                tooltip = proto.localised_name,
-            }
-            btn.locked = true
-            btn.tags = {selector_group = "pipe", entity_name = pipe_name}
+            available_pipes[#available_pipes + 1] = pipe_name
+        end
+    end
+
+    local selected_pipe = settings.pipe_name
+    -- Verify remembered pipe is still available; reset if not
+    if selected_pipe then
+        local found = false
+        for _, pipe_name in ipairs(available_pipes) do
             if pipe_name == selected_pipe then
-                btn.style = "slot_sized_button_pressed"
-                has_selection = true
+                found = true
+                break
             end
+        end
+        if not found then
+            selected_pipe = nil
+        end
+    end
+    -- Default to "pipe" (iron pipe) if available, otherwise first pipe
+    if not selected_pipe and #available_pipes > 0 then
+        -- Try to find "pipe" in the available list
+        local found_pipe = false
+        for _, pipe_name in ipairs(available_pipes) do
+            if pipe_name == "pipe" then
+                selected_pipe = "pipe"
+                found_pipe = true
+                break
+            end
+        end
+        -- Fallback to first available pipe if "pipe" not found
+        if not found_pipe then
+            selected_pipe = available_pipes[1]
+        end
+    end
+
+    local has_selection = false
+    for _, pipe_name in ipairs(available_pipes) do
+        local proto = prototypes.entity[pipe_name]
+        local btn = pipe_flow.add{
+            type = "choose-elem-button",
+            name = "mineore_pipe_btn_" .. pipe_name,
+            elem_type = "entity",
+            entity = pipe_name,
+            style = "slot_sized_button",
+            tooltip = proto.localised_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "pipe", entity_name = pipe_name}
+        if pipe_name == selected_pipe then
+            btn.style = "slot_sized_button_pressed"
+            has_selection = true
         end
     end
 

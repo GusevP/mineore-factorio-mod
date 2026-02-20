@@ -74,10 +74,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 **Files:**
 - Modify: `scripts/gui.lua`
 
-- [ ] Update gui._add_pipe_selector function to set selected_pipe to "pipe" when no previous setting exists and entity is available/researched
-- [ ] Ensure fallback behavior when basic pipe is not available
-- [ ] Write tests for pipe default selection logic with technology filtering
-- [ ] Run project test suite - must pass before task 6
+- [x] Update gui._add_pipe_selector function to set selected_pipe to "pipe" when no previous setting exists and entity is available/researched
+- [x] Ensure fallback behavior when basic pipe is not available
+- [x] Write tests for pipe default selection logic with technology filtering
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Clear cursor stack after selection tool use
 
