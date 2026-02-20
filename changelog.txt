@@ -1,3 +1,7 @@
+Version: 0.4.0
+Date: 2026-02-19
+  Changes:
+    - Change icon and thumbnail
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.0
 Date: 2026-02-19
@@ -16,39 +20,3 @@ Date: 2026-02-19
   Bugfixes:
     - Fixed underground belt output direction to face opposite of input for proper connectivity
 ---------------------------------------------------------------------------------------------------
-Version: 0.2.0
-Date: 2026-02-18
-  Features:
-    - Paired-row drill layout: drills face each other with a belt gap between them
-    - Transport belt placement in the gap between paired drill rows
-    - Electric pole/substation placement at optimal intervals for power coverage
-    - Beacon placement alongside drill columns/rows with greedy coverage algorithm
-    - Beacon module support: pre-request modules on ghost beacons
-    - Icon-based GUI overhaul: choose-elem-button selectors for drills, belts, poles, and beacons (P.U.M.P. pattern)
-    - Per-entity quality selection for drills, belts, poles, and beacons (Space Age)
-    - Belt orientation selector: North-South or East-West
-    - Configurable beacon limits: max and preferred beacons per drill (mod settings)
-    - Ore-specific resource filtering: drills only placed where the selected resource exists
-    - Shift-drag now removes ghost belts, poles, and beacons in addition to drills
-    - Flying text feedback shows counts for each entity type placed
-  Changes:
-    - Direction selector removed (drills now automatically face the center belt line)
-    - Drill, belt, pole, and beacon selectors now use icon buttons instead of dropdowns
-    - Drill module selector changed from dropdown to choose-elem-button
-    - Resource selector shows as info display; ore type flows from the scan
----------------------------------------------------------------------------------------------------
-Version: 0.1.0
-Date: 2026-02-17
-  Features:
-    - Initial release
-    - Selection tool for drag-selecting ore patches
-    - Three placement modes: Productivity, Normal, and Efficient
-    - Support for all base game and Space Age mining drills (burner, electric, big)
-    - Support for all solid minable resources across all planets
-    - Configuration GUI with drill selection, placement mode, and output direction
-    - Module pre-requests on ghost drills (speed, productivity, efficiency, quality)
-    - Quality selection for ghost drills (requires Space Age DLC)
-    - Remember settings option to skip GUI on repeat use
-    - Shift-drag ghost miner removal
-    - Automatic obstacle avoidance (water, cliffs, existing buildings)
-    - Mod settings for default placement mode and GUI behavior
