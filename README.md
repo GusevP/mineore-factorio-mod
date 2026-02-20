@@ -23,7 +23,7 @@ Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does th
 - **Quality support** — per-entity quality selection for drills, belts, poles, and beacons (Space Age)
 - **Belt direction** — choose North, South, East, or West belt flow direction
 - **Remember settings** — skip the GUI on repeat use by remembering your last configuration
-- **Pipe placement** — automatic pipe connections between drills when mining fluid-requiring resources (e.g., uranium ore with sulfuric acid); pipe-to-ground used for long gaps
+- **Pipe placement** — automatic pipe connections between drills when mining fluid-requiring resources (e.g., uranium ore with sulfuric acid)
 - **Polite placement mode** — optional mode that only clears trees and rocks, skipping positions blocked by existing buildings or other entities
 - **Ghost removal** — shift-drag to remove ghost miners, belts, poles, and beacons in an area
 - **Obstacle handling** — trees, rocks, and cliffs are marked for deconstruction; conflicting entities are demolished to allow ghost placement

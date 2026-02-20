@@ -138,6 +138,22 @@ function placer.place(player, scan_results, settings)
         selected_resource = settings.resource_name
     end
 
+    -- Validate that the selected drill has fluid input when mining fluid-requiring resources
+    local resource_needs_fluid = false
+    for _, group in pairs(resource_groups) do
+        if group.required_fluid then
+            resource_needs_fluid = true
+            break
+        end
+    end
+    if resource_needs_fluid and not drill.has_fluid_input then
+        player.create_local_flying_text({
+            text = {"mineore.drill-no-fluid-input"},
+            create_at_cursor = true,
+        })
+        return 0, 0
+    end
+
     -- Calculate grid positions with paired rows and belt gaps
     -- Derive belt direction: prefer new belt_direction, fall back to legacy belt_orientation
     local belt_direction = settings.belt_direction
@@ -247,15 +263,6 @@ function placer.place(player, scan_results, settings)
     -- surface.can_place_entity to avoid collisions with earlier ghosts.
     -- The beacon placer also builds an explicit blocked tile set for
     -- efficient pre-filtering of candidate positions.
-
-    -- Check if the selected resource requires fluid (for pipe placement)
-    local resource_needs_fluid = false
-    for _, group in pairs(resource_groups) do
-        if group.required_fluid then
-            resource_needs_fluid = true
-            break
-        end
-    end
 
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0

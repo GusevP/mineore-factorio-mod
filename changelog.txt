@@ -4,7 +4,6 @@ Date: 2026-02-20
     - Polite placement mode: optional checkbox that only clears trees and rocks, preserving existing buildings
     - Pipe placement for fluid-requiring resources (e.g., uranium ore with sulfuric acid)
     - Pipe selector in GUI with pipe type and quality selection (shown only for fluid-requiring resources)
-    - Pipe-to-ground used automatically for long gaps between drills
   Changes:
     - Elevated rails excluded from demolition in both polite and normal mode
     - Shift-drag ghost removal now also removes pipe and pipe-to-ground ghosts

@@ -68,7 +68,7 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 - [x] Create `pipe_placer.lua` following the belt_placer.lua pattern. Main function: `pipe_placer.place(surface, force, player, belt_lines, drill_info, pipe_name, quality, gap, direction)`
 - [x] For efficient mode (where drills have gaps between them): place pipes to connect adjacent drills' fluid connections. Use regular pipe entities in the gap tiles between drills along the perpendicular axis to belt flow
 - [x] For productivity mode (drills touching): drills share fluid automatically, no pipes needed - return early with 0 placed
-- [x] Handle pipe-to-ground entities when spanning long gaps (>2 tiles) for cleaner layouts
+- [ ] Handle pipe-to-ground entities when spanning long gaps (>2 tiles) for cleaner layouts (deferred: regular pipes used for all gaps)
 - [x] Use `ghost_util.place_ghost()` for each pipe placement (respecting polite mode if active)
 - [x] Write tests for pipe placement positions, gap handling, and direction correctness
 - [x] Run project test suite - must pass before task 5

@@ -22,6 +22,7 @@ script.on_configuration_changed(function()
         if player then
             config_gui.destroy(player)
             player_data.last_scan = nil
+            player_data.gui_draft = nil
 
             -- Migrate saved "loose" placement mode to "efficient"
             if player_data.settings and player_data.settings.placement_mode == "loose" then
@@ -126,6 +127,34 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             end
         end
 
+        -- Also verify the drill has fluid input when the selected resource requires it
+        local selected_resource = settings.resource_name
+        local resource_groups = scan_results.resource_groups
+        local resource_needs_fluid = false
+        if selected_resource and resource_groups[selected_resource] then
+            if resource_groups[selected_resource].required_fluid then
+                resource_needs_fluid = true
+            end
+        else
+            -- No specific resource selected; check all groups
+            for _, group in pairs(resource_groups) do
+                if group.required_fluid then
+                    resource_needs_fluid = true
+                    break
+                end
+            end
+        end
+
+        if resource_needs_fluid and drill_still_valid then
+            -- Find the drill info to check has_fluid_input
+            for _, drill in ipairs(scan_results.compatible_drills) do
+                if drill.name == settings.drill_name and not drill.has_fluid_input then
+                    drill_still_valid = false
+                    break
+                end
+            end
+        end
+
         if drill_still_valid then
             -- Clear remembered entity names whose prototypes no longer exist
             if settings.belt_name and not prototypes.entity[settings.belt_name] then
@@ -223,6 +252,8 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 
     if element.name == "mineore_close_button" or element.name == "mineore_cancel_button" then
+        local player_data = get_player_data(event.player_index)
+        player_data.gui_draft = nil
         config_gui.destroy(player)
         return
     end
@@ -232,6 +263,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         if settings then
             local player_data = get_player_data(event.player_index)
             player_data.settings = settings
+            player_data.gui_draft = nil
 
             config_gui.destroy(player)
 
@@ -258,7 +290,31 @@ script.on_event(defines.events.on_gui_selection_state_changed, function(event)
     local element = event.element
     if not element or not element.valid then return end
     if not config_gui.is_mineore_element(element) then return end
-    -- No additional action needed - selection is read when Place is clicked
+
+    -- When the resource dropdown changes, rebuild the GUI so that
+    -- fluid-dependent sections (drill filtering, pipe selector) update.
+    if element.name == "mineore_resource_dropdown" then
+        local player = game.get_player(event.player_index)
+        if not player then return end
+        local player_data = get_player_data(event.player_index)
+        if not player_data.last_scan then return end
+
+        -- Snapshot current GUI state into a draft so the rebuild preserves choices
+        -- without persisting to player_data.settings (which drives auto-skip).
+        local current = config_gui.read_settings(player)
+        if current then
+            -- Update resource_name from the dropdown that just changed
+            local resource_names = element.tags.resource_names
+            if resource_names and element.selected_index > 0 then
+                current.resource_name = resource_names[element.selected_index]
+            end
+            player_data.gui_draft = current
+        end
+
+        config_gui.create(player, player_data.last_scan, player_data)
+        return
+    end
+    -- No additional action needed for other dropdowns - selection is read when Place is clicked
 end)
 
 -- Handle choose-elem-button value changes (unlocked module pickers)
@@ -275,6 +331,8 @@ script.on_event(defines.events.on_gui_closed, function(event)
     if not element or not element.valid then return end
 
     if element.name == "mineore_config_frame" then
+        local player_data = get_player_data(event.player_index)
+        player_data.gui_draft = nil
         element.destroy()
     end
 end)

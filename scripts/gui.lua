@@ -21,7 +21,7 @@ end
 function gui.create(player, scan_results, player_data)
     gui.destroy(player)
 
-    local settings = player_data.settings or {}
+    local settings = player_data.gui_draft or player_data.settings or {}
 
     -- Apply default placement mode from mod settings if no previous choice
     if not settings.placement_mode then
@@ -102,26 +102,32 @@ function gui.create(player, scan_results, player_data)
         gui._add_resource_selector(inner, resource_names, settings)
     end
 
+    -- Determine which resource is currently selected
+    local selected_resource = settings.resource_name
+    if not selected_resource or not scan_results.resource_groups[selected_resource] then
+        selected_resource = resource_names[1]
+    end
+
+    -- Check if the selected resource requires fluid (affects drill filtering and pipe selector)
+    local needs_fluid = false
+    if selected_resource then
+        local group = scan_results.resource_groups[selected_resource]
+        if group and group.required_fluid then
+            needs_fluid = true
+        end
+    end
+
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
     -- Drill selector (icon buttons)
-    gui._add_drill_selector(inner, scan_results, settings)
+    local effective_drill_name = gui._add_drill_selector(inner, scan_results, settings, needs_fluid)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
     -- Belt type selector (icon buttons)
     gui._add_belt_selector(inner, settings)
-
-    -- Pipe selector (only when resource requires fluid)
-    local needs_fluid = false
-    for _, group in pairs(scan_results.resource_groups) do
-        if group.required_fluid then
-            needs_fluid = true
-            break
-        end
-    end
     if needs_fluid then
         inner.add{type = "line", direction = "horizontal"}
         gui._add_pipe_selector(inner, settings)
@@ -155,7 +161,7 @@ function gui.create(player, scan_results, player_data)
     inner.add{type = "line", direction = "horizontal"}
 
     -- Drill module selector (choose-elem-button)
-    gui._add_module_selector(inner, scan_results, settings)
+    gui._add_module_selector(inner, scan_results, settings, effective_drill_name)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -273,7 +279,8 @@ end
 --- @param parent LuaGuiElement
 --- @param scan_results table
 --- @param settings table Player settings
-function gui._add_drill_selector(parent, scan_results, settings)
+--- @param needs_fluid boolean|nil When true, only show drills with fluid input
+function gui._add_drill_selector(parent, scan_results, settings, needs_fluid)
     parent.add{
         type = "label",
         caption = {"mineore.gui-drill-header"},
@@ -287,13 +294,41 @@ function gui._add_drill_selector(parent, scan_results, settings)
     }
     flow.style.horizontal_spacing = 4
 
-    local selected_name = settings.drill_name
-    -- Default to first drill if no previous selection
-    if not selected_name and #scan_results.compatible_drills > 0 then
-        selected_name = scan_results.compatible_drills[1].name
+    -- Filter drills: when resource requires fluid, only show drills with fluid input
+    local drills_to_show = scan_results.compatible_drills
+    if needs_fluid then
+        drills_to_show = {}
+        for _, drill in ipairs(scan_results.compatible_drills) do
+            if drill.has_fluid_input then
+                drills_to_show[#drills_to_show + 1] = drill
+            end
+        end
+        -- Fall back to all drills if none have fluid input (edge case)
+        if #drills_to_show == 0 then
+            drills_to_show = scan_results.compatible_drills
+        end
     end
 
-    for _, drill in ipairs(scan_results.compatible_drills) do
+    local selected_name = settings.drill_name
+    -- Verify remembered drill is still in the filtered list; reset if not
+    if selected_name then
+        local found = false
+        for _, drill in ipairs(drills_to_show) do
+            if drill.name == selected_name then
+                found = true
+                break
+            end
+        end
+        if not found then
+            selected_name = nil
+        end
+    end
+    -- Default to first drill if no valid selection
+    if not selected_name and #drills_to_show > 0 then
+        selected_name = drills_to_show[1].name
+    end
+
+    for _, drill in ipairs(drills_to_show) do
         local btn = flow.add{
             type = "choose-elem-button",
             name = "mineore_drill_btn_" .. drill.name,
@@ -308,6 +343,8 @@ function gui._add_drill_selector(parent, scan_results, settings)
             btn.style = "slot_sized_button_pressed"
         end
     end
+
+    return selected_name
 end
 
 --- Add belt type selector as locked choose-elem-buttons + "none" sprite-button.
@@ -634,17 +671,21 @@ end
 --- @param parent LuaGuiElement
 --- @param scan_results table
 --- @param settings table Player settings
-function gui._add_module_selector(parent, scan_results, settings)
+--- @param effective_drill_name string|nil The drill name actually shown as selected in the drill selector
+function gui._add_module_selector(parent, scan_results, settings, effective_drill_name)
     parent.add{
         type = "label",
         caption = {"mineore.gui-module-header"},
         style = "caption_label",
     }
 
-    -- Get the currently selected drill to check module slots
+    -- Get the currently selected drill to check module slots.
+    -- Use effective_drill_name (from _add_drill_selector) so that module slots
+    -- match the drill actually shown as selected after fluid filtering.
+    local drill_to_find = effective_drill_name or settings.drill_name
     local selected_drill = nil
     for _, drill in ipairs(scan_results.compatible_drills) do
-        if settings.drill_name and settings.drill_name == drill.name then
+        if drill_to_find and drill_to_find == drill.name then
             selected_drill = drill
             break
         end

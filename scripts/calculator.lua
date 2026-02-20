@@ -208,7 +208,9 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                 x_min = nil,
                 x_max = nil,
                 gap_positions = {},  -- positions in the gap for poles/beacons
-                drill_along_positions = {},  -- x-positions of drills along this belt line
+                drill_along_positions = {},  -- x-positions of drills along this belt line (union of both sides)
+                drill_side1_positions = {},  -- x-positions of drills in top row only
+                drill_side2_positions = {},  -- x-positions of drills in bottom row only
             }
 
             local row_for_offset = pair_index
@@ -220,6 +222,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
             end
 
             local drill_x_set = {}
+            local top_x_set = {}
+            local bottom_x_set = {}
             local x = start_x + x_offset
             while x <= end_x do
                 if has_resources_in_mining_area(x, y_top, radius, resource_set)
@@ -232,6 +236,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     if not belt_line.x_min or x < belt_line.x_min then belt_line.x_min = x end
                     if not belt_line.x_max or x > belt_line.x_max then belt_line.x_max = x end
                     drill_x_set[x] = true
+                    top_x_set[x] = true
                 end
                 x = x + spacing_along
             end
@@ -248,15 +253,24 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     if not belt_line.x_min or x < belt_line.x_min then belt_line.x_min = x end
                     if not belt_line.x_max or x > belt_line.x_max then belt_line.x_max = x end
                     drill_x_set[x] = true
+                    bottom_x_set[x] = true
                 end
                 x = x + spacing_along
             end
 
-            -- Collect sorted drill x-positions
+            -- Collect sorted drill x-positions (union and per-side)
             for dx, _ in pairs(drill_x_set) do
                 belt_line.drill_along_positions[#belt_line.drill_along_positions + 1] = dx
             end
             table.sort(belt_line.drill_along_positions)
+            for dx, _ in pairs(top_x_set) do
+                belt_line.drill_side1_positions[#belt_line.drill_side1_positions + 1] = dx
+            end
+            table.sort(belt_line.drill_side1_positions)
+            for dx, _ in pairs(bottom_x_set) do
+                belt_line.drill_side2_positions[#belt_line.drill_side2_positions + 1] = dx
+            end
+            table.sort(belt_line.drill_side2_positions)
 
             -- Only add belt line if at least one drill was placed in this pair
             if belt_line.x_min then
@@ -313,7 +327,9 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                 y_min = nil,
                 y_max = nil,
                 gap_positions = {},
-                drill_along_positions = {},  -- y-positions of drills along this belt line
+                drill_along_positions = {},  -- y-positions of drills along this belt line (union of both sides)
+                drill_side1_positions = {},  -- y-positions of drills in left column only
+                drill_side2_positions = {},  -- y-positions of drills in right column only
             }
 
             local row_for_offset = pair_index
@@ -325,6 +341,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
 
             -- Place left column (faces east)
             local drill_y_set = {}
+            local left_y_set = {}
+            local right_y_set = {}
             local y = start_y + y_offset
             while y <= end_y do
                 if has_resources_in_mining_area(x_left, y, radius, resource_set)
@@ -336,6 +354,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     if not belt_line.y_min or y < belt_line.y_min then belt_line.y_min = y end
                     if not belt_line.y_max or y > belt_line.y_max then belt_line.y_max = y end
                     drill_y_set[y] = true
+                    left_y_set[y] = true
                 end
                 y = y + spacing_along
             end
@@ -352,15 +371,24 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
                     if not belt_line.y_min or y < belt_line.y_min then belt_line.y_min = y end
                     if not belt_line.y_max or y > belt_line.y_max then belt_line.y_max = y end
                     drill_y_set[y] = true
+                    right_y_set[y] = true
                 end
                 y = y + spacing_along
             end
 
-            -- Collect sorted drill y-positions
+            -- Collect sorted drill y-positions (union and per-side)
             for dy, _ in pairs(drill_y_set) do
                 belt_line.drill_along_positions[#belt_line.drill_along_positions + 1] = dy
             end
             table.sort(belt_line.drill_along_positions)
+            for dy, _ in pairs(left_y_set) do
+                belt_line.drill_side1_positions[#belt_line.drill_side1_positions + 1] = dy
+            end
+            table.sort(belt_line.drill_side1_positions)
+            for dy, _ in pairs(right_y_set) do
+                belt_line.drill_side2_positions[#belt_line.drill_side2_positions + 1] = dy
+            end
+            table.sort(belt_line.drill_side2_positions)
 
             -- Only add belt line if at least one drill was placed
             if belt_line.y_min then

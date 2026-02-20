@@ -98,11 +98,19 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
         local x_left = left_drill_x - half_w - 0.5
         local x_right = right_drill_x + half_w + 0.5
 
+        -- Use per-side positions to avoid orphan pipes on asymmetric layouts
+        local side1_positions = belt_line.drill_side1_positions or drill_positions
+        local side2_positions = belt_line.drill_side2_positions or drill_positions
+        local side_positions_list = {
+            {col_x = x_left, positions = side1_positions},
+            {col_x = x_right, positions = side2_positions},
+        }
+
         -- Place pipes between adjacent drills in each column
-        for _, col_x in ipairs({x_left, x_right}) do
-            for i = 1, #drill_positions - 1 do
-                local y_current = drill_positions[i]
-                local y_next = drill_positions[i + 1]
+        for _, side in ipairs(side_positions_list) do
+            for i = 1, #side.positions - 1 do
+                local y_current = side.positions[i]
+                local y_next = side.positions[i + 1]
 
                 -- Gap runs from bottom edge of current drill to top edge of next drill
                 local gap_start = y_current + half_h
@@ -112,7 +120,7 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
                 if gap_tiles > 0 then
                     local p, s = pipe_placer._fill_gap(
                         surface, force, player, pipe_name, underground_name,
-                        quality, col_x, gap_start, gap_tiles, "y", polite)
+                        quality, side.col_x, gap_start, gap_tiles, "y", polite)
                     placed = placed + p
                     skipped = skipped + s
                 end
@@ -130,10 +138,18 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
         local y_top = top_drill_y - half_h - 0.5
         local y_bottom = bottom_drill_y + half_h + 0.5
 
-        for _, row_y in ipairs({y_top, y_bottom}) do
-            for i = 1, #drill_positions - 1 do
-                local x_current = drill_positions[i]
-                local x_next = drill_positions[i + 1]
+        -- Use per-side positions to avoid orphan pipes on asymmetric layouts
+        local side1_positions = belt_line.drill_side1_positions or drill_positions
+        local side2_positions = belt_line.drill_side2_positions or drill_positions
+        local side_positions_list = {
+            {row_y = y_top, positions = side1_positions},
+            {row_y = y_bottom, positions = side2_positions},
+        }
+
+        for _, side in ipairs(side_positions_list) do
+            for i = 1, #side.positions - 1 do
+                local x_current = side.positions[i]
+                local x_next = side.positions[i + 1]
 
                 local gap_start = x_current + half_w
                 local gap_end = x_next - half_w
@@ -142,7 +158,7 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
                 if gap_tiles > 0 then
                     local p, s = pipe_placer._fill_gap(
                         surface, force, player, pipe_name, underground_name,
-                        quality, row_y, gap_start, gap_tiles, "x", polite)
+                        quality, side.row_y, gap_start, gap_tiles, "x", polite)
                     placed = placed + p
                     skipped = skipped + s
                 end
