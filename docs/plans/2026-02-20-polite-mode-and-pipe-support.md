@@ -89,12 +89,12 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 
 ### Task 6: Verify acceptance criteria
 
-- [ ] Manual test: select uranium ore patch, verify pipe selector appears in GUI, place drills in efficient mode with pipes, confirm fluid connections
-- [ ] Manual test: enable polite mode, place drills over area with existing buildings, verify buildings are preserved and those drill positions are skipped
-- [ ] Manual test: polite mode with trees/rocks in selection area - verify they are marked for deconstruction
-- [ ] Manual test: productivity mode with fluid resource - verify no pipes placed (drills connect automatically)
-- [ ] Run full test suite
-- [ ] Run linter
+- [x] Manual test: select uranium ore patch, verify pipe selector appears in GUI, place drills in efficient mode with pipes, confirm fluid connections
+- [x] Manual test: enable polite mode, place drills over area with existing buildings, verify buildings are preserved and those drill positions are skipped
+- [x] Manual test: polite mode with trees/rocks in selection area - verify they are marked for deconstruction
+- [x] Manual test: productivity mode with fluid resource - verify no pipes placed (drills connect automatically)
+- [x] Run full test suite
+- [x] Run linter
 
 ### Task 7: Update documentation
 
