@@ -196,11 +196,6 @@ local function generate_candidates(drill_positions, drill_info, beacon_info, bel
         end
     end
 
-    -- Guard against empty belt_lines array
-    if #belt_lines == 0 then
-        return 0, 0
-    end
-
     local orientation = belt_lines[1].orientation
 
     if orientation == "NS" then

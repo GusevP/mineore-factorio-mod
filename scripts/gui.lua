@@ -434,6 +434,10 @@ function gui._add_belt_selector(parent, settings, player)
             selected_belt = nil
         end
     end
+    -- Set default to first available belt if no selection
+    if not selected_belt and #available_belts > 0 then
+        selected_belt = available_belts[1]
+    end
 
     local has_selection = false
     for _, belt_name in ipairs(available_belts) do
