@@ -73,6 +73,6 @@ Fix two issues: (1) Allow burner drills for normal ores but exclude them for liq
 
 ### Task 5: Update documentation
 
-- [ ] update CLAUDE.md: modify Burner Drill Exclusion Pattern to document GUI-level filtering for liquid ores only (resource scanner includes burner drill in compatible list)
-- [ ] update CLAUDE.md: update Underground Belt Direction Pattern to document UBO 180-degree rotation (UBI faces flow direction, UBO faces opposite direction)
-- [ ] move this plan to docs/plans/completed/
+- [x] update CLAUDE.md: modify Burner Drill Exclusion Pattern to document GUI-level filtering for liquid ores only (resource scanner includes burner drill in compatible list)
+- [x] update CLAUDE.md: update Underground Belt Direction Pattern to document UBO 180-degree rotation (UBI faces flow direction, UBO faces opposite direction)
+- [x] move this plan to docs/plans/completed/

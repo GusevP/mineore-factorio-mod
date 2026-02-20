@@ -34,31 +34,34 @@
 
 ### Underground Belt Direction Pattern
 
-**Pattern:** Both UBO (output) and UBI (input) underground belts face the same direction - the belt flow direction.
+**Pattern:** UBI (input) faces the belt flow direction, while UBO (output) faces the opposite direction (180-degree rotation) for proper sprite connection.
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
-- Both UBO and UBI are set to `belt_dir_define` (the chosen flow direction)
-- Direction determines which way items flow through the underground belt pair
-- For south flow: both belts face south (items move south)
-- For north flow: both belts face north (items move north)
-- For east flow: both belts face east (items move east)
-- For west flow: both belts face west (items move west)
+- UBI is set to `belt_dir_define` (the chosen flow direction)
+- UBO is set to opposite direction from `belt_dir_define` (180-degree rotation)
+- For south flow: UBI faces south, UBO faces north
+- For north flow: UBI faces north, UBO faces south
+- For east flow: UBI faces east, UBO faces west
+- For west flow: UBI faces west, UBO faces east
 
-**Rationale:** In Factorio, underground belt direction indicates the flow direction of items, not the facing of entrance/exit. Both pieces of an underground belt pair must face the same direction for items to move through them correctly. The "input" vs "output" type parameter distinguishes entrance from exit, not the direction property.
+**Rationale:** Underground belt entrance and exit sprites require proper orientation for visual connection. The UBI (entrance) faces the flow direction where items enter the underground segment. The UBO (exit) faces the opposite direction (180 degrees rotated) so the exit sprite connects properly with the belt layout. This ensures both functional correctness and proper visual representation of the underground belt pair.
 
-**Previous bug:** Version 0.6.0 and earlier had UBO facing opposite direction from UBI, which caused underground belts to malfunction. Fixed in version 0.7.0.
+**Previous bugs:**
+- Version 0.6.0 and earlier: both UBO and UBI faced the same direction, causing sprite misalignment
+- Fixed in version 0.7.0: UBO now rotated 180 degrees from flow direction
 
 ### Burner Drill Exclusion Pattern
 
-**Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector.
+**Pattern:** Burner mining drill is excluded from the GUI drill selector only for liquid-requiring ores (e.g., uranium ore with sulfuric acid). For normal ores, burner drills are available.
 
 **Implementation:**
-- Function `resource_scanner.find_compatible_drills()` filters out "burner-mining-drill" by name
-- Exclusion happens after category compatibility check: `if can_mine and name ~= "burner-mining-drill" then`
-- Located in `scripts/resource_scanner.lua` at drill compatibility check
+- Function `resource_scanner.find_compatible_drills()` in `scripts/resource_scanner.lua` includes "burner-mining-drill" in the compatible drills list for all ore types
+- Function `gui._add_drill_selector()` in `scripts/gui.lua` filters out "burner-mining-drill" when `needs_fluid` is true
+- GUI filtering happens after technology-based filtering and fluid input compatibility checks
+- Filtering logic: `if needs_fluid and drill.name == "burner-mining-drill" then` skip this drill
 
-**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) and are generally not suitable for automated mining operations. The mod focuses on electric-powered automated mining.
+**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) because they lack fluid input capability. However, they are perfectly functional for normal ores (iron, copper, coal, stone) and players may want to use them in early game scenarios. The resource scanner includes burner drills in the compatible drills list, but the GUI excludes them from the selector when the selected ore requires fluids. This provides flexibility while preventing invalid configurations.
 
 ### Technology-Based Entity Filtering
 
