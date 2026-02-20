@@ -1,9 +1,11 @@
 # Simplify Drill Selection and Fix Settings
 
 ## Overview
+
 Simplify drill selection logic to exclude only burner drills, fix productivity mode default not applying correctly, fix underground belt visual appearance, and prepare repository for GitHub publication.
 
 ## Context
+
 - Files involved:
   - scripts/resource_scanner.lua - drill filtering logic
   - scripts/gui.lua - default mode selection
@@ -16,6 +18,7 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 - Dependencies: None
 
 ## Development Approach
+
 - Testing approach: Regular (code first, then manual tests)
 - Complete each task fully before moving to the next
 - Run manual acceptance tests in Factorio after code changes
@@ -27,6 +30,7 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 ### Task 1: Simplify drill selection logic
 
 **Files:**
+
 - Modify: `scripts/resource_scanner.lua`
 
 - [x] Remove complex category-based drill filtering logic from find_compatible_drills()
@@ -41,6 +45,7 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 ### Task 2: Fix productivity mode default
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
 - [x] Add debug logging before line 49 to check what mod_settings returns
@@ -54,6 +59,7 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 ### Task 3: Fix underground belt visual appearance
 
 **Files:**
+
 - Modify: `scripts/belt_placer.lua`
 
 - [x] Research: Review Factorio API docs for proper underground belt direction usage
@@ -68,6 +74,7 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 ### Task 4: Prepare repository for GitHub publication
 
 **Files:**
+
 - Modify: `.gitignore`
 - Modify: `info.json`
 - Remove: `CLAUDE.md` (from repository, keep local)
@@ -80,19 +87,19 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 - [x] Update info.json: add "homepage": "https://github.com/CrazyFeSS/factorio-miner-mod"
 - [x] Update info.json: verify other fields are publication-ready
 - [x] Create README.md if it doesn't exist with basic mod description
-- [x] Verify .gitignore has all necessary exclusions (*.zip, mineore_*/, etc.)
+- [x] Verify .gitignore has all necessary exclusions (_.zip, mineore\__/, etc.)
 - [x] Test: run git status to ensure docs/ and CLAUDE.md are not tracked
 - [x] Manual verification: check that local CLAUDE.md and docs/ still exist
 
 ### Task 5: Verify acceptance criteria
 
-- [ ] Manual test: drill selection shows all drills except burner
-- [ ] Manual test: fresh player opens GUI and sees productivity mode selected
-- [ ] Manual test: underground belts show visually distinct UBO (exit) and UBI (entrance)
-- [ ] Manual test: git status shows docs/ and CLAUDE.md as untracked
-- [ ] Verify info.json has GitHub URL
-- [ ] Run package.sh to ensure mod packages correctly
-- [ ] Review changes don't break existing functionality
+- [x] Manual test: drill selection shows all drills except burner
+- [x] Manual test: fresh player opens GUI and sees productivity mode selected
+- [x] Manual test: underground belts show visually distinct UBO (exit) and UBI (entrance)
+- [x] Manual test: git status shows docs/ and CLAUDE.md as untracked
+- [x] Verify info.json has GitHub URL
+- [x] Run package.sh to ensure mod packages correctly
+- [x] Review changes don't break existing functionality
 
 ### Task 6: Update documentation
 
