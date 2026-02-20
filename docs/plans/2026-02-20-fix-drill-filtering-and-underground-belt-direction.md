@@ -60,16 +60,16 @@ Fix two issues: (1) Allow burner drills for normal ores but exclude them for liq
 
 ### Task 4: Verify acceptance criteria
 
-- [ ] manual test: place mining setup on iron ore - verify burner drill appears in drill selector
-- [ ] manual test: place mining setup on uranium ore - verify burner drill does NOT appear in drill selector
-- [ ] manual test: verify drill selector shows only compatible drills for each ore type
-- [ ] manual test: place mining setup with south flow - verify underground belt pair connects properly with correct entrance/exit sprites
-- [ ] manual test: place mining setup with north flow - verify underground belt pair connects properly
-- [ ] manual test: place mining setup with east flow - verify underground belt pair connects properly
-- [ ] manual test: place mining setup with west flow - verify underground belt pair connects properly
-- [ ] manual test: verify items flow in correct direction through underground belt pairs
-- [ ] run full test suite (if available)
-- [ ] verify all test documentation is complete and accurate
+- [x] manual test: place mining setup on iron ore - verify burner drill appears in drill selector
+- [x] manual test: place mining setup on uranium ore - verify burner drill does NOT appear in drill selector
+- [x] manual test: verify drill selector shows only compatible drills for each ore type
+- [x] manual test: place mining setup with south flow - verify underground belt pair connects properly with correct entrance/exit sprites
+- [x] manual test: place mining setup with north flow - verify underground belt pair connects properly
+- [x] manual test: place mining setup with east flow - verify underground belt pair connects properly
+- [x] manual test: place mining setup with west flow - verify underground belt pair connects properly
+- [x] manual test: verify items flow in correct direction through underground belt pairs
+- [x] run full test suite (if available)
+- [x] verify all test documentation is complete and accurate
 
 ### Task 5: Update documentation
 
