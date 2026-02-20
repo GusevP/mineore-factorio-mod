@@ -1,19 +1,21 @@
--- Pole Placer - Places ghost electric poles/substations in the gaps between paired miner rows
+-- Pole Placer - Places ghost electric poles in fixed pattern with underground belts
 --
 -- Poles are placed along the belt line gap between paired drill rows.
--- The placement algorithm:
---   1. Reads the pole prototype data at runtime (supply area, wire reach, collision box)
---   2. Calculates the maximum spacing between poles so that:
---      a. All drills are within the pole's supply area
---      b. Consecutive poles are within wire reach of each other
---   3. Places poles along each belt line at the calculated interval
+-- The placement algorithm uses a fixed spacing pattern:
 --
--- For NS orientation: poles are placed along the vertical gap, spaced vertically
--- For EW orientation: poles are placed along the horizontal gap, spaced horizontally
+-- For 3x3+ drills (using underground belts):
+--   Pattern: UBO - UBI - Pole (repeats at each drill position)
+--   - Pole placed after each underground belt pair (UBI)
+--   - Position: drill_center + 1 tile in belt flow direction
+--   - For NS orientation: pattern repeats every drill height tiles
+--   - For EW orientation: pattern repeats every drill width tiles
 --
--- Multi-tile poles (e.g., 2x2 substations) are centered in the gap. If the pole
--- is too wide to fit in the free rows (middle gap rows not occupied by belts),
--- can_place_entity will reject the placement and the pole is skipped.
+-- For 2x2 drills (using plain belts):
+--   - Poles placed at regular drill spacing intervals along belt columns
+--   - Uses calculated spacing to ensure coverage and connectivity
+--
+-- Multi-tile poles are centered in the gap. If the pole
+-- is too wide to fit in the free rows, placement is skipped.
 
 local ghost_util = require("scripts.ghost_util")
 
@@ -42,35 +44,8 @@ function pole_placer.get_pole_info(pole_name)
     }
 end
 
---- Calculate the maximum spacing between poles along a belt line.
----
---- The spacing is limited by two constraints:
----   1. Supply coverage: each drill must be within the pole's supply area.
----      Two consecutive poles placed at distance D apart will have overlapping
----      supply areas if D <= 2 * supply_area_distance. We use this as the
----      supply constraint.
----
----   2. Wire connectivity: consecutive poles must be within max_wire_distance
----      of each other.
----
---- We use the minimum of these two constraints, rounded down to an integer.
----
---- @param pole_info table Pole prototype info from get_pole_info()
---- @return number spacing Maximum spacing between pole centers along the belt line
-function pole_placer.calculate_spacing(pole_info)
-    local supply_spacing = math.floor(2 * pole_info.supply_area_distance)
-    local wire_spacing = math.floor(pole_info.max_wire_distance)
-    local spacing = math.min(supply_spacing, wire_spacing)
-
-    if spacing < 1 then
-        spacing = 1
-    end
-
-    return spacing
-end
-
 --- Place ghost electric poles along all belt lines.
---- For 3x3+ drills: poles go in the belt line gap (existing behavior).
+--- For 3x3+ drills: uses fixed pattern (UBO-UBI-Pole) at each drill position.
 --- For 2x2 drills: poles go in the pole gap columns between pairs AND on outer edges.
 --- @param surface LuaSurface The game surface
 --- @param force string Force name for ghost placement
@@ -83,10 +58,11 @@ end
 --- @param pole_gap_positions table|nil Cross-axis positions of pole gaps between pairs (2x2 drills)
 --- @param outer_edge_positions table|nil Cross-axis positions of outer edges (2x2 drills)
 --- @param is_small_drill boolean|nil Whether this is a 2x2 (small) drill
+--- @param belt_direction string|nil Belt flow direction ("north", "south", "east", "west")
 --- @param polite boolean|nil When true, respect polite placement
 --- @return number placed Count of pole ghosts placed
 --- @return number skipped Count of positions where placement failed
-function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, polite)
+function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, belt_direction, polite)
     if not pole_name or pole_name == "" then
         return 0, 0
     end
@@ -96,7 +72,6 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
         return 0, 0
     end
 
-    local spacing = pole_placer.calculate_spacing(pole_info)
     local quality = pole_quality or "normal"
 
     local half_w = drill_info.width / 2
@@ -106,7 +81,8 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
     local skipped = 0
 
     if is_small_drill then
-        -- 2x2 drills: place poles in pole gap columns between pairs and on outer edges
+        -- 2x2 drills: place poles at regular drill spacing intervals
+        -- Use drill dimensions as spacing to align with drill pattern
         -- Combine pole_gap_positions and outer_edge_positions into one list
         local all_cross_positions = {}
         if outer_edge_positions then
@@ -139,6 +115,9 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
             local along_start = along_min - half_along
             local along_end = along_max + half_along
 
+            -- For 2x2 drills, use drill dimensions as spacing
+            local spacing = orientation == "NS" and drill_info.height or drill_info.width
+
             for _, cross_pos in ipairs(all_cross_positions) do
                 local p, s = pole_placer._place_pole_column(
                     surface, force, player, orientation, cross_pos,
@@ -148,16 +127,17 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
             end
         end
     else
-        -- 3x3+ drills: poles go in the belt line gap (existing behavior)
+        -- 3x3+ drills: poles use fixed pattern (UBO-UBI-Pole at each drill position)
+        belt_direction = belt_direction or "south"
         for _, belt_line in ipairs(belt_lines) do
             if belt_line.orientation == "NS" then
                 local p, s = pole_placer._place_ns_poles(
-                    surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap, polite)
+                    surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite)
                 placed = placed + p
                 skipped = skipped + s
             elseif belt_line.orientation == "EW" then
                 local p, s = pole_placer._place_ew_poles(
-                    surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap, polite)
+                    surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite)
                 placed = placed + p
                 skipped = skipped + s
             end
@@ -218,95 +198,105 @@ function pole_placer._place_pole_column(surface, force, player, orientation, cro
     return placed, skipped
 end
 
---- Place poles along a north-south oriented belt line.
---- Poles are placed vertically along the gap at calculated intervals.
---- The x-position is the center of the gap, snapped to the correct tile
---- alignment for the pole's width.
+--- Place poles along a north-south oriented belt line using fixed pattern.
+--- For 3x3+ drills: places one pole after each UBI (drill_center + 1 tile in flow direction).
+--- The x-position is the center of the gap, snapped to the correct tile alignment.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
 --- @param belt_line table Belt line metadata from calculator
 --- @param half_h number Half the drill height
---- @param spacing number Distance between pole centers
 --- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
---- @param gap number Gap size in tiles
+--- @param belt_direction string Belt flow direction ("north" or "south")
 --- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, spacing, pole_info, quality, gap, polite)
+function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite)
     local placed = 0
     local skipped = 0
 
     -- For NS belts, the gap spans the x-axis. x_center is the midpoint.
-    -- For odd-width poles (1x1, 3x3): center on x_center (tile-centered)
-    -- For even-width poles (2x2): snap so the pole straddles the gap center
     local x_center = belt_line.x
 
-    -- y extent: from the top edge of the first drill to the bottom edge of the last drill
-    local y_start = belt_line.y_min - half_h
-    local y_end = belt_line.y_max + half_h
+    -- Use fixed pattern: place pole at drill_center + 1 tile in belt flow direction
+    -- This places the pole after the UBI (which is at drill_center)
+    local drill_positions = belt_line.drill_along_positions or {}
 
-    local y = y_start + spacing / 2
-    while y <= y_end do
+    for _, drill_center in ipairs(drill_positions) do
+        local pole_y
+        if belt_direction == "south" then
+            -- Belt flows south: pole goes 1 tile south of drill center (after UBI)
+            pole_y = drill_center + 1
+        else
+            -- Belt flows north: pole goes 1 tile north of drill center (after UBI)
+            pole_y = drill_center - 1
+        end
+
         -- Snap y to tile center for proper alignment based on pole height
         local snap_y
         if pole_info.height % 2 == 0 then
-            snap_y = math.floor(y)  -- even-height: place on tile boundary
+            snap_y = math.floor(pole_y)  -- even-height: place on tile boundary
         else
-            snap_y = math.floor(y) + 0.5  -- odd-height: place on tile center
+            snap_y = math.floor(pole_y) + 0.5  -- odd-height: place on tile center
         end
+
         local pos = {x = x_center, y = snap_y}
         local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
-        y = y + spacing
     end
 
     return placed, skipped
 end
 
---- Place poles along an east-west oriented belt line.
---- Poles are placed horizontally along the gap at calculated intervals.
---- The y-position is the center of the gap, snapped to the correct tile
---- alignment for the pole's height.
+--- Place poles along an east-west oriented belt line using fixed pattern.
+--- For 3x3+ drills: places one pole after each UBI (drill_center + 1 tile in flow direction).
+--- The y-position is the center of the gap, snapped to the correct tile alignment.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
 --- @param belt_line table Belt line metadata from calculator
 --- @param half_w number Half the drill width
---- @param spacing number Distance between pole centers
 --- @param pole_info table Pole prototype info (name, width, height)
 --- @param quality string Quality name
---- @param gap number Gap size in tiles
+--- @param belt_direction string Belt flow direction ("east" or "west")
 --- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, spacing, pole_info, quality, gap, polite)
+function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite)
     local placed = 0
     local skipped = 0
 
     -- For EW belts, the gap spans the y-axis. y_center is the midpoint.
     local y_center = belt_line.y
 
-    -- x extent: from the left edge of the first drill to the right edge of the last drill
-    local x_start = belt_line.x_min - half_w
-    local x_end = belt_line.x_max + half_w
+    -- Use fixed pattern: place pole at drill_center + 1 tile in belt flow direction
+    -- This places the pole after the UBI (which is at drill_center)
+    local drill_positions = belt_line.drill_along_positions or {}
 
-    local x = x_start + spacing / 2
-    while x <= x_end do
+    for _, drill_center in ipairs(drill_positions) do
+        local pole_x
+        if belt_direction == "east" then
+            -- Belt flows east: pole goes 1 tile east of drill center (after UBI)
+            pole_x = drill_center + 1
+        else
+            -- Belt flows west: pole goes 1 tile west of drill center (after UBI)
+            pole_x = drill_center - 1
+        end
+
         -- Snap x to tile center for proper alignment based on pole width
         local snap_x
         if pole_info.width % 2 == 0 then
-            snap_x = math.floor(x)  -- even-width: place on tile boundary
+            snap_x = math.floor(pole_x)  -- even-width: place on tile boundary
         else
-            snap_x = math.floor(x) + 0.5  -- odd-width: place on tile center
+            snap_x = math.floor(pole_x) + 0.5  -- odd-width: place on tile center
         end
+
         local pos = {x = snap_x, y = y_center}
         local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
-        x = x + spacing
     end
 
     return placed, skipped

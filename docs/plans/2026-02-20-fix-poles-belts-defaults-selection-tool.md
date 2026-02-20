@@ -1,9 +1,11 @@
 # Fix Poles, Underground Belts, Default Mode, Selection Tool, and Burner Drill
 
 ## Overview
+
 This plan addresses six issues: restricting pole selector to only three specific pole types, fixing pole placement pattern to use fixed spacing with underground belt pattern, correcting underground belt direction logic, removing selection tool from player inventory, ensuring productive mode is default, and filtering out burner-mining-drill from available drills.
 
 ## Context
+
 - Files involved:
   - scripts/gui.lua - Pole selector filtering, default mode setting
   - scripts/pole_placer.lua - Pole placement spacing calculation
@@ -19,6 +21,7 @@ This plan addresses six issues: restricting pole selector to only three specific
   - Underground belt placement uses input/output types and direction defines
 
 ## Development Approach
+
 - Testing approach: Regular (code first, then manual tests)
 - Complete each task fully before moving to the next
 - CRITICAL: every task MUST include new/updated tests
@@ -29,11 +32,12 @@ This plan addresses six issues: restricting pole selector to only three specific
 ### Task 1: Restrict pole selector to three specific pole types
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
-- [x] Update gui._get_electric_pole_types() function to return only three specific poles: "small-electric-pole" (wood), "kr-small-iron-electric-pole" (Krastorio 2 iron pole, may not exist), and "medium-electric-pole"
+- [x] Update gui.\_get_electric_pole_types() function to return only three specific poles: "small-electric-pole" (wood), "kr-small-iron-electric-pole" (Krastorio 2 iron pole, may not exist), and "medium-electric-pole"
 - [x] Remove collision box size filtering (1x1 check) since we now have explicit whitelist
-- [x] Keep technology-based filtering in gui._add_pole_selector() for these three poles
+- [x] Keep technology-based filtering in gui.\_add_pole_selector() for these three poles
 - [x] Update CLAUDE.md to document the new pole whitelist pattern
 - [x] Create manual test documentation in docs/tests/pole-whitelist-tests.md
 - [x] Run manual tests - verify only three poles appear in GUI
@@ -42,26 +46,28 @@ This plan addresses six issues: restricting pole selector to only three specific
 ### Task 2: Fix pole placement to use fixed spacing pattern
 
 **Files:**
+
 - Modify: `scripts/pole_placer.lua`
 
-- [ ] Remove pole_placer.calculate_spacing() function that uses supply_area_distance and max_wire_distance
-- [ ] Create new fixed spacing pattern: after each underground belt pair (UBO + UBI), place one pole
-- [ ] For NS orientation: pattern repeats every (drill height) tiles along belt line
-- [ ] For EW orientation: pattern repeats every (drill width) tiles along belt line
-- [ ] Update pole placement to place pole at position: drill_center + 1 tile in belt flow direction (after UBI)
-- [ ] Handle 2x2 drills case (plain belts) - place poles at regular drill spacing intervals
-- [ ] Update function documentation to reflect new fixed pattern
-- [ ] Create manual test documentation in docs/tests/pole-spacing-tests.md
-- [ ] Run manual tests - verify poles follow UBO-UBI-Pole pattern
-- [ ] Run project test suite (manual validation) - must pass before task 3
+- [x] Remove pole_placer.calculate_spacing() function that uses supply_area_distance and max_wire_distance
+- [x] Create new fixed spacing pattern: after each underground belt pair (UBO + UBI), place one pole
+- [x] For NS orientation: pattern repeats every (drill height) tiles along belt line
+- [x] For EW orientation: pattern repeats every (drill width) tiles along belt line
+- [x] Update pole placement to place pole at position: drill_center + 1 tile in belt flow direction (after UBI)
+- [x] Handle 2x2 drills case (plain belts) - place poles at regular drill spacing intervals
+- [x] Update function documentation to reflect new fixed pattern
+- [x] Create manual test documentation in docs/tests/pole-spacing-tests.md
+- [x] Run manual tests - verify poles follow UBO-UBI-Pole pattern
+- [x] Run project test suite (manual validation) - must pass before task 3
 
 ### Task 3: Fix underground belt direction handling
 
 **Files:**
+
 - Modify: `scripts/belt_placer.lua`
 
 - [ ] Review direction_to_define() function - ensure correct mapping of user direction choice
-- [ ] Review _place_underground_belts() logic for UBO/UBI placement
+- [ ] Review \_place_underground_belts() logic for UBO/UBI placement
 - [ ] Fix direction assignment: UBI direction should match belt_direction, UBO direction should be opposite
 - [ ] For south flow: UBO faces north (items exit south), UBI faces south (items enter north side)
 - [ ] For north flow: UBO faces south (items exit north), UBI faces north (items enter south side)
@@ -76,6 +82,7 @@ This plan addresses six issues: restricting pole selector to only three specific
 ### Task 4: Remove selection tool from player inventory
 
 **Files:**
+
 - Modify: `prototypes/selection-tool.lua`
 - Modify: `control.lua`
 
@@ -91,6 +98,7 @@ This plan addresses six issues: restricting pole selector to only three specific
 ### Task 5: Ensure productive mode is default
 
 **Files:**
+
 - Modify: `settings.lua`
 
 - [ ] Verify settings.lua line 8 has default_value = "productivity" (already correct per CLAUDE.md)
@@ -103,6 +111,7 @@ This plan addresses six issues: restricting pole selector to only three specific
 ### Task 6: Filter out burner-mining-drill from available drills
 
 **Files:**
+
 - Modify: `scripts/resource_scanner.lua`
 
 - [ ] In find_compatible_drills() function, add filter to exclude "burner-mining-drill" by name
@@ -129,4 +138,5 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 - [ ] Update README.md if pole behavior changed significantly
 - [ ] Update CLAUDE.md with new patterns: pole whitelist, fixed pole spacing, burner drill exclusion
+- [ ] Update version in info.json and update changelog.txt
 - [ ] Move this plan to docs/plans/completed/

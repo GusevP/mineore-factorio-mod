@@ -515,6 +515,7 @@ function placer.place(player, scan_results, settings)
             result.pole_gap_positions,
             result.outer_edge_positions,
             result.is_small_drill,
+            belt_direction,
             polite
         )
     end
