@@ -64,10 +64,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 **Files:**
 - Modify: `scripts/gui.lua`
 
-- [ ] Update gui._add_pole_selector function to set selected_pole to "medium-electric-pole" when no previous setting exists and entity is available/researched
-- [ ] Ensure fallback to first available pole when medium-electric-pole is not researched
-- [ ] Write tests for pole default selection logic with technology filtering
-- [ ] Run project test suite - must pass before task 5
+- [x] Update gui._add_pole_selector function to set selected_pole to "medium-electric-pole" when no previous setting exists and entity is available/researched
+- [x] Ensure fallback to first available pole when medium-electric-pole is not researched
+- [x] Write tests for pole default selection logic with technology filtering
+- [x] Run project test suite - must pass before task 5
 
 ### Task 5: Set default pipe to pipe (iron pipe)
 

@@ -480,26 +480,63 @@ function gui._add_pole_selector(parent, settings, player)
     pole_flow.style.horizontal_spacing = 4
 
     local pole_types = gui._get_electric_pole_types()
-    local selected_pole = settings.pole_name
-    local has_selection = false
 
+    -- Filter poles by technology availability
+    local available_poles = {}
     for _, pole_name in ipairs(pole_types) do
         local proto = prototypes.entity[pole_name]
         if proto and is_entity_available(player, pole_name) then
-            local btn = pole_flow.add{
-                type = "choose-elem-button",
-                name = "mineore_pole_btn_" .. pole_name,
-                elem_type = "entity",
-                entity = pole_name,
-                style = "slot_sized_button",
-                tooltip = proto.localised_name,
-            }
-            btn.locked = true
-            btn.tags = {selector_group = "pole", entity_name = pole_name}
+            available_poles[#available_poles + 1] = pole_name
+        end
+    end
+
+    local selected_pole = settings.pole_name
+    -- Verify remembered pole is still available; reset if not
+    if selected_pole then
+        local found = false
+        for _, pole_name in ipairs(available_poles) do
             if pole_name == selected_pole then
-                btn.style = "slot_sized_button_pressed"
-                has_selection = true
+                found = true
+                break
             end
+        end
+        if not found then
+            selected_pole = nil
+        end
+    end
+    -- Default to medium-electric-pole if available, otherwise first pole
+    if not selected_pole and #available_poles > 0 then
+        -- Try to find medium-electric-pole in the available list
+        local found_medium = false
+        for _, pole_name in ipairs(available_poles) do
+            if pole_name == "medium-electric-pole" then
+                selected_pole = "medium-electric-pole"
+                found_medium = true
+                break
+            end
+        end
+        -- Fallback to first available pole if medium-electric-pole not found
+        if not found_medium then
+            selected_pole = available_poles[1]
+        end
+    end
+
+    local has_selection = false
+    for _, pole_name in ipairs(available_poles) do
+        local proto = prototypes.entity[pole_name]
+        local btn = pole_flow.add{
+            type = "choose-elem-button",
+            name = "mineore_pole_btn_" .. pole_name,
+            elem_type = "entity",
+            entity = pole_name,
+            style = "slot_sized_button",
+            tooltip = proto.localised_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "pole", entity_name = pole_name}
+        if pole_name == selected_pole then
+            btn.style = "slot_sized_button_pressed"
+            has_selection = true
         end
     end
 
