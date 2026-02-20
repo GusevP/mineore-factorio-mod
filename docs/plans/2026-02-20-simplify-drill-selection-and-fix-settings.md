@@ -73,16 +73,16 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 - Remove: `CLAUDE.md` (from repository, keep local)
 - Remove: `docs/` (entire directory from repository)
 
-- [ ] Add CLAUDE.md to .gitignore
-- [ ] Add docs/ to .gitignore
-- [ ] Remove CLAUDE.md from git tracking: git rm --cached CLAUDE.md
-- [ ] Remove docs/ from git tracking: git rm -r --cached docs/
-- [ ] Update info.json: add "homepage": "https://github.com/CrazyFeSS/factorio-miner-mod"
-- [ ] Update info.json: verify other fields are publication-ready
-- [ ] Create README.md if it doesn't exist with basic mod description
-- [ ] Verify .gitignore has all necessary exclusions (*.zip, mineore_*/, etc.)
-- [ ] Test: run git status to ensure docs/ and CLAUDE.md are not tracked
-- [ ] Manual verification: check that local CLAUDE.md and docs/ still exist
+- [x] Add CLAUDE.md to .gitignore
+- [x] Add docs/ to .gitignore
+- [x] Remove CLAUDE.md from git tracking: git rm --cached CLAUDE.md
+- [x] Remove docs/ from git tracking: git rm -r --cached docs/
+- [x] Update info.json: add "homepage": "https://github.com/CrazyFeSS/factorio-miner-mod"
+- [x] Update info.json: verify other fields are publication-ready
+- [x] Create README.md if it doesn't exist with basic mod description
+- [x] Verify .gitignore has all necessary exclusions (*.zip, mineore_*/, etc.)
+- [x] Test: run git status to ensure docs/ and CLAUDE.md are not tracked
+- [x] Manual verification: check that local CLAUDE.md and docs/ still exist
 
 ### Task 5: Verify acceptance criteria
 

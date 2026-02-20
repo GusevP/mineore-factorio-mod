@@ -4,7 +4,7 @@
   "title": "Miner Planner",
   "author": "CrazyFeSS",
   "contact": "",
-  "homepage": "",
+  "homepage": "https://github.com/CrazyFeSS/factorio-miner-mod",
   "description": "Automates mining drill placement on ore patches with transport belts, electric poles, and beacons. Drag-select an area, configure drills, belts, poles, and beacons via icon-based GUI, then ghost entities are placed in paired-row layouts ready for bots. Supports all drill types, belt tiers, pole types, and resources across all planets.",
   "factorio_version": "2.0",
   "dependencies": ["base >= 2.0", "? space-age >= 2.0"]
