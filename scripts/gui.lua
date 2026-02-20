@@ -346,9 +346,21 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
             selected_name = nil
         end
     end
-    -- Default to first drill if no valid selection
+    -- Default to electric-mining-drill if available, otherwise first drill
     if not selected_name and #drills_to_show > 0 then
-        selected_name = drills_to_show[1].name
+        -- Try to find electric-mining-drill in the filtered list
+        local found_electric = false
+        for _, drill in ipairs(drills_to_show) do
+            if drill.name == "electric-mining-drill" then
+                selected_name = "electric-mining-drill"
+                found_electric = true
+                break
+            end
+        end
+        -- Fallback to first available drill if electric drill not found
+        if not found_electric then
+            selected_name = drills_to_show[1].name
+        end
     end
 
     for _, drill in ipairs(drills_to_show) do

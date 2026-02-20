@@ -54,10 +54,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 **Files:**
 - Modify: `scripts/gui.lua`
 
-- [ ] Update gui._add_drill_selector function to prefer "electric-mining-drill" when available instead of first drill in filtered list
-- [ ] Ensure fallback to first available drill when electric-mining-drill is not in the filtered/researched drills list
-- [ ] Write tests for drill default selection logic with technology filtering
-- [ ] Run project test suite - must pass before task 4
+- [x] Update gui._add_drill_selector function to prefer "electric-mining-drill" when available instead of first drill in filtered list
+- [x] Ensure fallback to first available drill when electric-mining-drill is not in the filtered/researched drills list
+- [x] Write tests for drill default selection logic with technology filtering
+- [x] Run project test suite - must pass before task 4
 
 ### Task 4: Set default pole to medium-electric-pole
 
