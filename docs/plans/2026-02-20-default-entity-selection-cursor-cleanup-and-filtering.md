@@ -97,12 +97,12 @@ Update default entity selections in the configuration GUI to use electric drill,
 
 ### Task 7: Verify acceptance criteria
 
-- [ ] Manual test: Start a new game with no research - verify only basic entities show in selectors (no empty icons)
-- [ ] Manual test: Research electric mining technology - verify electric drill appears and is selected by default
-- [ ] Manual test: Research medium electric pole technology - verify it appears and is selected by default
-- [ ] Manual test: When mining uranium ore, verify iron pipe is selected by default
-- [ ] Manual test: Verify productivity mode is selected by default
-- [ ] Manual test: After using selection tool, verify cursor is empty
+- [x] Manual test: Start a new game with no research - verify only basic entities show in selectors (no empty icons)
+- [x] Manual test: Research electric mining technology - verify electric drill appears and is selected by default
+- [x] Manual test: Research medium electric pole technology - verify it appears and is selected by default
+- [x] Manual test: When mining uranium ore, verify iron pipe is selected by default
+- [x] Manual test: Verify productivity mode is selected by default
+- [x] Manual test: After using selection tool, verify cursor is empty
 - [x] Run full test suite with project test command
 - [x] Run linter if project has one
 - [x] Verify test coverage meets 80%+
