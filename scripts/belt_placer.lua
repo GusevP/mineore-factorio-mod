@@ -165,14 +165,17 @@ function belt_placer._place_plain_belts(surface, force, player, belt_line, drill
 end
 
 --- Place underground belts for 3x3+ drills.
---- For each drill along the belt line, places UBI at the drill's output
---- position (center) and UBO one tile before UBI in the belt flow direction.
+--- For each drill along the belt line, places underground belt pairs:
+---   - First drill: only UBI (entrance to underground section)
+---   - Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
 --- The 1-tile gap between drill pairs is left free for poles.
 ---
+--- Both UBI and UBO face the same direction (belt flow direction) for proper auto-connection.
+--- The belt_to_ground_type parameter ("input"/"output") determines entrance vs exit behavior.
+---
 --- For NS orientation (belt flows south):
----   UBO at drill_center_y - 1 (one tile north of center)
----   UBI at drill_center_y (center of drill body = output position)
----   Remaining rows in drill body left free for poles
+---   First drill: only UBI at drill_center_y
+---   Subsequent drills: UBO at drill_center_y - 1, UBI at drill_center_y
 ---
 --- For belt flowing north, UBO/UBI positions are mirrored.
 ---
@@ -193,53 +196,56 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
     local placed = 0
     local skipped = 0
 
-    -- UBI (entrance/input) faces the belt flow direction (items enter and flow in this direction).
-    -- UBO (exit/output) faces the opposite direction (180 degrees rotated) for proper sprite connection.
+    -- Both UBI (entrance/input) and UBO (exit/output) face the same direction (belt flow direction).
+    -- This allows Factorio's auto-connection system to properly pair them.
     -- The belt_to_ground_type parameter ("input"/"output") determines which sprite is shown:
     --   - "input" uses UndergroundBeltPrototype.structure.direction_in (entrance visual)
     --   - "output" uses UndergroundBeltPrototype.structure.direction_out (exit visual)
-    -- For a south-flowing belt: UBI has direction=south, UBO has direction=north
-    -- For a north-flowing belt: UBI has direction=north, UBO has direction=south
-    -- For an east-flowing belt: UBI has direction=east, UBO has direction=west
-    -- For a west-flowing belt: UBI has direction=west, UBO has direction=east
+    -- For a south-flowing belt: both UBI and UBO have direction=south
+    -- For a north-flowing belt: both UBI and UBO have direction=north
+    -- For an east-flowing belt: both UBI and UBO have direction=east
+    -- For a west-flowing belt: both UBI and UBO have direction=west
     local ubi_dir = belt_dir_define
-    local ubo_dir = opposite_direction(belt_dir_define)
+    local ubo_dir = belt_dir_define
 
     local drill_positions = belt_line.drill_along_positions or {}
 
     if belt_line.orientation == "NS" then
         local x = belt_line.x
 
-        for _, drill_center in ipairs(drill_positions) do
+        for drill_index, drill_center in ipairs(drill_positions) do
             -- drill_center is the y-position of the drill center
-            -- UBI at center (output position), UBO one tile before in flow direction
+            -- First drill: only UBI (entrance to underground section)
+            -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
             local ubi_y, ubo_y
             if belt_direction == "south" then
                 -- Belt flows south (items move downward/south):
-                -- - UBO (output) at drill_center - 1, faces north (180 degrees from flow direction)
-                -- - UBI (input) at drill_center, faces south (same as flow direction)
-                -- UBO faces opposite direction for proper entrance/exit sprite connection
+                -- - UBO (output/exit) at drill_center - 1, faces south (same as flow direction)
+                -- - UBI (input/entrance) at drill_center, faces south (same as flow direction)
+                -- Both face the same direction for auto-connection
                 ubo_y = drill_center - 1
                 ubi_y = drill_center
             else
                 -- Belt flows north (items move upward/north):
-                -- - UBO (output) at drill_center + 1, faces south (180 degrees from flow direction)
-                -- - UBI (input) at drill_center, faces north (same as flow direction)
-                -- UBO faces opposite direction for proper entrance/exit sprite connection
+                -- - UBO (output/exit) at drill_center + 1, faces north (same as flow direction)
+                -- - UBI (input/entrance) at drill_center, faces north (same as flow direction)
+                -- Both face the same direction for auto-connection
                 ubo_y = drill_center + 1
                 ubi_y = drill_center
             end
 
-            -- Place UBO (exit) - note: Factorio underground belt exit has type "output"
-            local ubo_pos = {x = x, y = ubo_y}
-            local p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
-            placed = placed + p
-            skipped = skipped + s
+            -- Place UBO (exit) for all drills except the first (first drill has no preceding UBI to connect to)
+            if drill_index > 1 then
+                local ubo_pos = {x = x, y = ubo_y}
+                local p, s = belt_placer._place_underground_ghost(
+                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+                placed = placed + p
+                skipped = skipped + s
+            end
 
-            -- Place UBI (entrance) - has type "input"
+            -- Place UBI (entrance) for all drills
             local ubi_pos = {x = x, y = ubi_y}
-            p, s = belt_placer._place_underground_ghost(
+            local p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
@@ -247,33 +253,37 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
     else -- EW
         local y = belt_line.y
 
-        for _, drill_center in ipairs(drill_positions) do
+        for drill_index, drill_center in ipairs(drill_positions) do
             -- drill_center is the x-position of the drill center
+            -- First drill: only UBI (entrance to underground section)
+            -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
             local ubi_x, ubo_x
             if belt_direction == "east" then
                 -- Belt flows east (items move rightward/east):
-                -- - UBO (output) at drill_center - 1, faces west (180 degrees from flow direction)
-                -- - UBI (input) at drill_center, faces east (same as flow direction)
-                -- UBO faces opposite direction for proper entrance/exit sprite connection
+                -- - UBO (output/exit) at drill_center - 1, faces east (same as flow direction)
+                -- - UBI (input/entrance) at drill_center, faces east (same as flow direction)
+                -- Both face the same direction for auto-connection
                 ubo_x = drill_center - 1
                 ubi_x = drill_center
             else
                 -- Belt flows west (items move leftward/west):
-                -- - UBO (output) at drill_center + 1, faces east (180 degrees from flow direction)
-                -- - UBI (input) at drill_center, faces west (same as flow direction)
-                -- UBO faces opposite direction for proper entrance/exit sprite connection
+                -- - UBO (output/exit) at drill_center + 1, faces west (same as flow direction)
+                -- - UBI (input/entrance) at drill_center, faces west (same as flow direction)
+                -- Both face the same direction for auto-connection
                 ubo_x = drill_center + 1
                 ubi_x = drill_center
             end
 
-            -- Place UBO (exit)
-            local ubo_pos = {x = ubo_x, y = y}
-            local p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
-            placed = placed + p
-            skipped = skipped + s
+            -- Place UBO (exit) for all drills except the first (first drill has no preceding UBI to connect to)
+            if drill_index > 1 then
+                local ubo_pos = {x = ubo_x, y = y}
+                local p, s = belt_placer._place_underground_ghost(
+                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+                placed = placed + p
+                skipped = skipped + s
+            end
 
-            -- Place UBI (entrance)
+            -- Place UBI (entrance) for all drills
             local ubi_pos = {x = ubi_x, y = y}
             p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)

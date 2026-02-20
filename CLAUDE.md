@@ -34,22 +34,23 @@
 
 ### Underground Belt Direction Pattern
 
-**Pattern:** UBI (input) faces the belt flow direction, while UBO (output) faces the opposite direction (180-degree rotation) for proper sprite connection.
+**Pattern:** Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. The first drill in a sequence gets only UBI, while subsequent drills get both UBO and UBI.
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
-- UBI is set to `belt_dir_define` (the chosen flow direction)
-- UBO is set to opposite direction from `belt_dir_define` (180-degree rotation)
-- For south flow: UBI faces south, UBO faces north
-- For north flow: UBI faces north, UBO faces south
-- For east flow: UBI faces east, UBO faces west
-- For west flow: UBI faces west, UBO faces east
+- Both UBI and UBO are set to `belt_dir_define` (the chosen flow direction)
+- For south flow: both UBI and UBO face south
+- For north flow: both UBI and UBO face north
+- For east flow: both UBI and UBO face east
+- For west flow: both UBI and UBO face west
+- Placement pattern: first drill gets only UBI, subsequent drills get UBO then UBI
 
-**Rationale:** Underground belt entrance and exit sprites require proper orientation for visual connection. The UBI (entrance) faces the flow direction where items enter the underground segment. The UBO (exit) faces the opposite direction (180 degrees rotated) so the exit sprite connects properly with the belt layout. This ensures both functional correctness and proper visual representation of the underground belt pair.
+**Rationale:** Factorio's underground belt auto-connection system requires both entrance and exit to face the same direction. The belt_to_ground_type parameter ("input" vs "output") determines the functional behavior and sprite, not the direction. When both belts face the same direction, Factorio automatically connects them without manual rotation. The first drill only needs UBI (entrance) because there's no previous underground section to exit from. Subsequent drills need UBO (exit from previous section) then UBI (entrance to next section).
 
 **Previous bugs:**
 - Version 0.6.0 and earlier: both UBO and UBI faced the same direction, causing sprite misalignment
-- Fixed in version 0.7.0: UBO now rotated 180 degrees from flow direction
+- Version 0.7.0: UBO rotated 180 degrees from flow direction, causing connection issues
+- Fixed in version 0.8.0: both UBO and UBI face same direction, first drill skips UBO placement
 
 ### Burner Drill Exclusion Pattern
 

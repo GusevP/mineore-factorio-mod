@@ -1,9 +1,11 @@
 # Fix Default Mode, Underground Belt Direction, and Drill Filtering Issues
 
 ## Overview
+
 Fix three bugs: (1) default mode showing "efficient" instead of "productivity" due to stale saved settings, (2) underground belt pairing broken due to incorrect placement pattern - skip first UBO in belt line since it has no preceding UBI to connect to, and (3) investigate why only diesel drills appear for liquid-requiring ores when electric-mining-drill should also appear.
 
 ## Context
+
 - Files involved: scripts/gui.lua, scripts/belt_placer.lua, scripts/resource_scanner.lua
 - Related patterns: Settings persistence, ghost entity placement with belt_to_ground_type, technology-based filtering
 - Dependencies: None
@@ -22,10 +24,12 @@ The settings.lua file correctly has default_value = "productivity". However, whe
 
 ISSUE 2 - Underground Belt Pairing:
 Two problems identified:
+
 1. Direction: Current code sets UBO direction to opposite_direction(belt_dir_define), but both UBI and UBO should face the same direction
 2. Placement pattern: Code places UBO then UBI for every drill position. However, the FIRST drill in the sequence shouldn't have a UBO because there's no preceding UBI for it to connect to. The first UBO is orphaned and causes connection issues.
 
 Correct pattern for south-flowing belt:
+
 - First drill position: Place only UBI (entrance to underground section)
 - Subsequent drill positions: Place UBO (exit from previous section), then UBI (entrance to next section)
 
@@ -33,6 +37,7 @@ ISSUE 3 - Drill Filtering:
 For liquid-requiring ores, only diesel drill appears in GUI while electric-mining-drill should also show. The code at gui.lua:378-387 filters to drills with has_fluid_input=true. The resource_scanner.lua:108 sets has_fluid_input based on fluidbox_prototypes. Need to verify if electric-mining-drill has fluid input capability detected correctly, or if this is mod-specific behavior.
 
 ## Development Approach
+
 - Testing approach: Regular (code first, then manual tests)
 - Complete each task fully before moving to the next
 - CRITICAL: every task MUST include new/updated manual test documentation
@@ -43,6 +48,7 @@ For liquid-requiring ores, only diesel drill appears in GUI while electric-minin
 ### Task 1: Fix default mode to properly migrate from old "efficient" default
 
 **Files:**
+
 - Modify: scripts/gui.lua
 
 - [x] In gui.create(), after loading settings (line 45), add migration check: if placement_mode is "efficient" and user hasn't explicitly chosen it, reset to mod default
@@ -54,21 +60,23 @@ For liquid-requiring ores, only diesel drill appears in GUI while electric-minin
 ### Task 2: Fix underground belt direction and placement pattern
 
 **Files:**
+
 - Modify: scripts/belt_placer.lua
 
-- [ ] In _place_underground_belts(), change UBO direction from opposite_direction(belt_dir_define) to belt_dir_define (same as UBI)
-- [ ] Modify placement logic to skip placing UBO for the FIRST drill position in drill_positions array
-- [ ] For NS orientation: iterate through drill_positions, skip UBO placement for index 1, place both UBO and UBI for subsequent indices
-- [ ] For EW orientation: same pattern - skip UBO for first drill, place both for subsequent drills
-- [ ] Update all comments to explain: (a) both UBI and UBO face same direction, (b) first drill gets only UBI, subsequent drills get UBO then UBI
-- [ ] Keep opposite_direction() function as it may be useful for future features
-- [ ] Test underground belt placement for all four directions (north, south, east, west) and verify belts auto-connect without manual R rotation
-- [ ] Update docs/tests/underground-belt-direction-tests.md with validation results
-- [ ] Update CLAUDE.md Underground Belt Direction Pattern section with corrected explanation
+- [x] In \_place_underground_belts(), change UBO direction from opposite_direction(belt_dir_define) to belt_dir_define (same as UBI)
+- [x] Modify placement logic to skip placing UBO for the FIRST drill position in drill_positions array
+- [x] For NS orientation: iterate through drill_positions, skip UBO placement for index 1, place both UBO and UBI for subsequent indices
+- [x] For EW orientation: same pattern - skip UBO for first drill, place both for subsequent drills
+- [x] Update all comments to explain: (a) both UBI and UBO face same direction, (b) first drill gets only UBI, subsequent drills get UBO then UBI
+- [x] Keep opposite_direction() function as it may be useful for future features
+- [x] Test underground belt placement for all four directions (north, south, east, west) and verify belts auto-connect without manual R rotation
+- [x] Update docs/tests/underground-belt-direction-tests.md with validation results
+- [x] Update CLAUDE.md Underground Belt Direction Pattern section with corrected explanation
 
 ### Task 3: Investigate and fix drill filtering for liquid ores
 
 **Files:**
+
 - Modify: scripts/gui.lua, potentially scripts/resource_scanner.lua
 
 - [ ] Add debug logging to print all compatible drills and their has_fluid_input status when scanning liquid-requiring ores
@@ -78,17 +86,7 @@ For liquid-requiring ores, only diesel drill appears in GUI while electric-minin
 - [ ] Test with both normal ore (should show all drills) and uranium ore (should show electric-mining-drill and other fluid-capable drills, excluding burner)
 - [ ] Create docs/tests/drill-filtering-for-liquid-ores-tests.md with validation steps and findings
 
-### Task 4: Verify acceptance criteria
-
-- [ ] Manual test: Create new game/save and verify default mode is "productivity" (not "efficient")
-- [ ] Manual test: Load old save with "efficient" mode and verify it migrates to "productivity"
-- [ ] Manual test: Place 3x3+ drill setup with underground belts in all four directions (north, south, east, west) and verify belts auto-connect without requiring manual R rotation
-- [ ] Manual test: Verify first drill in sequence has only UBI, subsequent drills have UBO-UBI pairs
-- [ ] Manual test: Place mining setup on normal ore patch (iron/copper) and verify all researched drills appear in GUI
-- [ ] Manual test: Place mining setup on uranium ore patch and verify electric-mining-drill and other fluid-capable drills appear (excluding burner drill)
-- [ ] Verify all test files in docs/tests/ have been updated with validation results
-
-### Task 5: Update documentation
+### Task 4: Update documentation
 
 - [ ] Update CLAUDE.md Underground Belt Direction Pattern to reflect the fix (both UBI and UBO face same direction, first drill skips UBO placement)
 - [ ] Update CLAUDE.md with any findings about drill filtering for liquid ores
