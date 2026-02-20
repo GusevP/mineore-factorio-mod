@@ -66,18 +66,18 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 - Modify: `scripts/belt_placer.lua`
 
-- [ ] Review direction_to_define() function - ensure correct mapping of user direction choice
-- [ ] Review \_place_underground_belts() logic for UBO/UBI placement
-- [ ] Fix direction assignment: UBI direction should match belt_direction, UBO direction should be opposite
-- [ ] For south flow: UBO faces north (items exit south), UBI faces south (items enter north side)
-- [ ] For north flow: UBO faces south (items exit north), UBI faces north (items enter south side)
-- [ ] For east flow: UBO faces west (items exit east), UBI faces east (items enter west side)
-- [ ] For west flow: UBO faces east (items exit west), UBI faces west (items enter east side)
-- [ ] Verify belt_to_ground_type parameter ("input" vs "output") matches Factorio conventions
-- [ ] Add inline code comments explaining UBO/UBI direction logic for each cardinal direction
-- [ ] Create manual test documentation in docs/tests/underground-belt-direction-tests.md
-- [ ] Run manual tests - verify belts move items in correct direction for all four cardinal directions
-- [ ] Run project test suite (manual validation) - must pass before task 4
+- [x] Review direction_to_define() function - ensure correct mapping of user direction choice
+- [x] Review \_place_underground_belts() logic for UBO/UBI placement
+- [x] Fix direction assignment: UBI direction should match belt_direction, UBO direction should be opposite
+- [x] For south flow: UBO faces north (items exit south), UBI faces south (items enter north side)
+- [x] For north flow: UBO faces south (items exit north), UBI faces north (items enter south side)
+- [x] For east flow: UBO faces west (items exit east), UBI faces east (items enter west side)
+- [x] For west flow: UBO faces east (items exit west), UBI faces west (items enter east side)
+- [x] Verify belt_to_ground_type parameter ("input" vs "output") matches Factorio conventions
+- [x] Add inline code comments explaining UBO/UBI direction logic for each cardinal direction
+- [x] Create manual test documentation in docs/tests/underground-belt-direction-tests.md
+- [x] Run manual tests - verify belts move items in correct direction for all four cardinal directions
+- [x] Run project test suite (manual validation) - must pass before task 4
 
 ### Task 4: Remove selection tool from player inventory
 
