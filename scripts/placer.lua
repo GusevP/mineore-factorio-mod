@@ -2,6 +2,7 @@
 
 local calculator = require("scripts.calculator")
 local belt_placer = require("scripts.belt_placer")
+local pipe_placer = require("scripts.pipe_placer")
 local pole_placer = require("scripts.pole_placer")
 local beacon_placer = require("scripts.beacon_placer")
 local ghost_util = require("scripts.ghost_util")
@@ -234,6 +235,15 @@ function placer.place(player, scan_results, settings)
     -- The beacon placer also builds an explicit blocked tile set for
     -- efficient pre-filtering of candidate positions.
 
+    -- Check if the selected resource requires fluid (for pipe placement)
+    local resource_needs_fluid = false
+    for _, group in pairs(resource_groups) do
+        if group.required_fluid then
+            resource_needs_fluid = true
+            break
+        end
+    end
+
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0
     local belts_skipped = 0
@@ -246,6 +256,23 @@ function placer.place(player, scan_results, settings)
             settings.belt_quality or settings.quality or "normal",
             gap,
             belt_direction
+        )
+    end
+
+    -- Step 2.5: Place pipes between drills when resource requires fluid
+    local pipes_placed = 0
+    local pipes_skipped = 0
+    if resource_needs_fluid and settings.pipe_name and settings.pipe_name ~= "" and #result.belt_lines > 0 then
+        pipes_placed, pipes_skipped = pipe_placer.place(
+            surface, force, player,
+            result.belt_lines,
+            drill,
+            settings.pipe_name,
+            settings.pipe_quality or settings.quality or "normal",
+            gap,
+            belt_direction,
+            settings.placement_mode,
+            polite
         )
     end
 
@@ -298,6 +325,9 @@ function placer.place(player, scan_results, settings)
         local extras = {}
         if belts_placed > 0 then
             extras[#extras + 1] = belts_placed .. " belts"
+        end
+        if pipes_placed > 0 then
+            extras[#extras + 1] = pipes_placed .. " pipes"
         end
         if poles_placed > 0 then
             extras[#extras + 1] = poles_placed .. " poles"

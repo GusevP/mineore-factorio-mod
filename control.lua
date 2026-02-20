@@ -132,6 +132,10 @@ script.on_event(defines.events.on_player_selected_area, function(event)
                 settings.belt_name = nil
                 settings.belt_quality = nil
             end
+            if settings.pipe_name and not prototypes.entity[settings.pipe_name] then
+                settings.pipe_name = nil
+                settings.pipe_quality = nil
+            end
             if settings.pole_name and not prototypes.entity[settings.pole_name] then
                 settings.pole_name = nil
                 settings.pole_quality = nil
@@ -171,6 +175,8 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
         ["mining-drill"] = true,
         ["transport-belt"] = true,
         ["underground-belt"] = true,
+        ["pipe"] = true,
+        ["pipe-to-ground"] = true,
         ["electric-pole"] = true,
         ["beacon"] = true,
     }

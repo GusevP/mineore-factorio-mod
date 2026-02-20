@@ -76,16 +76,16 @@ Two features: (1) A "polite mode" GUI checkbox that places drills without destro
 - Modify: `locale/en/locale.cfg`
 - Modify: `control.lua`
 
-- [ ] Add pipe selector to GUI (only shown when selected resource requires fluid). Follow the belt selector pattern: icon buttons for available pipe types + "None" button + quality dropdown
-- [ ] Add locale strings for pipe selector header and labels
-- [ ] Read pipe selection in `gui.read_settings()`, add `settings.pipe_name` and `settings.pipe_quality`
-- [ ] In `placer.place()`, add Step 2.5 (between belts and poles): call `pipe_placer.place()` when `settings.pipe_name` is set and the resource requires fluid
-- [ ] Pass fluid requirement info from scan_results through to the pipe placer
-- [ ] Include pipe count in the placement feedback message
-- [ ] Register pipe_placer require in placer.lua
-- [ ] Add "pipe" entity type to the alt-select ghost removal in control.lua
-- [ ] Write tests for pipe GUI integration and placement pipeline
-- [ ] Run project test suite - must pass before task 6
+- [x] Add pipe selector to GUI (only shown when selected resource requires fluid). Follow the belt selector pattern: icon buttons for available pipe types + "None" button + quality dropdown
+- [x] Add locale strings for pipe selector header and labels
+- [x] Read pipe selection in `gui.read_settings()`, add `settings.pipe_name` and `settings.pipe_quality`
+- [x] In `placer.place()`, add Step 2.5 (between belts and poles): call `pipe_placer.place()` when `settings.pipe_name` is set and the resource requires fluid
+- [x] Pass fluid requirement info from scan_results through to the pipe placer
+- [x] Include pipe count in the placement feedback message
+- [x] Register pipe_placer require in placer.lua
+- [x] Add "pipe" entity type to the alt-select ghost removal in control.lua
+- [x] Write tests for pipe GUI integration and placement pipeline
+- [x] Run project test suite - must pass before task 6
 
 ### Task 6: Verify acceptance criteria
 

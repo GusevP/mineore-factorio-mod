@@ -114,6 +114,19 @@ function gui.create(player, scan_results, player_data)
     -- Belt type selector (icon buttons)
     gui._add_belt_selector(inner, settings)
 
+    -- Pipe selector (only when resource requires fluid)
+    local needs_fluid = false
+    for _, group in pairs(scan_results.resource_groups) do
+        if group.required_fluid then
+            needs_fluid = true
+            break
+        end
+    end
+    if needs_fluid then
+        inner.add{type = "line", direction = "horizontal"}
+        gui._add_pipe_selector(inner, settings)
+    end
+
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
@@ -754,6 +767,88 @@ function gui._get_transport_belt_types()
     return names
 end
 
+--- Add pipe selector as locked choose-elem-buttons + "none" sprite-button.
+--- Only shown when selected resource requires fluid.
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+function gui._add_pipe_selector(parent, settings)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-pipe-header"},
+        style = "caption_label",
+    }
+
+    local row = parent.add{
+        type = "flow",
+        name = "pipe_selector_row",
+        direction = "horizontal",
+    }
+    row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
+
+    local pipe_flow = row.add{
+        type = "flow",
+        name = "pipe_selector_flow",
+        direction = "horizontal",
+    }
+    pipe_flow.style.horizontal_spacing = 4
+
+    local pipe_types = gui._get_pipe_types()
+    local selected_pipe = settings.pipe_name
+    local has_selection = false
+
+    for _, pipe_name in ipairs(pipe_types) do
+        local proto = prototypes.entity[pipe_name]
+        if proto then
+            local btn = pipe_flow.add{
+                type = "choose-elem-button",
+                name = "mineore_pipe_btn_" .. pipe_name,
+                elem_type = "entity",
+                entity = pipe_name,
+                style = "slot_sized_button",
+                tooltip = proto.localised_name,
+            }
+            btn.locked = true
+            btn.tags = {selector_group = "pipe", entity_name = pipe_name}
+            if pipe_name == selected_pipe then
+                btn.style = "slot_sized_button_pressed"
+                has_selection = true
+            end
+        end
+    end
+
+    -- "None" button
+    local none_btn = pipe_flow.add{
+        type = "sprite-button",
+        name = "mineore_pipe_none",
+        sprite = "utility/close",
+        style = "slot_sized_button",
+        tooltip = {"mineore.gui-none"},
+    }
+    none_btn.tags = {selector_group = "pipe", entity_name = ""}
+    if not has_selection then
+        none_btn.style = "slot_sized_button_pressed"
+    end
+
+    -- Quality dropdown for pipes
+    if script.feature_flags.quality then
+        row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(row, "pipe", settings.pipe_quality or settings.quality)
+    end
+end
+
+--- Get all pipe prototype names sorted by name.
+--- @return string[] Array of pipe prototype names
+function gui._get_pipe_types()
+    local pipes = prototypes.get_entity_filtered({{filter = "type", type = "pipe"}})
+    local pipe_list = {}
+    for name, _ in pairs(pipes) do
+        pipe_list[#pipe_list + 1] = name
+    end
+    table.sort(pipe_list)
+    return pipe_list
+end
+
 --- Get all electric pole prototype names sorted by supply area.
 --- @return string[] Array of pole prototype names
 function gui._get_electric_pole_types()
@@ -817,6 +912,13 @@ function gui.read_settings(player)
     if belt_row then
         local belt_flow = belt_row.belt_selector_flow
         settings.belt_name = gui._read_selector_from_flow(belt_flow, "belt")
+    end
+
+    -- Read pipe selection (may not exist if resource doesn't need fluid)
+    local pipe_row = inner.pipe_selector_row
+    if pipe_row then
+        local pipe_flow = pipe_row.pipe_selector_flow
+        settings.pipe_name = gui._read_selector_from_flow(pipe_flow, "pipe")
     end
 
     -- Read pole selection
@@ -892,6 +994,7 @@ function gui.read_settings(player)
     -- Read per-entity quality selections (Space Age only)
     if script.feature_flags.quality then
         settings.belt_quality = gui._read_quality_dropdown(belt_row, "belt")
+        settings.pipe_quality = gui._read_quality_dropdown(pipe_row, "pipe")
         settings.pole_quality = gui._read_quality_dropdown(pole_row, "pole")
         settings.beacon_quality = gui._read_quality_dropdown(beacon_row, "beacon")
         -- Use belt quality as the general quality fallback, or "normal"
