@@ -14,6 +14,9 @@ ZIPFILE="${FOLDER}.zip"
 
 echo "Packaging ${FOLDER}..."
 
+cleanup() { rm -rf "$FOLDER"; }
+trap cleanup EXIT
+
 # Clean up any previous build artifacts
 rm -rf "$FOLDER" "$ZIPFILE"
 
@@ -26,9 +29,6 @@ cp -r scripts prototypes locale graphics "$FOLDER/"
 
 # Create the zip
 zip -r "$ZIPFILE" "$FOLDER" -x "*.DS_Store" > /dev/null
-
-# Clean up temp directory
-rm -rf "$FOLDER"
 
 SIZE=$(wc -c < "$ZIPFILE" | tr -d ' ')
 echo "Created ${ZIPFILE} (${SIZE} bytes)"
