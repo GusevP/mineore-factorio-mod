@@ -30,13 +30,25 @@ Verify that underground belts (UBO/UBI pairs) are placed with correct directions
 - Items on belts move south (downward on screen)
 
 **Validation:**
-- Place the ghost entities
-- Build the underground belts
+- Place the ghost entities using the mod's selection tool
+- Inspect ghost entities BEFORE building:
+  - Hover over UBO ghost - tooltip should show "Underground belt (output)" or exit indicator
+  - Hover over UBI ghost - tooltip should show "Underground belt (input)" or entrance indicator
+  - Visually, UBO should show exit sprite (different from entrance)
+  - Visually, UBI should show entrance sprite
+- Build the underground belts from ghosts
+- Inspect built entities:
+  - UBO should display exit visual (opening with belt coming out)
+  - UBI should display entrance visual (opening with belt going in)
+  - Both belts should have arrows pointing south
 - Add items to drills
 - Observe items moving south through underground belts
 - Items should exit UBO moving south, enter UBI from north side, continue south
 
 **Pass Criteria:**
+- UBO and UBI have DISTINCT visual appearances (one shows entrance, one shows exit)
+- UBO ghost and entity show "output" type
+- UBI ghost and entity show "input" type
 - Items flow continuously south through the belt system
 - No items stuck or moving wrong direction
 - Underground belt pairs connect properly (green connection line visible)
@@ -62,12 +74,19 @@ Verify that underground belts (UBO/UBI pairs) are placed with correct directions
 - Items on belts move north (upward on screen)
 
 **Validation:**
-- Build underground belts
+- Place ghost entities and inspect:
+  - Hover over UBO ghost - should show "output" type
+  - Hover over UBI ghost - should show "input" type
+  - Verify distinct visual sprites (exit vs entrance)
+- Build underground belts from ghosts
+- Inspect built entities for distinct visuals
 - Add items to drills
 - Observe items moving north through underground belts
 - Items should exit UBO moving north, enter UBI from south side, continue north
 
 **Pass Criteria:**
+- UBO and UBI show distinct visual appearances (exit vs entrance sprites)
+- Correct type indicators on ghosts and built entities
 - Items flow continuously north through the belt system
 - No items stuck or moving wrong direction
 - Underground belt pairs connect properly
@@ -93,12 +112,17 @@ Verify that underground belts (UBO/UBI pairs) are placed with correct directions
 - Items on belts move east (rightward on screen)
 
 **Validation:**
-- Build underground belts
+- Place ghost entities and inspect visual differences
+- Hover over ghosts to verify type (input vs output)
+- Build underground belts from ghosts
+- Verify built entities show distinct entrance/exit visuals
 - Add items to drills
 - Observe items moving east through underground belts
 - Items should exit UBO moving east, enter UBI from west side, continue east
 
 **Pass Criteria:**
+- UBO shows exit sprite, UBI shows entrance sprite (visually distinct)
+- Type indicators correct on ghosts and entities
 - Items flow continuously east through the belt system
 - No items stuck or moving wrong direction
 - Underground belt pairs connect properly
@@ -124,12 +148,17 @@ Verify that underground belts (UBO/UBI pairs) are placed with correct directions
 - Items on belts move west (leftward on screen)
 
 **Validation:**
-- Build underground belts
+- Place ghost entities and inspect visual differences
+- Hover over ghosts to verify type (input vs output)
+- Build underground belts from ghosts
+- Verify built entities show distinct entrance/exit visuals
 - Add items to drills
 - Observe items moving west through underground belts
 - Items should exit UBO moving west, enter UBI from east side, continue west
 
 **Pass Criteria:**
+- UBO shows exit sprite, UBI shows entrance sprite (visually distinct)
+- Type indicators correct on ghosts and entities
 - Items flow continuously west through the belt system
 - No items stuck or moving wrong direction
 - Underground belt pairs connect properly

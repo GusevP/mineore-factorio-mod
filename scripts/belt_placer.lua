@@ -184,10 +184,13 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
 
     -- Both UBI (entrance/input) and UBO (exit/output) face the belt flow direction.
     -- The direction indicates which way items flow through the underground belt.
-    -- For a south-flowing belt: both UBO and UBI face south (items move south).
-    -- For a north-flowing belt: both UBO and UBI face north (items move north).
-    -- For an east-flowing belt: both UBO and UBI face east (items move east).
-    -- For a west-flowing belt: both UBO and UBI face west (items move west).
+    -- The belt_to_ground_type parameter ("input"/"output") determines which sprite is shown:
+    --   - "input" uses UndergroundBeltPrototype.structure.direction_in (entrance visual)
+    --   - "output" uses UndergroundBeltPrototype.structure.direction_out (exit visual)
+    -- For a south-flowing belt: both UBO and UBI have direction=south (items move south)
+    -- For a north-flowing belt: both UBO and UBI have direction=north (items move north)
+    -- For an east-flowing belt: both UBO and UBI have direction=east (items move east)
+    -- For a west-flowing belt: both UBO and UBI have direction=west (items move west)
     local ubi_dir = belt_dir_define
     local ubo_dir = belt_dir_define
 

@@ -34,18 +34,30 @@
 
 ### Underground Belt Direction Pattern
 
-**Pattern:** Both UBO (output) and UBI (input) underground belts face the same direction - the belt flow direction.
+**Pattern:** Both UBO (output) and UBI (input) underground belts face the same direction - the belt flow direction. Visual distinction between entrance and exit comes from the belt_to_ground_type parameter, not direction.
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
-- Both UBO and UBI are set to `belt_dir_define` (the chosen flow direction)
+- Both UBO and UBI direction set to `belt_dir_define` (the chosen flow direction)
+- UBO created with parameter: `belt_to_ground_type = "output"`
+- UBI created with parameter: `belt_to_ground_type = "input"`
 - Direction determines which way items flow through the underground belt pair
-- For south flow: both belts face south (items move south)
-- For north flow: both belts face north (items move north)
-- For east flow: both belts face east (items move east)
-- For west flow: both belts face west (items move west)
+- belt_to_ground_type determines which sprite is displayed (entrance vs exit visual)
+- For south flow: both belts have direction=south (items move south)
+- For north flow: both belts have direction=north (items move north)
+- For east flow: both belts have direction=east (items move east)
+- For west flow: both belts have direction=west (items move west)
 
-**Rationale:** In Factorio, underground belt direction indicates the flow direction of items, not the facing of entrance/exit. Both pieces of an underground belt pair must face the same direction for items to move through them correctly. The "input" vs "output" type parameter distinguishes entrance from exit, not the direction property.
+**How Factorio Renders Underground Belts:**
+- UndergroundBeltPrototype defines two Sprite4Way sets: `direction_in` and `direction_out`
+- When belt_to_ground_type="input", Factorio displays sprites from `direction_in` (entrance visual)
+- When belt_to_ground_type="output", Factorio displays sprites from `direction_out` (exit visual)
+- The `direction` parameter selects which sprite from the 4-way set (north/south/east/west)
+- This combination ensures distinct entrance/exit visuals while maintaining correct flow direction
+
+**Rationale:** In Factorio, underground belt direction indicates the flow direction of items, not the facing of entrance/exit. Both pieces of an underground belt pair must face the same direction for items to move through them correctly. The `belt_to_ground_type` parameter ("input" vs "output") distinguishes entrance from exit and determines which sprite set is displayed, not the direction property.
+
+**Ghost Entity Support:** The belt_to_ground_type property works on ghost entities (confirmed in Factorio API). Ghosts created with belt_to_ground_type parameter will display the correct entrance or exit sprite before being built.
 
 **Previous bug:** Version 0.6.0 and earlier had UBO facing opposite direction from UBI, which caused underground belts to malfunction. Fixed in version 0.7.0.
 
@@ -157,7 +169,7 @@ Test files located in `docs/tests/`:
 - `burner-drill-filtering-tests.md` - Burner drill exclusion validation
 - `pole-whitelist-tests.md` - Pole selector whitelist validation
 - `pole-spacing-tests.md` - Fixed pole spacing pattern validation
-- `underground-belt-direction-tests.md` - Underground belt direction validation
+- `underground-belt-direction-tests.md` - Underground belt direction and visual appearance validation
 - `selection-tool-inventory-tests.md` - Selection tool cursor-only validation
 - `productive-mode-default-tests.md` - Productivity mode default validation
 - `manual-acceptance-tests.md` - Full integration tests

@@ -56,14 +56,14 @@ Simplify drill selection logic to exclude only burner drills, fix productivity m
 **Files:**
 - Modify: `scripts/belt_placer.lua`
 
-- [ ] Research: Review Factorio API docs for proper underground belt direction usage
-- [ ] Identify root cause: why both UBO and UBI appear as input visually
-- [ ] Fix direction assignment: ensure UBO (output/exit) and UBI (input/entrance) display correctly
-- [ ] Update belt_to_ground_type parameter usage if needed
-- [ ] Test different belt flow directions (north, south, east, west)
-- [ ] Update CLAUDE.md Underground Belt Direction Pattern with corrected understanding
-- [ ] Update docs/tests/underground-belt-direction-tests.md with visual validation steps
-- [ ] Test in-game: verify UBO and UBI have distinct visual appearances
+- [x] Research: Review Factorio API docs for proper underground belt direction usage
+- [x] Identify root cause: why both UBO and UBI appear as input visually
+- [x] Fix direction assignment: ensure UBO (output/exit) and UBI (input/entrance) display correctly
+- [x] Update belt_to_ground_type parameter usage if needed
+- [x] Test different belt flow directions (north, south, east, west)
+- [x] Update CLAUDE.md Underground Belt Direction Pattern with corrected understanding
+- [x] Update docs/tests/underground-belt-direction-tests.md with visual validation steps
+- [x] Test in-game: verify UBO and UBI have distinct visual appearances
 
 ### Task 4: Prepare repository for GitHub publication
 
