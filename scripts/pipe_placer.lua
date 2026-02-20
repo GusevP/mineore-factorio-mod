@@ -52,7 +52,7 @@ function pipe_placer.place(surface, force, player, belt_lines, drill_info, pipe_
     for _, belt_line in ipairs(belt_lines) do
         local p, s = pipe_placer._place_pipes_along_line(
             surface, force, player, belt_line, drill_info,
-            pipe_name, nil, quality, belt_direction, gap, polite)
+            pipe_name, quality, belt_direction, gap, polite)
         placed = placed + p
         skipped = skipped + s
     end
@@ -77,7 +77,7 @@ end
 --- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, drill_info, pipe_name, underground_name, quality, belt_direction, belt_gap, polite)
+function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, drill_info, pipe_name, quality, belt_direction, belt_gap, polite)
     local placed = 0
     local skipped = 0
 
@@ -119,7 +119,7 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
 
                 if gap_tiles > 0 then
                     local p, s = pipe_placer._fill_gap(
-                        surface, force, player, pipe_name, underground_name,
+                        surface, force, player, pipe_name,
                         quality, side.col_x, gap_start, gap_tiles, "y", polite)
                     placed = placed + p
                     skipped = skipped + s
@@ -157,7 +157,7 @@ function pipe_placer._place_pipes_along_line(surface, force, player, belt_line, 
 
                 if gap_tiles > 0 then
                     local p, s = pipe_placer._fill_gap(
-                        surface, force, player, pipe_name, underground_name,
+                        surface, force, player, pipe_name,
                         quality, side.row_y, gap_start, gap_tiles, "x", polite)
                     placed = placed + p
                     skipped = skipped + s
@@ -175,7 +175,6 @@ end
 --- @param force string
 --- @param player LuaPlayer
 --- @param pipe_name string Regular pipe prototype
---- @param underground_name string|nil Unused, kept for call-site compatibility
 --- @param quality string Quality name
 --- @param fixed_coord number The fixed coordinate (x for y-axis gaps, y for x-axis gaps)
 --- @param gap_start number Start of the gap (edge of first drill)
@@ -184,7 +183,7 @@ end
 --- @param polite boolean|nil Polite mode flag
 --- @return number placed
 --- @return number skipped
-function pipe_placer._fill_gap(surface, force, player, pipe_name, underground_name, quality, fixed_coord, gap_start, gap_tiles, axis, polite)
+function pipe_placer._fill_gap(surface, force, player, pipe_name, quality, fixed_coord, gap_start, gap_tiles, axis, polite)
     local placed = 0
     local skipped = 0
 

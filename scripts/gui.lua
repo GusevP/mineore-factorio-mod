@@ -317,10 +317,8 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
                 drills_to_show[#drills_to_show + 1] = drill
             end
         end
-        -- Fall back to all drills if none have fluid input (edge case)
-        if #drills_to_show == 0 then
-            drills_to_show = scan_results.compatible_drills
-        end
+        -- If no drills with fluid input, keep empty list (player cannot mine this resource)
+        -- Don't fall back to incompatible drills
     end
 
     -- Filter drills by technology availability

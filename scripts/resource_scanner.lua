@@ -135,6 +135,14 @@ function resource_scanner.compute_bounds(entities)
         end
     end
 
+    -- Handle edge case: no valid entities
+    if min_x == math.huge then
+        return {
+            left_top = {x = 0, y = 0},
+            right_bottom = {x = 0, y = 0},
+        }
+    end
+
     return {
         left_top = {x = min_x, y = min_y},
         right_bottom = {x = max_x, y = max_y},
