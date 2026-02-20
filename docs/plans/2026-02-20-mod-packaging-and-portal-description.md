@@ -46,14 +46,14 @@ Create a shell script to package the mod into a properly formatted .zip file for
 **Files:**
 - Create: `docs/mod-portal-description.md`
 
-- [ ] Write a polished mod portal long description covering:
+- [x] Write a polished mod portal long description covering:
   - What the mod does (one-paragraph summary)
   - Feature list with clear formatting
   - How to use it (quick-start steps)
   - Mod settings overview
   - Requirements and compatibility notes
   - Credit/inspiration (P.U.M.P. mod)
-- [ ] Use Factorio mod portal markdown formatting (it supports a subset of markdown)
+- [x] Use Factorio mod portal markdown formatting (it supports a subset of markdown)
 
 ### Task 4: Update info.json homepage field
 
