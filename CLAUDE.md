@@ -18,6 +18,17 @@
 
 **Rationale:** These three pole types work well with the mod's fixed spacing pattern. Larger poles (big electric pole, substations) are excluded.
 
+### Burner Drill Exclusion Pattern
+
+**Pattern:** Burner mining drill is explicitly excluded from available drills in the drill selector.
+
+**Implementation:**
+- Function `resource_scanner.find_compatible_drills()` filters out "burner-mining-drill" by name
+- Exclusion happens after category compatibility check: `if can_mine and name ~= "burner-mining-drill" then`
+- Located in `scripts/resource_scanner.lua` at drill compatibility check
+
+**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) and are generally not suitable for automated mining operations. The mod focuses on electric-powered automated mining.
+
 ### Technology-Based Entity Filtering
 
 **Pattern:** GUI selectors filter entities based on player's force technology research status.
@@ -98,6 +109,7 @@ Test files located in `docs/tests/`:
 - `pipe-default-selection-tests.md` - Iron pipe default
 - `default-mode-selection-tests.md` - Productivity mode default
 - `cursor-clearing-tests.md` - Cursor management validation
+- `burner-drill-filtering-tests.md` - Burner drill exclusion validation
 - `manual-acceptance-tests.md` - Full integration tests
 - `validation-summary.md` - Test results summary
 

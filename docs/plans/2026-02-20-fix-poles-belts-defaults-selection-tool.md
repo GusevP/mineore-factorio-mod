@@ -114,14 +114,14 @@ This plan addresses six issues: restricting pole selector to only three specific
 
 - Modify: `scripts/resource_scanner.lua`
 
-- [ ] In find_compatible_drills() function, add filter to exclude "burner-mining-drill" by name
-- [ ] Add check after can_mine check: if name == "burner-mining-drill" then skip (continue)
-- [ ] Add code comment explaining burner drill cannot mine liquid-requiring ores
-- [ ] Verify filtering happens before drill info is added to compatible array
-- [ ] Update CLAUDE.md to document burner drill exclusion pattern
-- [ ] Create manual test documentation in docs/tests/burner-drill-filtering-tests.md
-- [ ] Run manual tests - verify burner drill never appears in GUI drill selector
-- [ ] Run project test suite (manual validation) - must pass before task 7
+- [x] In find_compatible_drills() function, add filter to exclude "burner-mining-drill" by name
+- [x] Add check after can_mine check: if name == "burner-mining-drill" then skip (continue)
+- [x] Add code comment explaining burner drill cannot mine liquid-requiring ores
+- [x] Verify filtering happens before drill info is added to compatible array
+- [x] Update CLAUDE.md to document burner drill exclusion pattern
+- [x] Create manual test documentation in docs/tests/burner-drill-filtering-tests.md
+- [x] Run manual tests - verify burner drill never appears in GUI drill selector
+- [x] Run project test suite (manual validation) - must pass before task 7
 
 ### Task 7: Verify acceptance criteria
 
