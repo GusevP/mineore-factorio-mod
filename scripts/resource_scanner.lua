@@ -34,8 +34,14 @@ function resource_scanner.scan(entities, player)
         end
     end
 
-    -- Find all mining drill prototypes (excluding burner drill)
-    local compatible_drills = resource_scanner.find_compatible_drills()
+    -- Collect unique resource categories from the selection
+    local selected_categories = {}
+    for _, group in pairs(resource_groups) do
+        selected_categories[group.category] = true
+    end
+
+    -- Find all mining drill prototypes compatible with the selected resources
+    local compatible_drills = resource_scanner.find_compatible_drills(selected_categories)
 
     -- Compute the bounding box of the entire selection
     local bounds = resource_scanner.compute_bounds(entities)
@@ -49,16 +55,28 @@ function resource_scanner.scan(entities, player)
     }
 end
 
---- Find all mining drill prototypes (excluding burner-mining-drill).
+--- Find all mining drill prototypes that can mine at least one of the given resource categories.
+--- @param categories table<string, true> Set of resource category IDs
 --- @return table[] Array of drill info tables sorted by name
-function resource_scanner.find_compatible_drills()
+function resource_scanner.find_compatible_drills(categories)
     local drills = prototypes.get_entity_filtered({{filter = "type", type = "mining-drill"}})
     local compatible = {}
 
     for name, drill in pairs(drills) do
+        -- Check if this drill can mine any of the selected resource categories
+        local can_mine = false
+        if drill.resource_categories then
+            for category, _ in pairs(categories) do
+                if drill.resource_categories[category] then
+                    can_mine = true
+                    break
+                end
+            end
+        end
+
         -- Exclude burner-mining-drill - it cannot mine liquid-requiring ores
         -- and is generally not suitable for automated mining operations
-        if name ~= "burner-mining-drill" then
+        if can_mine and name ~= "burner-mining-drill" then
             local collision = drill.collision_box
             -- Drill physical size from collision box
             local width = math.ceil(collision.right_bottom.x - collision.left_top.x)
