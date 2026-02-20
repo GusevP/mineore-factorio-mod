@@ -132,7 +132,7 @@ function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines
         if belt_line.orientation == "NS" then
             local x_center = belt_line.x
             local y_start = math.floor(belt_line.y_min - half_h)
-            local y_end = math.floor(belt_line.y_max + half_h)
+            local y_end = math.floor(belt_line.y_max + half_h) - 1
             local x_start_tile = math.floor(x_center - gap / 2)
             for tile_offset = 0, gap - 1 do
                 local tx = x_start_tile + tile_offset
@@ -143,7 +143,7 @@ function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines
         elseif belt_line.orientation == "EW" then
             local y_center = belt_line.y
             local x_start = math.floor(belt_line.x_min - half_w)
-            local x_end = math.floor(belt_line.x_max + half_w)
+            local x_end = math.floor(belt_line.x_max + half_w) - 1
             local y_start_tile = math.floor(y_center - gap / 2)
             for tile_offset = 0, gap - 1 do
                 local ty = y_start_tile + tile_offset
