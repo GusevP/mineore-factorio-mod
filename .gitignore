@@ -2,5 +2,5 @@
 # ralphex progress logs
 .ralphex/progress/
 .DS_Store
-mineore/
+mineore_*/
 mineore*.zip
