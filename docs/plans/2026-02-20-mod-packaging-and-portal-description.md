@@ -29,7 +29,7 @@ Create a shell script to package the mod into a properly formatted .zip file for
 **Files:**
 - Create: `package.sh`
 
-- [ ] Create `package.sh` that:
+- [x] Create `package.sh` that:
   - Reads version from info.json using grep/sed (no external deps)
   - Creates a temp directory `mineore_$VERSION/`
   - Copies mod files into it: info.json, control.lua, data.lua, settings.lua, changelog.txt, thumbnail.png, scripts/, prototypes/, locale/, graphics/
@@ -37,9 +37,9 @@ Create a shell script to package the mod into a properly formatted .zip file for
   - Zips it as `mineore_$VERSION.zip`
   - Cleans up the temp directory
   - Prints the output filename and size
-- [ ] Make the script executable
-- [ ] Add `mineore_*.zip` to .gitignore (replacing the current mineore.zip entry)
-- [ ] Run the script to verify it produces a valid zip
+- [x] Make the script executable
+- [x] Add `mineore_*.zip` to .gitignore (replacing the current mineore.zip entry)
+- [x] Run the script to verify it produces a valid zip
 
 ### Task 3: Write mod portal description
 
