@@ -185,6 +185,7 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             -- Skip GUI, go straight to placement
             player.print({"mineore.using-remembered-settings"})
             placer.place(player, scan_results, settings)
+            player.clear_cursor()
             return
         end
     end
@@ -233,6 +234,8 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
             create_at_cursor = true,
         })
     end
+
+    player.clear_cursor()
 end)
 
 -- GUI event handlers
@@ -270,6 +273,7 @@ script.on_event(defines.events.on_gui_click, function(event)
             -- Place ghost entities using calculated grid positions
             if player_data.last_scan then
                 placer.place(player, player_data.last_scan, settings)
+                player.clear_cursor()
             end
         end
         return

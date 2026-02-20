@@ -22,25 +22,27 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 1: Filter unavailable entities from GUI selectors
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
-- [x] Update gui.create function to pass player object to all selector functions (_add_drill_selector, _add_pole_selector, _add_pipe_selector, _add_belt_selector, _add_beacon_selector)
-- [x] Update _add_drill_selector function signature to accept player parameter
-- [x] Add entity availability check in _add_drill_selector: only show drills whose recipe is enabled for player.force
-- [x] Update _add_pole_selector function signature to accept player parameter
-- [x] Add entity availability check in _add_pole_selector: only show poles whose recipe is enabled for player.force
-- [x] Update _add_pipe_selector function signature to accept player parameter
-- [x] Add entity availability check in _add_pipe_selector: only show pipes whose recipe is enabled for player.force
-- [x] Update _add_belt_selector function signature to accept player parameter
-- [x] Add entity availability check in _add_belt_selector: only show belts whose recipe is enabled for player.force
-- [x] Update _add_beacon_selector function signature to accept player parameter
-- [x] Add entity availability check in _add_beacon_selector: only show beacons whose recipe is enabled for player.force
+- [x] Update gui.create function to pass player object to all selector functions (\_add_drill_selector, \_add_pole_selector, \_add_pipe_selector, \_add_belt_selector, \_add_beacon_selector)
+- [x] Update \_add_drill_selector function signature to accept player parameter
+- [x] Add entity availability check in \_add_drill_selector: only show drills whose recipe is enabled for player.force
+- [x] Update \_add_pole_selector function signature to accept player parameter
+- [x] Add entity availability check in \_add_pole_selector: only show poles whose recipe is enabled for player.force
+- [x] Update \_add_pipe_selector function signature to accept player parameter
+- [x] Add entity availability check in \_add_pipe_selector: only show pipes whose recipe is enabled for player.force
+- [x] Update \_add_belt_selector function signature to accept player parameter
+- [x] Add entity availability check in \_add_belt_selector: only show belts whose recipe is enabled for player.force
+- [x] Update \_add_beacon_selector function signature to accept player parameter
+- [x] Add entity availability check in \_add_beacon_selector: only show beacons whose recipe is enabled for player.force
 - [x] Write tests for entity filtering based on force technology
 - [x] Run project test suite - must pass before task 2
 
 ### Task 2: Change default placement mode to productivity
 
 **Files:**
+
 - Modify: `settings.lua`
 - Modify: `scripts/gui.lua` (update fallback if needed)
 
@@ -52,9 +54,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 3: Set default drill to electric-mining-drill
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
-- [x] Update gui._add_drill_selector function to prefer "electric-mining-drill" when available instead of first drill in filtered list
+- [x] Update gui.\_add_drill_selector function to prefer "electric-mining-drill" when available instead of first drill in filtered list
 - [x] Ensure fallback to first available drill when electric-mining-drill is not in the filtered/researched drills list
 - [x] Write tests for drill default selection logic with technology filtering
 - [x] Run project test suite - must pass before task 4
@@ -62,9 +65,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 4: Set default pole to medium-electric-pole
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
-- [x] Update gui._add_pole_selector function to set selected_pole to "medium-electric-pole" when no previous setting exists and entity is available/researched
+- [x] Update gui.\_add_pole_selector function to set selected_pole to "medium-electric-pole" when no previous setting exists and entity is available/researched
 - [x] Ensure fallback to first available pole when medium-electric-pole is not researched
 - [x] Write tests for pole default selection logic with technology filtering
 - [x] Run project test suite - must pass before task 5
@@ -72,9 +76,10 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 5: Set default pipe to pipe (iron pipe)
 
 **Files:**
+
 - Modify: `scripts/gui.lua`
 
-- [x] Update gui._add_pipe_selector function to set selected_pipe to "pipe" when no previous setting exists and entity is available/researched
+- [x] Update gui.\_add_pipe_selector function to set selected_pipe to "pipe" when no previous setting exists and entity is available/researched
 - [x] Ensure fallback behavior when basic pipe is not available
 - [x] Write tests for pipe default selection logic with technology filtering
 - [x] Run project test suite - must pass before task 6
@@ -82,12 +87,13 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 6: Clear cursor stack after selection tool use
 
 **Files:**
+
 - Modify: `control.lua`
 
-- [ ] After successful placement in on_player_selected_area event handler (around line 187), clear player cursor to prevent selection tool from staying in hand
-- [ ] After ghost removal in on_player_alt_selected_area event handler (around line 224-234), clear player cursor
-- [ ] Write tests for cursor clearing behavior
-- [ ] Run project test suite - must pass before task 7
+- [x] After successful placement in on_player_selected_area event handler (around line 187), clear player cursor to prevent selection tool from staying in hand
+- [x] After ghost removal in on_player_alt_selected_area event handler (around line 224-234), clear player cursor
+- [x] Write tests for cursor clearing behavior
+- [x] Run project test suite - must pass before task 7
 
 ### Task 7: Verify acceptance criteria
 
@@ -104,4 +110,5 @@ Update default entity selections in the configuration GUI to use electric drill,
 ### Task 8: Update documentation
 
 - [ ] Update README.md if user-facing behavior changed (note new defaults and technology-based filtering in Usage section)
+- [ ] Update version in info.json and update changelog.txt
 - [ ] Move this plan to docs/plans/completed/
