@@ -7,12 +7,12 @@ Miner Planner automates mining drill placement on ore patches. Drag-select an ar
 ### Productivity
 Maximum drills, edge-to-edge, highest ore throughput.
 
-![Productivity mode](https://raw.githubusercontent.com/CrazyFeSS/factorio-miner-mod/main/docs/images/base_prod.gif)
+![Productivity mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_prod.gif?raw=true)
 
 ### Efficient
 Fewest drills, staggered rows for maximum coverage per drill.
 
-![Efficient mode](https://raw.githubusercontent.com/CrazyFeSS/factorio-miner-mod/main/docs/images/base_efficient.gif)
+![Efficient mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_efficient.gif?raw=true)
 
 ---
 
