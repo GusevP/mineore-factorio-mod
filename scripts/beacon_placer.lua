@@ -464,19 +464,12 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
             if cand then  -- nil entries are removed candidates
                 local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions, drill_info)
 
-                -- Skip candidates that would push any drill over the cap;
-                -- score by number of drills that still have room for more beacons
-                local would_exceed = false
+                -- Score = number of drills that still have room for more beacons
                 local score = 0
                 for _, drill_idx in ipairs(affected) do
-                    if drill_beacon_count[drill_idx] >= max_beacons_per_drill then
-                        would_exceed = true
-                        break
+                    if drill_beacon_count[drill_idx] < max_beacons_per_drill then
+                        score = score + 1
                     end
-                end
-
-                if not would_exceed then
-                    score = #affected
                 end
 
                 if score > best_score then
@@ -516,38 +509,21 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
         end
     end
 
-    -- Fill pass: place beacons in remaining valid positions, but only if doing so
-    -- would not exceed max_beacons_per_drill for any affected drill.
+    -- Fill pass: place beacons in all remaining valid positions to ensure
+    -- full column/row coverage, even if all drills are already saturated.
     for i = 1, candidate_count do
         local cand = valid_candidates[i]
         if cand then
             -- Re-check collision since blocked set may have changed
             if not beacon_collides(cand.x, cand.y, beacon_info, blocked) then
-                -- Check that placing this beacon won't exceed the cap for any drill
-                local affected = get_affected_drills(cand.x, cand.y, beacon_info, drill_positions, drill_info)
-                local would_exceed = false
-                for _, drill_idx in ipairs(affected) do
-                    if drill_beacon_count[drill_idx] >= max_beacons_per_drill then
-                        would_exceed = true
-                        break
-                    end
-                end
+                local was_placed = try_place_beacon(cand)
 
-                if not would_exceed then
-                    local was_placed = try_place_beacon(cand)
-
-                    if was_placed then
-                        -- Update drill beacon counts
-                        for _, drill_idx in ipairs(affected) do
-                            drill_beacon_count[drill_idx] = drill_beacon_count[drill_idx] + 1
-                        end
-
-                        -- Remove other candidates that now collide with the placed beacon
-                        for j = i + 1, candidate_count do
-                            local c = valid_candidates[j]
-                            if c and beacon_collides(c.x, c.y, beacon_info, blocked) then
-                                valid_candidates[j] = nil
-                            end
+                -- Remove other candidates that now collide with the placed beacon
+                if was_placed then
+                    for j = i + 1, candidate_count do
+                        local c = valid_candidates[j]
+                        if c and beacon_collides(c.x, c.y, beacon_info, blocked) then
+                            valid_candidates[j] = nil
                         end
                     end
                 end

@@ -175,7 +175,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- Pair stride: distance from one pair center to the next pair center
         -- Each pair consists of two rows of drills separated by a gap
         local pair_height = body_h + gap + body_h
-        local pair_stride = pair_height + (spacing_across - body_h) + pole_gap + beacon_width
+        local inter_pair = beacon_width > 0 and beacon_width or math.max(spacing_across - body_h, 0)
+        local pair_stride = pair_height + inter_pair + pole_gap
         -- spacing_across is the distance between drill centers in the across direction
         -- For paired rows, we use it as the spacing from one pair to the next
 
@@ -297,7 +298,8 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         -- "along" = y-axis (along the belt), "across" = x-axis (perpendicular)
 
         local pair_width = body_w + gap + body_w
-        local pair_stride = pair_width + (spacing_across - body_w) + pole_gap + beacon_width
+        local inter_pair = beacon_width > 0 and beacon_width or math.max(spacing_across - body_w, 0)
+        local pair_stride = pair_width + inter_pair + pole_gap
 
         local start_x = math.floor(bounds.left_top.x) + half_w
         local start_y = math.floor(bounds.left_top.y) + half_h
