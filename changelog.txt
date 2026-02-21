@@ -1,3 +1,15 @@
+Version: 0.8.0
+Date: 2026-02-21
+  Changes:
+    - Beacon columns now always fill the full column/row regardless of per-drill beacon limits
+    - Beacon inter-pair gap sized to exactly match beacon width, ensuring beacons are flush with drills on both sides
+    - Polite mode now respects rail ramps and rail supports as ground-level obstacles
+  Bugfixes:
+    - Fixed beacons not filling full column/row due to overly restrictive per-drill cap enforcement
+    - Fixed gap between beacons and drills in efficient mode caused by additive spacing calculation
+    - Fixed beacons not affecting big drills (5x5) in efficient mode when inter-pair gap exceeded beacon supply range
+    - Fixed polite mode placing ghosts over rail ramps and rail supports instead of skipping them
+---------------------------------------------------------------------------------------------------
 Version: 0.7.0
 Date: 2026-02-20
   Changes:

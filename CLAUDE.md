@@ -72,6 +72,30 @@ local ghost = surface.create_entity{
 - Version 0.10.0 attempt: tried to use `ghost.rotate()` to flip UBO from "input" to "output" after creation, but this doesn't update the ghost sprite
 - Fixed in current version: pass `type="output"` parameter during ghost creation for UBO entities
 
+### Beacon Inter-Pair Spacing Pattern
+
+**Pattern:** When beacons are selected, the inter-pair gap is sized to exactly match the beacon width, ensuring beacons are flush with drills on both sides. Without beacons, efficient mode spacing is used.
+
+**Implementation:**
+- In `calculator.lua`, the `inter_pair` spacing is computed as:
+  ```lua
+  local inter_pair = beacon_width > 0 and beacon_width or math.max(spacing_across - body_dim, 0)
+  ```
+- `placer.lua` passes `beacon_width` from `beacon_placer.get_beacon_info()` to the calculator
+- The beacon_placer's `generate_candidates()` places shared beacon columns at the midpoint between adjacent pair edges, which with `inter_pair = beacon_width` means the beacon fills the gap exactly
+
+**Rationale:** Previously, the inter-pair gap was `(spacing_across - body_dim) + beacon_width`, making the efficient mode extra spacing and beacon width additive. This left visible gaps between beacons and drills, and for large drills (5x5) could push beacons out of supply range. By using just `beacon_width` when beacons are selected, the beacon is always flush with drills on both sides and within supply range. The efficient mode mining-area-overlap constraint is relaxed between pairs when beacons are used, since players choosing beacons prioritize beacon coverage over mining efficiency.
+
+### Beacon Fill Pass Pattern
+
+**Pattern:** Beacon placement uses a two-phase algorithm: a greedy phase that respects `max_beacons_per_drill` preference, followed by an unconditional fill pass that places beacons in all remaining valid positions.
+
+**Implementation:**
+- In `beacon_placer.lua`, the greedy loop scores candidates by counting unsaturated drills (drills below the per-drill cap). A candidate is placed if at least one affected drill benefits.
+- The fill pass places beacons in ALL remaining valid positions to ensure full column/row coverage, even if all nearby drills are already at the per-drill cap.
+
+**Rationale:** The fill pass ensures complete visual fill of beacon columns/rows with no gaps. Without it, edge positions (top/bottom of columns) get skipped when nearby drills are already saturated from beacons placed in the middle of the column.
+
 ### Burner Drill Exclusion Pattern
 
 **Pattern:** Burner mining drill is excluded from the GUI drill selector only for liquid-requiring ores (e.g., uranium ore with sulfuric acid). For normal ores, burner drills are available.
@@ -155,6 +179,27 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 **Rationale:** The selection tool is a utility item that should only exist temporarily in the player's cursor during use. Allowing it to enter inventory would clutter the player's inventory and create confusion about how to use it. The "only-in-cursor" flag is a Factorio engine feature that prevents items from being placed in inventory slots.
 
 **Related:** See Cursor Management pattern for how cursor is cleared after tool use.
+
+### Polite Mode Rail Infrastructure Handling
+
+**Pattern:** Ghost placement distinguishes between elevated rails (in the air) and ground-level rail infrastructure (ramps, supports). Elevated rails are completely ignored. Rail ramps and rail supports block polite mode placement but are never deconstructed.
+
+**Entity classification in `ghost_util.lua`:**
+- `no_decon_types`: resources, characters, ghosts, and elevated rail types (`elevated-straight-rail`, `elevated-curved-rail-a`, `elevated-curved-rail-b`, `elevated-half-diagonal-rail`) — completely invisible to placement logic
+- `ground_rail_types`: `rail-ramp`, `rail-support` — block polite mode, never deconstructed in any mode
+- `polite_decon_types`: trees, rocks, cliffs — demolished in both modes
+
+**Behavior by mode:**
+| Entity type | Normal mode | Polite mode |
+|---|---|---|
+| Elevated rails | Ignored (in the air) | Ignored (in the air) |
+| Rail ramps/supports | Ignored (ghost placed) | Blocks placement |
+| Trees/rocks/cliffs | Demolished | Demolished |
+| Other buildings | Demolished | Blocks placement |
+
+**Mod compatibility:** Checks use `entity.type` (prototype class), not `entity.name`. Modded entities (e.g., Krastorio 2) that use standard Factorio entity types are automatically handled.
+
+**Also in `placer.lua`:** The `preserve_types` set in `demolish_obstacles()` preserves both elevated rails and rail ramps/supports from the broad area sweep.
 
 ## Configuration Defaults
 

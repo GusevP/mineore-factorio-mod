@@ -10,18 +10,24 @@
 
 local ghost_util = {}
 
--- Entity types that should never be deconstructed
+-- Entity types that should never be deconstructed and never block placement
 local no_decon_types = {
     ["resource"] = true,
     ["character"] = true,
     ["entity-ghost"] = true,
     ["tile-ghost"] = true,
-    -- Elevated rails exist on a different collision layer and don't conflict
-    -- with ground-level entities like mining drills
+    -- Elevated rails are in the air and don't conflict with ground-level entities
     ["elevated-straight-rail"] = true,
     ["elevated-curved-rail-a"] = true,
     ["elevated-curved-rail-b"] = true,
     ["elevated-half-diagonal-rail"] = true,
+}
+
+-- Ground-level rail infrastructure: never deconstructed, but blocks polite mode.
+-- Rail ramps and supports have ground-level collision and shouldn't be built over.
+-- These are entity prototype types, so modded entities (e.g. Krastorio) that use
+-- the same Factorio types are automatically handled.
+local ground_rail_types = {
     ["rail-ramp"] = true,
     ["rail-support"] = true,
 }
@@ -69,7 +75,12 @@ function ghost_util.demolish_conflicts(surface, force, player, name, position, d
     local blocked = false
     for _, entity in ipairs(entities) do
         if entity.valid and not no_decon_types[entity.type] then
-            if polite then
+            if ground_rail_types[entity.type] then
+                -- Rail ramps/supports are never deconstructed but block polite mode
+                if polite then
+                    blocked = true
+                end
+            elseif polite then
                 if polite_decon_types[entity.type] then
                     if not entity.to_be_deconstructed() then
                         entity.order_deconstruction(force, player)

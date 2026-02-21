@@ -28,12 +28,12 @@ local preserve_types = {
     ["entity-ghost"] = true,
     ["tile-ghost"] = true,
     ["character"] = true,
-    -- Elevated rails exist on a different collision layer and don't conflict
-    -- with ground-level entities like mining drills
+    -- Elevated rails are in the air and don't conflict with ground-level entities
     ["elevated-straight-rail"] = true,
     ["elevated-curved-rail-a"] = true,
     ["elevated-curved-rail-b"] = true,
     ["elevated-half-diagonal-rail"] = true,
+    -- Rail ramps/supports have ground-level collision and should never be demolished
     ["rail-ramp"] = true,
     ["rail-support"] = true,
 }
