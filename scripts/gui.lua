@@ -55,15 +55,12 @@ function gui.create(player, scan_results, player_data)
     if settings.placement_mode == "normal" or settings.placement_mode == "loose" then
         settings.placement_mode = "efficient"
     end
-    -- Migrate stale "efficient" default to new "productivity" default
-    -- When default was changed from "efficient" to "productivity", existing saves retained "efficient"
-    -- This migration treats all "efficient" values as potentially stale and resets to current default
+    -- Migrate stale "efficient" default to "productivity".
+    -- Existing saves may have "efficient" stored from when it was the old default.
+    -- The mod setting value also persists from old saves, so we can't rely on it.
     if settings.placement_mode == "efficient" then
-        local default_mode = player.mod_settings["mineore-default-mode"].value
-        if default_mode == "productivity" then
-            settings.placement_mode = "productivity"
-            player_data.gui_draft = settings
-        end
+        settings.placement_mode = "productivity"
+        player_data.gui_draft = settings
     end
 
     -- Main frame
