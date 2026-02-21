@@ -4,6 +4,18 @@ A Factorio 2.0 mod that automates mining drill placement on ore patches with tra
 
 Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does the same for pumpjacks on oil fields.
 
+## Placement Modes
+
+### Productivity Mode
+Maximum drills, edge-to-edge, highest ore throughput.
+
+![Productivity mode](docs/images/base_prod.gif)
+
+### Efficient Mode
+Fewest drills, staggered rows for maximum coverage per drill.
+
+![Efficient mode](docs/images/base_efficient.gif)
+
 ## Features
 
 - **Selection tool** — drag-select any ore patch to start planning miners
