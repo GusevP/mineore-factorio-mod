@@ -9,6 +9,7 @@ Date: 2026-02-21
     - Fixed gap between beacons and drills in efficient mode caused by additive spacing calculation
     - Fixed beacons not affecting big drills (5x5) in efficient mode when inter-pair gap exceeded beacon supply range
     - Fixed polite mode placing ghosts over rail ramps and rail supports instead of skipping them
+    - Fixed productivity mode not being selected as default for existing saves
 ---------------------------------------------------------------------------------------------------
 Version: 0.7.0
 Date: 2026-02-20
