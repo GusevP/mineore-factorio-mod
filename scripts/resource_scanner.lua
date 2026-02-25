@@ -12,6 +12,7 @@ function resource_scanner.scan(entities, player)
     end
 
     -- Group resource entities by name and collect positions
+    -- Skip fluid resources (e.g., crude oil) that are mined by pumpjacks, not mining drills
     local resource_groups = {}
     for _, entity in pairs(entities) do
         if entity.valid then
@@ -19,18 +20,35 @@ function resource_scanner.scan(entities, player)
             if not resource_groups[name] then
                 local proto = prototypes.entity[name]
                 local mineable = proto and proto.mineable_properties
-                resource_groups[name] = {
-                    name = name,
-                    category = proto and proto.resource_category or "basic-solid",
-                    count = 0,
-                    positions = {},
-                    required_fluid = mineable and mineable.required_fluid or nil,
-                    fluid_amount = mineable and mineable.fluid_amount or nil,
-                }
+
+                -- Check if all products are fluids (e.g., crude oil) — skip these
+                local is_fluid_resource = false
+                if mineable and mineable.products then
+                    is_fluid_resource = true
+                    for _, product in ipairs(mineable.products) do
+                        if product.type ~= "fluid" then
+                            is_fluid_resource = false
+                            break
+                        end
+                    end
+                end
+
+                if not is_fluid_resource then
+                    resource_groups[name] = {
+                        name = name,
+                        category = proto and proto.resource_category or "basic-solid",
+                        count = 0,
+                        positions = {},
+                        required_fluid = mineable and mineable.required_fluid or nil,
+                        fluid_amount = mineable and mineable.fluid_amount or nil,
+                    }
+                end
             end
             local group = resource_groups[name]
-            group.count = group.count + 1
-            group.positions[#group.positions + 1] = entity.position
+            if group then
+                group.count = group.count + 1
+                group.positions[#group.positions + 1] = entity.position
+            end
         end
     end
 

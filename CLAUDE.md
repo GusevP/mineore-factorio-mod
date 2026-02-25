@@ -96,6 +96,19 @@ local ghost = surface.create_entity{
 
 **Rationale:** The fill pass ensures complete visual fill of beacon columns/rows with no gaps. Without it, edge positions (top/bottom of columns) get skipped when nearby drills are already saturated from beacons placed in the middle of the column.
 
+### Fluid Resource Exclusion Pattern
+
+**Pattern:** Resources that produce only fluid products (e.g., crude oil) are excluded from the resource scanner since they are mined by pumpjacks, not mining drills.
+
+**Implementation:**
+- In `resource_scanner.scan()`, after reading `mineable_properties.products`, check if ALL products have `type == "fluid"`
+- If so, skip the resource entirely — it never appears in `resource_groups`
+- This prevents fluid resources from appearing in the ore selector GUI
+
+**Rationale:** Pumpjacks are `mining-drill` type entities in Factorio's data model, so they appear as "compatible drills" when fluid resources are included. The mod is designed for solid ore mining with mining drills, not pumpjack placement. Filtering at the scanner level prevents fluid resources from reaching the GUI at all.
+
+**Key detail:** Uranium ore is NOT filtered out despite requiring sulfuric acid fluid input — its products are solid items (`uranium-ore`), not fluids. Only resources whose products are exclusively fluids (like crude oil producing `crude-oil` fluid) are excluded.
+
 ### Burner Drill Exclusion Pattern
 
 **Pattern:** Burner mining drill is excluded from the GUI drill selector only for liquid-requiring ores (e.g., uranium ore with sulfuric acid). For normal ores, burner drills are available.

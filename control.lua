@@ -268,6 +268,19 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
         end
     end
 
+    -- Also remove landfill tile ghosts in the selected area
+    local surface = player.surface
+    local tile_ghosts = surface.find_entities_filtered{
+        area = {event.area.left_top, event.area.right_bottom},
+        type = "tile-ghost",
+    }
+    for _, tg in pairs(tile_ghosts) do
+        if tg.valid then
+            tg.destroy()
+            removed = removed + 1
+        end
+    end
+
     if removed > 0 then
         player.create_local_flying_text({
             text = {"mineore.ghosts-removed", removed},
