@@ -37,14 +37,19 @@ end
 
 --- Calculate the gap size between paired drill rows.
 ---
---- The gap is always 1 tile. Underground belts (UBI/UBO) are placed within
---- the drill body rows, and the single gap tile is reserved for poles.
+--- The gap is always 1 tile unless gap_override is specified.
+--- Underground belts (UBI/UBO) are placed within the drill body rows,
+--- and the gap tile(s) are reserved for poles/infrastructure.
 --- For 2x2 drills, plain belts fill the gap instead.
 ---
 --- @param drill table Drill info with width and height
 --- @param belt_orientation string "NS" or "EW"
---- @return number gap_tiles Always 1
-function calculator.get_pair_gap(drill, belt_orientation)
+--- @param gap_override number|nil Optional override for gap size (e.g., 2 for substation 5x5 mode)
+--- @return number gap_tiles
+function calculator.get_pair_gap(drill, belt_orientation, gap_override)
+    if gap_override then
+        return gap_override
+    end
     return 1
 end
 
@@ -128,8 +133,9 @@ local has_foreign_ore_overlap = has_resources_in_mining_area
 --- @param all_resource_groups table|nil Full unfiltered resource groups (for foreign ore filtering). If nil, no foreign ore filtering is applied.
 --- @param selected_resource string|nil The selected ore name. If nil, no foreign ore filtering.
 --- @param beacon_width number|nil Width of beacon entity (0 or nil when no beacons selected)
+--- @param gap_override number|nil Override gap between paired rows (e.g., 2 for substation 5x5 mode)
 --- @return table {positions=array, belt_lines=array, gap=number, belt_direction=string}
-function calculator.calculate_positions(drill, bounds, mode, belt_direction, resource_groups, all_resource_groups, selected_resource, beacon_width)
+function calculator.calculate_positions(drill, bounds, mode, belt_direction, resource_groups, all_resource_groups, selected_resource, beacon_width, gap_override)
     -- Support legacy "NS"/"EW" values
     if belt_direction == "NS" then belt_direction = "south" end
     if belt_direction == "EW" then belt_direction = "east" end
@@ -150,7 +156,7 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
     local body_w = drill.width
     local body_h = drill.height
     local radius = drill.mining_drill_radius
-    local gap = calculator.get_pair_gap(drill, belt_orientation)
+    local gap = calculator.get_pair_gap(drill, belt_orientation, gap_override)
 
     local half_w = body_w / 2
     local half_h = body_h / 2
@@ -428,6 +434,16 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         end
     end
 
+    -- Compute inter-pair center positions (midpoints between adjacent pairs)
+    -- Used for efficient mode substation placement in the gap between pairs
+    local inter_pair_centers = {}
+    if #pair_edge_min > 1 then
+        for i = 1, #pair_edge_max - 1 do
+            local center = (pair_edge_max[i] + pair_edge_min[i + 1]) / 2
+            inter_pair_centers[#inter_pair_centers + 1] = center
+        end
+    end
+
     return {
         positions = positions,
         belt_lines = belt_lines,
@@ -436,6 +452,9 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
         pole_gap_positions = pole_gap_positions,
         outer_edge_positions = outer_edge_positions,
         is_small_drill = is_small_drill,
+        inter_pair_centers = inter_pair_centers,
+        pair_edge_min = pair_edge_min,
+        pair_edge_max = pair_edge_max,
     }
 end
 

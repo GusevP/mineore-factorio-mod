@@ -21,17 +21,21 @@ Fewest drills, staggered rows for maximum coverage per drill.
 - **Drag-select placement** — select any ore patch and ghost miners appear in an optimal grid
 - **Two placement modes** — *Productivity* (maximum drills, edge-to-edge) or *Efficient* (fewest drills, staggered rows)
 - **Full entity selection** — choose drill type, transport belt tier, electric pole type, beacon type, and quality for each
+- **Substation support** — 2x2 electric poles (substations) have specialized placement logic with splitters and dual belt output lines for 5x5+ drills in productivity mode
 - **Beacon support** — beacons fill alongside drill rows with configurable max and preferred counts per drill; includes beacon module selection
-- **Underground belts** — automatically placed for 3×3+ drills to keep belt runs clean
+- **Underground belts** — automatically placed for 3x3+ drills to keep belt runs clean
 - **4-direction belt flow** — north, south, east, or west
 - **Pipe placement** — automatic pipes for fluid-requiring resources (e.g. uranium ore with sulfuric acid), with pipe type and quality selection
-- **Polite placement mode** — only clears trees and rocks, preserving existing buildings
+- **Foundation auto-placement** — landfill, ice-platform, or other foundation tiles are automatically placed under entities on water or frozen ocean; foundation type is detected per planet
+- **Polite placement mode** — only clears trees and rocks, preserving existing buildings; respects rail ramps and supports
+- **Technology-based filtering** — GUI selectors only show entities whose recipes have been researched
 - **Drill modules** — select modules to insert into placed drill ghosts
 - **Ore-type filtering** — drills skip positions where the mining area overlaps a different ore type
 - **Obstacle clearing** — trees, rocks, and cliffs in the placement zone are marked for deconstruction
-- **Ghost cleanup** — shift-drag to remove placed ghost miners, belts, poles, pipes, and beacons
+- **Ghost cleanup** — shift-drag to remove placed ghost miners, belts, poles, pipes, beacons, and foundation tiles
 - **Remember settings** — skip the GUI on repeat placements and reuse your last configuration
 - **Multi-planet support** — works with any resource on any surface (Nauvis, Vulcanus, Fulgora, Gleba, Aquilo)
+- **Mod compatibility** — auto-discovers modded drills, belts, poles, beacons, pipes, and 2x2 substations
 
 ---
 
@@ -59,7 +63,7 @@ All settings are per-player:
 ## Requirements
 
 - Factorio 2.0+
-- Optional: Space Age expansion (for multi-planet resources)
+- Optional: Space Age expansion (for multi-planet resources and quality)
 
 ---
 

@@ -22,6 +22,56 @@ local function find_drill(scan_results, drill_name)
     return nil
 end
 
+--- Detect if the selected pole is a substation (exactly 2x2 entity).
+--- @param pole_name string|nil Pole prototype name
+--- @return boolean is_substation True if pole is exactly 2x2
+local function is_substation(pole_name)
+    if not pole_name or pole_name == "" then
+        return false
+    end
+    local pole_info = pole_placer.get_pole_info(pole_name)
+    if not pole_info then
+        return false
+    end
+    return pole_info.width == 2 and pole_info.height == 2
+end
+
+--- Determine the substation placement mode based on drill size, placement mode, and inter-pair gap.
+--- @param drill table Drill info (width, height)
+--- @param mode string "productivity" or "efficient"
+--- @param beacon_width number Beacon width (0 if no beacons)
+--- @return string|nil substation_mode "productive_5x5", "productive_3x3", "efficient", or nil
+local function determine_substation_mode(drill, mode, beacon_width)
+    local body_max = math.max(drill.width, drill.height)
+
+    -- 2x2 drills: substation not supported (can't fit in 1-tile gap)
+    if body_max <= 2 then
+        return nil
+    end
+
+    if mode == "productivity" then
+        if body_max >= 5 then
+            return "productive_5x5"
+        else
+            return "productive_3x3"
+        end
+    elseif mode == "efficient" then
+        -- Efficient mode: inter-pair gap must be >= 2 tiles
+        -- The inter-pair gap is: spacing_across - body_dim (when no beacons)
+        -- or beacon_width (when beacons selected)
+        local radius = drill.mining_drill_radius
+        local mining_diameter = math.floor(radius) * 2 + 1
+        local body_dim = math.max(drill.width, drill.height)
+        local inter_pair = beacon_width > 0 and beacon_width or math.max(mining_diameter - body_dim, 0)
+        if inter_pair >= 2 then
+            return "efficient"
+        end
+        return nil
+    end
+
+    return nil
+end
+
 -- Entity types that should NOT be demolished
 local preserve_types = {
     ["resource"] = true,
@@ -326,20 +376,13 @@ function placer.place(player, scan_results, settings)
         selected_resource = settings.resource_name
     end
 
-    -- Validate that the selected drill has fluid input when mining fluid-requiring resources
+    -- Check if any selected resource requires fluid (used for pipe placement)
     local resource_needs_fluid = false
     for _, group in pairs(resource_groups) do
         if group.required_fluid then
             resource_needs_fluid = true
             break
         end
-    end
-    if resource_needs_fluid and not drill.has_fluid_input then
-        player.create_local_flying_text({
-            text = {"mineore.drill-no-fluid-input"},
-            create_at_cursor = true,
-        })
-        return 0, 0
     end
 
     -- Calculate grid positions with paired rows and belt gaps
@@ -366,6 +409,18 @@ function placer.place(player, scan_results, settings)
         end
     end
 
+    -- Detect substation mode and compute gap override
+    local substation_active = is_substation(settings.pole_name)
+    local substation_mode = nil
+    local gap_override = nil
+
+    if substation_active then
+        substation_mode = determine_substation_mode(drill, settings.placement_mode, beacon_width)
+        if substation_mode == "productive_5x5" then
+            gap_override = 2
+        end
+    end
+
     local result = calculator.calculate_positions(
         drill,
         scan_results.bounds,
@@ -374,7 +429,8 @@ function placer.place(player, scan_results, settings)
         resource_groups,
         all_resource_groups,
         selected_resource,
-        beacon_width
+        beacon_width,
+        gap_override
     )
 
     local positions = result.positions
@@ -476,16 +532,37 @@ function placer.place(player, scan_results, settings)
     local belts_placed = 0
     local belts_skipped = 0
     if settings.belt_name and settings.belt_name ~= "" and #result.belt_lines > 0 then
-        belts_placed, belts_skipped = belt_placer.place(
-            surface, force, player,
-            result.belt_lines,
-            drill,
-            settings.belt_name,
-            settings.belt_quality or settings.quality or "normal",
-            gap,
-            belt_direction,
-            polite
-        )
+        if substation_mode == "productive_5x5" then
+            -- 5x5+ productive substation mode: use 2-column belt layout with splitters
+            local belt_dir_define
+            if belt_direction == "north" then belt_dir_define = defines.direction.north
+            elseif belt_direction == "south" then belt_dir_define = defines.direction.south
+            elseif belt_direction == "east" then belt_dir_define = defines.direction.east
+            elseif belt_direction == "west" then belt_dir_define = defines.direction.west
+            else belt_dir_define = defines.direction.south end
+
+            belts_placed, belts_skipped = belt_placer._place_substation_5x5_belts(
+                surface, force, player,
+                result.belt_lines,
+                drill,
+                settings.belt_name,
+                settings.belt_quality or settings.quality or "normal",
+                belt_dir_define,
+                belt_direction,
+                polite
+            )
+        else
+            belts_placed, belts_skipped = belt_placer.place(
+                surface, force, player,
+                result.belt_lines,
+                drill,
+                settings.belt_name,
+                settings.belt_quality or settings.quality or "normal",
+                gap,
+                belt_direction,
+                polite
+            )
+        end
     end
 
     -- Step 2.5: Place pipes between drills when resource requires fluid
@@ -509,19 +586,52 @@ function placer.place(player, scan_results, settings)
     local poles_placed = 0
     local poles_skipped = 0
     if settings.pole_name and settings.pole_name ~= "" and #result.belt_lines > 0 then
-        poles_placed, poles_skipped = pole_placer.place(
-            surface, force, player,
-            result.belt_lines,
-            drill,
-            settings.pole_name,
-            settings.pole_quality or settings.quality or "normal",
-            gap,
-            result.pole_gap_positions,
-            result.outer_edge_positions,
-            result.is_small_drill,
-            belt_direction,
-            polite
-        )
+        if substation_mode then
+            -- Substation mode: use specialized placement functions
+            local pole_info = pole_placer.get_pole_info(settings.pole_name)
+            local pole_quality = settings.pole_quality or settings.quality or "normal"
+
+            if pole_info then
+                if substation_mode == "productive_5x5" then
+                    poles_placed, poles_skipped = pole_placer.place_substations_productive_5x5(
+                        surface, force, player,
+                        result.belt_lines, drill, pole_info, pole_quality,
+                        belt_direction, gap, polite
+                    )
+                elseif substation_mode == "productive_3x3" then
+                    local removed
+                    poles_placed, poles_skipped, removed = pole_placer.place_substations_productive_3x3(
+                        surface, force, player,
+                        result.belt_lines, drill, pole_info, pole_quality,
+                        belt_direction, gap, polite
+                    )
+                    -- Adjust placed drill count for removed drills
+                    if removed and #removed > 0 then
+                        placed = placed - #removed
+                    end
+                elseif substation_mode == "efficient" then
+                    poles_placed, poles_skipped = pole_placer.place_substations_efficient(
+                        surface, force, player,
+                        result.belt_lines, drill, pole_info, pole_quality,
+                        belt_direction, result.inter_pair_centers or {}, polite
+                    )
+                end
+            end
+        else
+            poles_placed, poles_skipped = pole_placer.place(
+                surface, force, player,
+                result.belt_lines,
+                drill,
+                settings.pole_name,
+                settings.pole_quality or settings.quality or "normal",
+                gap,
+                result.pole_gap_positions,
+                result.outer_edge_positions,
+                result.is_small_drill,
+                belt_direction,
+                polite
+            )
+        end
     end
 
     -- Step 4: Place beacons on the outer edges of drill pairs (last step)

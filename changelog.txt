@@ -3,12 +3,20 @@ Date: 2026-02-25
   Features:
     - Auto-place foundation tile ghosts (landfill, ice-platform, etc.) under entities on non-buildable tiles like water or frozen ocean
     - Foundation type is detected automatically per planet — landfill on Nauvis, ice-platform on Aquilo, and any modded foundation tiles
+    - Substation support: 2x2 electric poles (substations) now available in the pole selector with specialized placement logic
+    - Substation placement modes: productive mode for 5x5+ drills uses 2-tile gap with splitters and dual underground belt output lines; productive mode for 3x3-4x4 drills replaces drills with substations at intervals; efficient mode places substations in inter-pair gaps
+    - Modded 2x2 substations are auto-discovered and available in the pole selector
+    - Substations always placed at both ends of each drill column/row for full power coverage, spaced by wire distance for connectivity
   Changes:
-    - Alt-selection (shift-drag) now also removes foundation tile ghosts in the selected area
+    - Alt-selection (shift-drag) now also removes foundation tile ghosts and splitter ghosts in the selected area
+    - Drill selector for fluid-requiring ores (e.g., uranium) now shows all drills except burner mining drill, instead of only drills with fluid input
+    - Pole selector now auto-discovers 2x2 electric poles from any mod instead of using a hardcoded name list
+    - Electric poles larger than 2x2 (e.g., 3x3 modded substations) are filtered out of the pole selector
   Bugfixes:
     - Fixed ore selector showing fluid resources (e.g., crude oil) that are mined by pumpjacks, not mining drills
     - Fixed beacons being placed at positions where they don't affect any drill (e.g., edges of beacon columns/rows)
     - Fixed beacon supply area overlap check using non-strict comparison, causing off-by-one tile error at range boundaries
+    - Fixed no drills available for uranium ore when using modded drills that have fluid input
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.0
 Date: 2026-02-21

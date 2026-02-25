@@ -195,15 +195,25 @@ script.on_event(defines.events.on_player_selected_area, function(event)
             if settings.pole_name then
                 local proto = prototypes.entity[settings.pole_name]
                 local recipe = player.force.recipes[settings.pole_name]
-                -- Also verify pole is in the whitelist
-                local in_whitelist = false
-                for _, whitelisted_pole in ipairs(config_gui.POLE_WHITELIST) do
-                    if settings.pole_name == whitelisted_pole then
-                        in_whitelist = true
-                        break
+                -- Verify pole is valid: either in 1x1 whitelist or a 2x2+ electric pole
+                local is_valid_pole = false
+                if proto and proto.type == "electric-pole" then
+                    for _, whitelisted_pole in ipairs(config_gui.POLE_WHITELIST) do
+                        if settings.pole_name == whitelisted_pole then
+                            is_valid_pole = true
+                            break
+                        end
+                    end
+                    if not is_valid_pole then
+                        local cbox = proto.collision_box
+                        local w = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
+                        local h = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
+                        if w == 2 and h == 2 then
+                            is_valid_pole = true
+                        end
                     end
                 end
-                if not proto or (recipe and not recipe.enabled) or not in_whitelist then
+                if not proto or (recipe and not recipe.enabled) or not is_valid_pole then
                     settings.pole_name = nil
                     settings.pole_quality = nil
                 end
@@ -245,11 +255,12 @@ script.on_event(defines.events.on_player_alt_selected_area, function(event)
     local player = game.get_player(event.player_index)
     if not player then return end
 
-    -- Remove ghost mining drills, transport belts, electric poles, and beacons
+    -- Remove ghost mining drills, transport belts, electric poles, beacons, and splitters
     local removable_types = {
         ["mining-drill"] = true,
         ["transport-belt"] = true,
         ["underground-belt"] = true,
+        ["splitter"] = true,
         ["pipe"] = true,
         ["pipe-to-ground"] = true,
         ["electric-pole"] = true,

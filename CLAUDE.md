@@ -4,19 +4,26 @@
 
 ### Pole Whitelist Pattern
 
-**Pattern:** Pole selector uses explicit whitelist of three compatible pole types.
+**Pattern:** Pole selector uses a whitelist for 1x1 poles plus automatic discovery of 2x2+ electric poles (substations).
 
-**Whitelisted poles:**
+**Whitelisted 1x1 poles:**
 - `small-electric-pole` (wooden pole)
 - `kr-small-iron-electric-pole` (Krastorio 2 iron pole, may not exist in all games)
 - `medium-electric-pole`
 
+**2x2 poles (auto-discovered):**
+- Any `electric-pole` prototype with collision box exactly 2x2
+- Includes base game `substation` and any modded 2x2 substations automatically
+- Larger poles (3x3+) are excluded — they don't fit the substation placement logic
+
 **Implementation:**
-- Function `gui._get_electric_pole_types()` returns only whitelisted poles that exist in current game
+- Function `gui._get_electric_pole_types()` combines whitelisted 1x1 poles with auto-discovered 2x2 poles
+- Scans `prototypes.entity` for all `electric-pole` type entities with collision box exactly 2x2
 - Technology-based filtering still applies (pole must be researched to appear)
 - Sorted by supply area distance
+- 1x1 poles use fixed spacing pattern; 2x2 poles use specialized substation placement modes
 
-**Rationale:** These three pole types work well with the mod's fixed spacing pattern. Larger poles (big electric pole, substations) are excluded.
+**Rationale:** The 1x1 pole types work well with the mod's fixed spacing pattern. 2x2 poles (substations) require specialized placement logic because they don't fit in the standard 1-tile gap. Auto-discovery by type ensures compatibility with any mod that adds 2x2 substation-type entities. 3x3+ poles are excluded as they don't fit the substation placement logic.
 
 ### Fixed Pole Spacing Pattern
 
@@ -30,7 +37,53 @@
 - For EW orientation: pattern repeats every (drill width) tiles along belt line
 - For 2x2 drills (plain belts): poles placed at regular drill spacing intervals
 
-**Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The three whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
+**Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The 1x1 whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
+
+### Substation Placement Modes
+
+**Pattern:** When a 2x2 pole (substation) is selected, specialized placement logic replaces the standard fixed pole spacing. The mode depends on drill size and placement mode.
+
+**Behavioral Matrix:**
+
+| Drill Size | Mode | Substation Behavior |
+|---|---|---|
+| 2x2 | Any | Not supported (substation won't fit in 1-tile gap) |
+| 3x3-4x4 | Productive | Replace side2 drills with substations at intervals |
+| 3x3-4x4 | Efficient | Place in inter-pair gap (needs >= 2 tiles) |
+| 5x5+ | Productive | 2-tile gap with 2-column belt layout + splitters |
+| 5x5+ | Efficient | Place in inter-pair gap (needs >= 2 tiles) |
+
+**Implementation:**
+- `placer.lua`: `is_substation()` detects exactly 2x2 poles, `determine_substation_mode()` routes to correct mode
+- `calculator.lua`: accepts `gap_override` param (2 for productive_5x5), returns `inter_pair_centers`
+- `belt_placer._place_substation_5x5_belts()`: 5-entity-per-drill layout (Splitter + dual UBO + dual UBI)
+- `pole_placer.place_substations_productive_5x5()`: substations in empty gaps between belt sections
+- `pole_placer.place_substations_productive_3x3()`: replaces side2 drills with substations at wire-reach intervals
+- `pole_placer.place_substations_efficient()`: substations in inter-pair gaps at wire-reach intervals
+
+**5x5+ Productive Mode Layout (NS south flow):**
+
+Gap between paired drill columns is expanded to 2 tiles. Per drill, 5 belt entities are placed:
+1. **Splitter** at drill center — catches ore from both left+right drills
+2. **UBO col1 + UBO col2** 1 tile upstream of splitter — exits from previous underground (skip for first drill)
+3. **UBI col1 + UBI col2** 1 tile downstream of splitter — entrances to next underground
+
+The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. All remaining tiles in the drill zone are empty — substations are placed in those gaps by `pole_placer`, spaced by wire distance and always at both ends.
+
+```
+For south flow, drill centers at y, y+5, y+10 (5x5 drills):
+  Col1  Col2
+  [empty]        <- substation candidate (gap between drills)
+  [UBO] [UBO]    <- exits from previous underground
+  [Splitter  ]   <- at drill center, spans both columns
+  [UBI] [UBI]    <- entrances to next underground (two output lines)
+  [empty]        <- substation candidate
+  [UBO] [UBO]    <- next drill...
+  [Splitter  ]
+  [UBI] [UBI]
+```
+
+**Splitter name derivation:** `belt_name:gsub("transport%-belt", "splitter")` + prototype validation
 
 ### Underground Belt Type Setting Pattern
 
@@ -116,15 +169,15 @@ local ghost = surface.create_entity{
 
 ### Burner Drill Exclusion Pattern
 
-**Pattern:** Burner mining drill is excluded from the GUI drill selector only for liquid-requiring ores (e.g., uranium ore with sulfuric acid). For normal ores, burner drills are available.
+**Pattern:** For liquid-requiring ores (e.g., uranium), only the burner mining drill is excluded. All other drills are shown regardless of whether they have fluid input capability.
 
 **Implementation:**
 - Function `resource_scanner.find_compatible_drills()` in `scripts/resource_scanner.lua` includes "burner-mining-drill" in the compatible drills list for all ore types
-- Function `gui._add_drill_selector()` in `scripts/gui.lua` filters out "burner-mining-drill" when `needs_fluid` is true
-- GUI filtering happens after technology-based filtering and fluid input compatibility checks
-- Filtering logic: `if needs_fluid and drill.name == "burner-mining-drill" then` skip this drill
+- Function `gui._add_drill_selector()` in `scripts/gui.lua` filters out only "burner-mining-drill" when `needs_fluid` is true
+- No `has_fluid_input` filtering — all drills except burner are available for fluid-requiring ores
+- Technology-based filtering still applies after the burner exclusion
 
-**Rationale:** Burner mining drills cannot mine liquid-requiring ores (e.g., uranium ore with sulfuric acid) because they lack fluid input capability. However, they are perfectly functional for normal ores (iron, copper, coal, stone) and players may want to use them in early game scenarios. The resource scanner includes burner drills in the compatible drills list, but the GUI excludes them from the selector when the selected ore requires fluids. This provides flexibility while preventing invalid configurations.
+**Rationale:** Burner mining drills cannot mine liquid-requiring ores. All other drills (including modded ones) should be available for selection — the game itself will enforce fluid input requirements at build time.
 
 ### Technology-Based Entity Filtering
 

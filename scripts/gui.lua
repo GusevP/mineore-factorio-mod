@@ -5,8 +5,7 @@ local gui = {}
 local FRAME_NAME = "mineore_config_frame"
 local PLACEMENT_MODES = {"productivity", "efficient"}
 
--- Whitelist of electric pole types compatible with the mod's fixed spacing pattern
--- Only these three pole types work well with the underground belt placement pattern
+-- Whitelist of 1x1 electric pole types compatible with the mod's fixed spacing pattern
 gui.POLE_WHITELIST = {
     "small-electric-pole",
     "kr-small-iron-electric-pole",
@@ -377,28 +376,16 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
     }
     flow.style.horizontal_spacing = 4
 
-    -- Filter drills: when resource requires fluid, only show drills with fluid input
+    -- Filter drills: when resource requires fluid, only exclude burner mining drill
     local drills_to_show = scan_results.compatible_drills
     if needs_fluid then
-        drills_to_show = {}
-        for _, drill in ipairs(scan_results.compatible_drills) do
-            if drill.has_fluid_input then
-                drills_to_show[#drills_to_show + 1] = drill
-            end
-        end
-        -- If no drills with fluid input, keep empty list (player cannot mine this resource)
-        -- Don't fall back to incompatible drills
-    end
-
-    -- Filter out burner drills for liquid-requiring ores (they cannot mine these ores)
-    if needs_fluid then
-        local non_burner_drills = {}
+        local filtered = {}
         for _, drill in ipairs(drills_to_show) do
             if drill.name ~= "burner-mining-drill" then
-                non_burner_drills[#non_burner_drills + 1] = drill
+                filtered[#filtered + 1] = drill
             end
         end
-        drills_to_show = non_burner_drills
+        drills_to_show = filtered
     end
 
     -- Filter drills by technology availability
@@ -1127,11 +1114,14 @@ function gui._get_pipe_types()
     return pipe_list
 end
 
---- Get whitelisted electric pole prototype names sorted by supply area.
---- Only returns three specific pole types that work well with the mod's placement logic.
+--- Get electric pole prototype names sorted by supply area.
+--- Includes whitelisted 1x1 poles plus any 2x2+ electric pole (substations from base game or mods).
 --- @return string[] Array of pole prototype names
 function gui._get_electric_pole_types()
     local pole_list = {}
+    local added = {}
+
+    -- Add whitelisted 1x1 poles
     for _, name in ipairs(gui.POLE_WHITELIST) do
         local proto = prototypes.entity[name]
         if proto then
@@ -1139,8 +1129,26 @@ function gui._get_electric_pole_types()
                 name = name,
                 supply_area = proto.get_supply_area_distance() or 0,
             }
+            added[name] = true
         end
     end
+
+    -- Add any exactly 2x2 electric pole (substations from base game or mods)
+    for name, proto in pairs(prototypes.entity) do
+        if not added[name] and proto.type == "electric-pole" then
+            local cbox = proto.collision_box
+            local w = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
+            local h = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
+            if w == 2 and h == 2 then
+                pole_list[#pole_list + 1] = {
+                    name = name,
+                    supply_area = proto.get_supply_area_distance() or 0,
+                }
+                added[name] = true
+            end
+        end
+    end
+
     table.sort(pole_list, function(a, b) return a.supply_area < b.supply_area end)
 
     local names = {}
