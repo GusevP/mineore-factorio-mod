@@ -68,19 +68,23 @@ Gap between paired drill columns is expanded to 2 tiles. Per drill, 5 belt entit
 2. **UBO col1 + UBO col2** 1 tile upstream of splitter — exits from previous underground (skip for first drill)
 3. **UBI col1 + UBI col2** 1 tile downstream of splitter — entrances to next underground
 
-The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. All remaining tiles in the drill zone are empty — substations are placed in those gaps by `pole_placer`, spaced by wire distance and always at both ends.
+The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. Substations are placed by `pole_placer` at both ends of the belt line (outside drill bodies) and at intermediate positions where they don't collide with belt entities.
+
+**Substation collision safety:** Before placing each substation, `pole_placer` checks for existing belt/splitter ghosts in the substation footprint via `surface.find_entities_filtered`. For 5x5 drills, the 2-tile gap between belt sections is too narrow for a 2x2 substation (collision boxes overlap by ~0.14 tiles), so intermediate substations are skipped. Start/end substations are positioned 1 tile outside the drill body to avoid overlap.
 
 ```
 For south flow, drill centers at y, y+5, y+10 (5x5 drills):
   Col1  Col2
-  [empty]        <- substation candidate (gap between drills)
-  [UBO] [UBO]    <- exits from previous underground
+  [Substation]   <- before first drill (y = center - half - 1)
   [Splitter  ]   <- at drill center, spans both columns
   [UBI] [UBI]    <- entrances to next underground (two output lines)
-  [empty]        <- substation candidate
-  [UBO] [UBO]    <- next drill...
-  [Splitter  ]
+  [empty]        <- too narrow for substation (skipped for 5x5)
+  [empty]
+  [UBO] [UBO]    <- exits from previous underground
+  [Splitter  ]   <- next drill...
   [UBI] [UBI]
+  [empty]
+  [Substation]   <- after last drill (y = center + half + 1)
 ```
 
 **Splitter name derivation:** `belt_name:gsub("transport%-belt", "splitter")` + prototype validation

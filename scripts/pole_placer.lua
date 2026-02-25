@@ -368,43 +368,30 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
 
             for i, drill_center in ipairs(drill_positions) do
                 if i == 1 then
-                    -- Before first drill: upstream of UBO
-                    -- For south: above drill, zone_top to UBO-1
-                    -- For north: below drill, zone_bottom to UBO+1
+                    -- Before first drill: place upstream of drill body
                     if belt_direction == "south" then
-                        -- zone_top = drill_center - half, UBO at drill_center - 1
-                        -- Empty: drill_center - half to drill_center - 2
-                        local mid = (drill_center - half + drill_center - 2) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
+                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center - half - 1}
                     else
-                        local mid = (drill_center + half + drill_center + 2) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
+                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center + half + 1}
                     end
                 end
 
                 if i < #drill_positions then
-                    -- Between drill i and drill i+1
+                    -- Between drill i and drill i+1: midpoint of gap between belt sections
                     local next_center = drill_positions[i + 1]
                     if belt_direction == "south" then
-                        -- UBI of drill i at drill_center + 1
-                        -- UBO of drill i+1 at next_center - 1
-                        -- Gap midpoint:
                         local mid = (drill_center + 1 + next_center - 1) / 2
                         candidates[#candidates + 1] = {x = belt_line.x, y = mid}
                     else
-                        -- UBI of drill i at drill_center - 1
-                        -- UBO of drill i+1 at next_center + 1
                         local mid = (drill_center - 1 + next_center + 1) / 2
                         candidates[#candidates + 1] = {x = belt_line.x, y = mid}
                     end
                 else
-                    -- After last drill: downstream of UBI
+                    -- After last drill: place downstream of drill body
                     if belt_direction == "south" then
-                        local mid = (drill_center + 2 + drill_center + half) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
+                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center + half + 1}
                     else
-                        local mid = (drill_center - 2 + drill_center - half) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
+                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center - half - 1}
                     end
                 end
             end
@@ -416,11 +403,9 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             for i, drill_center in ipairs(drill_positions) do
                 if i == 1 then
                     if belt_direction == "east" then
-                        local mid = (drill_center - half + drill_center - 2) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
+                        candidates[#candidates + 1] = {x = drill_center - half - 1, y = belt_line.y}
                     else
-                        local mid = (drill_center + half + drill_center + 2) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
+                        candidates[#candidates + 1] = {x = drill_center + half + 1, y = belt_line.y}
                     end
                 end
 
@@ -435,11 +420,9 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
                     end
                 else
                     if belt_direction == "east" then
-                        local mid = (drill_center + 2 + drill_center + half) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
+                        candidates[#candidates + 1] = {x = drill_center + half + 1, y = belt_line.y}
                     else
-                        local mid = (drill_center - 2 + drill_center - half) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
+                        candidates[#candidates + 1] = {x = drill_center - half - 1, y = belt_line.y}
                     end
                 end
             end
@@ -448,6 +431,8 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
         -- Place substations at candidates:
         -- - Always place at first and last positions (so all drills have power)
         -- - Space intermediate ones by wire distance (so they connect to each other)
+        -- - Skip positions that would overlap with existing entity ghosts (belt/splitter)
+        local sub_half = pole_info.width / 2
         local last_placed_pos = nil
         for idx, cand in ipairs(candidates) do
             local is_first = (idx == 1)
@@ -473,11 +458,26 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
                     x = math.floor(cand.x + 0.5),
                     y = math.floor(cand.y + 0.5),
                 }
-                local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
-                placed = placed + p
-                skipped = skipped + s
-                if p > 0 then
-                    last_placed_pos = pos
+
+                -- Check for existing belt/splitter ghosts in substation footprint.
+                -- For 5x5 drills, the gap between belt sections is only 2 tiles,
+                -- so the substation collision box can overlap with UBO/UBI ghosts.
+                local check_area = {
+                    {pos.x - sub_half + 0.05, pos.y - sub_half + 0.05},
+                    {pos.x + sub_half - 0.05, pos.y + sub_half - 0.05},
+                }
+                local existing = surface.find_entities_filtered{
+                    area = check_area,
+                    type = "entity-ghost",
+                    ghost_type = {"underground-belt", "splitter", "transport-belt"},
+                }
+                if #existing == 0 then
+                    local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    if p > 0 then
+                        last_placed_pos = pos
+                    end
                 end
             end
         end
