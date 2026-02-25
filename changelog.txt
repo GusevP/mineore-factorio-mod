@@ -1,3 +1,11 @@
+Version: 0.9.0
+Date: 2026-02-25
+  Features:
+    - Auto-place foundation tile ghosts (landfill, ice-platform, etc.) under entities on non-buildable tiles like water or frozen ocean
+    - Foundation type is detected automatically per planet — landfill on Nauvis, ice-platform on Aquilo, and any modded foundation tiles
+  Changes:
+    - Alt-selection (shift-drag) now also removes foundation tile ghosts in the selected area
+---------------------------------------------------------------------------------------------------
 Version: 0.8.0
 Date: 2026-02-21
   Changes:

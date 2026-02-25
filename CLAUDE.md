@@ -180,6 +180,26 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 **Related:** See Cursor Management pattern for how cursor is cleared after tool use.
 
+### Foundation Tile Auto-Placement Pattern
+
+**Pattern:** When placing entity ghosts on non-buildable tiles (water, frozen ocean, etc.), foundation tile ghosts are automatically placed underneath so bots lay foundation before building the entity.
+
+**Implementation:**
+- Local function `place_foundation_if_needed()` in `scripts/ghost_util.lua`
+- Called from `ghost_util.place_ghost()` before entity ghost creation — all entity types (drills, belts, poles, pipes, beacons) get foundation coverage automatically
+- Foundation tile discovery: `get_foundation_tiles()` iterates `prototypes.tile` for `is_foundation = true`, cached after first call
+- Tile check: `surface.get_tile(tx, ty).collides_with("water_tile")` — only attempts foundation on tiles with the `water_tile` collision layer
+- Tries each foundation tile via `surface.create_entity{name="tile-ghost", inner_name=tile_name}`, caching the last successful one (`preferred` index) since a given surface uses the same foundation type throughout
+
+**Planet/surface support:**
+- Nauvis: places `landfill` on water
+- Aquilo: places `ice-platform` on frozen ocean
+- Any modded surface: automatically discovers and uses the correct `is_foundation` tile
+
+**Alt-selection cleanup:** The `on_player_alt_selected_area` handler in `control.lua` also removes `tile-ghost` entities in the selected area via `surface.find_entities_filtered{type="tile-ghost"}`.
+
+**Key lesson:** `surface.create_entity` for `tile-ghost` does NOT validate whether the tile actually needs foundation — it succeeds on land tiles too. The `collides_with("water_tile")` pre-check is required to avoid placing unnecessary foundation everywhere.
+
 ### Polite Mode Rail Infrastructure Handling
 
 **Pattern:** Ghost placement distinguishes between elevated rails (in the air) and ground-level rail infrastructure (ramps, supports). Elevated rails are completely ignored. Rail ramps and rail supports block polite mode placement but are never deconstructed.
@@ -244,6 +264,7 @@ Note: All tests are currently manual test documentation, not automated tests.
   - `belt_placer.lua` - Belt placement logic
   - `pole_placer.lua` - Electric pole placement
   - `pipe_placer.lua` - Pipe placement for fluid resources
+  - `ghost_util.lua` - Ghost entity placement with conflict resolution and foundation tiles
 - `/prototypes/` - Factorio data-stage definitions
 - `/locale/` - Localization strings
 - `/docs/plans/` - Development plans (active)

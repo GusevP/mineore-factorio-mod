@@ -99,6 +99,87 @@ function ghost_util.demolish_conflicts(surface, force, player, name, position, d
     return blocked
 end
 
+-- Cache of foundation tile names (populated on first use)
+local foundation_tile_cache = nil
+
+--- Get all foundation tile prototype names.
+--- Cached after first call since the set of tiles doesn't change during a game session.
+local function get_foundation_tiles()
+    if foundation_tile_cache then return foundation_tile_cache end
+    foundation_tile_cache = {}
+    for name, proto in pairs(prototypes.tile) do
+        if proto.is_foundation then
+            foundation_tile_cache[#foundation_tile_cache + 1] = name
+        end
+    end
+    return foundation_tile_cache
+end
+
+--- Attempt to place foundation tile ghosts for non-buildable tiles in an entity's footprint.
+--- Discovers all foundation tiles (landfill, ice-platform, etc.) and tries each one.
+--- Only places foundation on tiles that collide with "water_tile" (water, frozen ocean, etc.).
+local function place_foundation_if_needed(surface, force, player, entity_name, position, direction)
+    local foundations = get_foundation_tiles()
+    if #foundations == 0 then return end
+
+    local proto = prototypes.entity[entity_name]
+    if not proto then return end
+
+    local cbox = proto.collision_box
+    local half_w = (cbox.right_bottom.x - cbox.left_top.x) / 2
+    local half_h = (cbox.right_bottom.y - cbox.left_top.y) / 2
+
+    -- Swap for rotated entities
+    if direction == defines.direction.east or direction == defines.direction.west then
+        half_w, half_h = half_h, half_w
+    end
+
+    -- Calculate tile range from collision box
+    local left = math.floor(position.x - half_w)
+    local top = math.floor(position.y - half_h)
+    local right = math.ceil(position.x + half_w) - 1
+    local bottom = math.ceil(position.y + half_h) - 1
+
+    -- Track which foundation worked last to try it first (same surface = same foundation)
+    local preferred = 1
+
+    for tx = left, right do
+        for ty = top, bottom do
+            -- Only place foundation on non-buildable tiles (water, frozen ocean, etc.)
+            local tile = surface.get_tile(tx, ty)
+            if tile.collides_with("water_tile") then
+                local pos = {tx + 0.5, ty + 0.5}
+                -- Try the preferred foundation first (likely correct for this surface)
+                local placed = surface.create_entity{
+                    name = "tile-ghost",
+                    inner_name = foundations[preferred],
+                    position = pos,
+                    force = force,
+                    player = player,
+                }
+                if not placed then
+                    -- Try remaining foundations
+                    for i, tile_name in ipairs(foundations) do
+                        if i ~= preferred then
+                            placed = surface.create_entity{
+                                name = "tile-ghost",
+                                inner_name = tile_name,
+                                position = pos,
+                                force = force,
+                                player = player,
+                            }
+                            if placed then
+                                preferred = i
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 --- Place a ghost entity after demolishing conflicts.
 --- In normal mode, demolishes all conflicts then forces ghost placement.
 --- In polite mode, only demolishes trees/rocks; skips placement if blocked by buildings.
@@ -119,6 +200,9 @@ function ghost_util.place_ghost(surface, force, player, entity_name, position, d
     if blocked then
         return nil, false
     end
+
+    -- Place foundation tile ghosts (landfill, ice-platform, etc.) for non-buildable tiles
+    place_foundation_if_needed(surface, force, player, entity_name, position, direction)
 
     local create_params = {
         name = "entity-ghost",
