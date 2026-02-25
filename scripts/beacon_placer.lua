@@ -85,7 +85,7 @@ local function get_affected_drills(bx, by, beacon_info, drill_positions, drill_i
     for i, entry in ipairs(drill_positions) do
         local dx = math.abs(entry.position.x - bx)
         local dy = math.abs(entry.position.y - by)
-        if dx <= reach_x and dy <= reach_y then
+        if dx < reach_x and dy < reach_y then
             affected[#affected + 1] = i
         end
     end
@@ -511,11 +511,13 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
 
     -- Fill pass: place beacons in all remaining valid positions to ensure
     -- full column/row coverage, even if all drills are already saturated.
+    -- Only place if the beacon affects at least one drill.
     for i = 1, candidate_count do
         local cand = valid_candidates[i]
         if cand then
             -- Re-check collision since blocked set may have changed
-            if not beacon_collides(cand.x, cand.y, beacon_info, blocked) then
+            if not beacon_collides(cand.x, cand.y, beacon_info, blocked)
+               and #get_affected_drills(cand.x, cand.y, beacon_info, drill_positions, drill_info) > 0 then
                 local was_placed = try_place_beacon(cand)
 
                 -- Remove other candidates that now collide with the placed beacon

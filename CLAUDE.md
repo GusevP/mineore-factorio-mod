@@ -88,13 +88,18 @@ local ghost = surface.create_entity{
 
 ### Beacon Fill Pass Pattern
 
-**Pattern:** Beacon placement uses a two-phase algorithm: a greedy phase that respects `max_beacons_per_drill` preference, followed by an unconditional fill pass that places beacons in all remaining valid positions.
+**Pattern:** Beacon placement uses a two-phase algorithm: a greedy phase that respects `max_beacons_per_drill` preference, followed by a fill pass that places beacons in remaining valid positions only if they affect at least one drill.
 
 **Implementation:**
 - In `beacon_placer.lua`, the greedy loop scores candidates by counting unsaturated drills (drills below the per-drill cap). A candidate is placed if at least one affected drill benefits.
-- The fill pass places beacons in ALL remaining valid positions to ensure full column/row coverage, even if all nearby drills are already at the per-drill cap.
+- The fill pass places beacons in remaining valid positions that affect at least one drill, ensuring full column/row coverage without wasting beacons on positions outside any drill's range.
+- The `get_affected_drills()` function uses strict `<` comparison (not `<=`) to match Factorio's supply area overlap semantics — touching but not overlapping does not count as affected.
 
-**Rationale:** The fill pass ensures complete visual fill of beacon columns/rows with no gaps. Without it, edge positions (top/bottom of columns) get skipped when nearby drills are already saturated from beacons placed in the middle of the column.
+**Rationale:** The fill pass ensures complete visual fill of beacon columns/rows with no gaps. Without it, edge positions (top/bottom of columns) get skipped when nearby drills are already saturated from beacons placed in the middle of the column. The drill-affect check prevents placing useless beacons at column edges that are beyond any drill's supply range.
+
+**Previous bugs:**
+- Before 0.9.0: fill pass placed beacons unconditionally, including positions that don't affect any drill
+- Before 0.9.0: `get_affected_drills()` used `<=` comparison, off by 1 tile from Factorio's strict overlap check
 
 ### Fluid Resource Exclusion Pattern
 

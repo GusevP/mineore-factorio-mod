@@ -7,6 +7,8 @@ Date: 2026-02-25
     - Alt-selection (shift-drag) now also removes foundation tile ghosts in the selected area
   Bugfixes:
     - Fixed ore selector showing fluid resources (e.g., crude oil) that are mined by pumpjacks, not mining drills
+    - Fixed beacons being placed at positions where they don't affect any drill (e.g., edges of beacon columns/rows)
+    - Fixed beacon supply area overlap check using non-strict comparison, causing off-by-one tile error at range boundaries
 ---------------------------------------------------------------------------------------------------
 Version: 0.8.0
 Date: 2026-02-21
