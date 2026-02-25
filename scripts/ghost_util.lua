@@ -117,6 +117,39 @@ function ghost_util.get_foundation_tiles()
     return tiles
 end
 
+--- Check if any tile in an entity's footprint is non-buildable (water, lava, oil ocean, etc.).
+--- @param surface LuaSurface
+--- @param entity_name string Entity prototype name
+--- @param position table {x, y}
+--- @param direction defines.direction|nil
+--- @return boolean True if any tile collides with "water_tile"
+local function has_non_buildable_tile(surface, entity_name, position, direction)
+    local proto = prototypes.entity[entity_name]
+    if not proto then return false end
+
+    local cbox = proto.collision_box
+    local half_w = (cbox.right_bottom.x - cbox.left_top.x) / 2
+    local half_h = (cbox.right_bottom.y - cbox.left_top.y) / 2
+
+    if direction == defines.direction.east or direction == defines.direction.west then
+        half_w, half_h = half_h, half_w
+    end
+
+    local left = math.floor(position.x - half_w)
+    local top = math.floor(position.y - half_h)
+    local right = math.ceil(position.x + half_w) - 1
+    local bottom = math.ceil(position.y + half_h) - 1
+
+    for tx = left, right do
+        for ty = top, bottom do
+            if surface.get_tile(tx, ty).collides_with("water_tile") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
 --- Place foundation tile ghosts for non-buildable tiles in an entity's footprint.
 --- Uses the foundation tile set via ghost_util.foundation_tile.
 --- Only places foundation on tiles that collide with "water_tile" (water, lava, oil ocean, etc.).
@@ -180,8 +213,15 @@ function ghost_util.place_ghost(surface, force, player, entity_name, position, d
         return nil, false
     end
 
-    -- Place foundation tile ghosts (landfill, ice-platform, etc.) for non-buildable tiles
-    place_foundation_if_needed(surface, force, player, entity_name, position, direction)
+    -- Check for non-buildable tiles in entity footprint.
+    -- If no foundation is selected, skip placement entirely.
+    -- If foundation is selected, place foundation ghosts first.
+    if has_non_buildable_tile(surface, entity_name, position, direction) then
+        if not ghost_util.foundation_tile then
+            return nil, false
+        end
+        place_foundation_if_needed(surface, force, player, entity_name, position, direction)
+    end
 
     local create_params = {
         name = "entity-ghost",
