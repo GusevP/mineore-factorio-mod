@@ -1,3 +1,12 @@
+Version: 1.0.2
+Date: 2026-02-26
+  Changes:
+    - GUI now scrollable when content exceeds screen height, preventing controls from being cut off on smaller displays
+    - Placement mode options displayed horizontally in a single row instead of vertically, saving vertical space
+    - Drill module selector moved inline with drill selector section, removing separate header and reducing GUI height
+  Bugfixes:
+    - Fixed entity ghosts being placed over non-buildable tiles (lava, water) when no foundation tile is selected — placement is now skipped instead
+---------------------------------------------------------------------------------------------------
 Version: 1.0.1
 Date: 2026-02-26
   Bugfixes:

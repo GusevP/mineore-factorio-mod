@@ -110,7 +110,14 @@ function gui.create(player, scan_results, player_data)
         style = "inside_shallow_frame_with_padding",
     }
 
-    local inner = content.add{
+    local scroll = content.add{
+        type = "scroll-pane",
+        name = "scroll_pane",
+        direction = "vertical",
+    }
+    scroll.style.maximal_height = 500
+
+    local inner = scroll.add{
         type = "flow",
         name = "inner",
         direction = "vertical",
@@ -205,6 +212,9 @@ function gui.create(player, scan_results, player_data)
     -- Drill selector (icon buttons)
     local effective_drill_name = gui._add_drill_selector(inner, scan_results, settings, needs_fluid, player)
 
+    -- Drill module selector (inline with drill section)
+    gui._add_module_selector(inner, scan_results, settings, effective_drill_name)
+
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
@@ -238,12 +248,6 @@ function gui.create(player, scan_results, player_data)
 
     -- Belt direction selector (N/S/E/W)
     gui._add_belt_direction_selector(inner, settings)
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Drill module selector (choose-elem-button)
-    gui._add_module_selector(inner, scan_results, settings, effective_drill_name)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -791,11 +795,19 @@ function gui._add_beacon_selector(parent, settings, player)
     }
 end
 
---- Add placement mode radio buttons to the GUI.
+--- Add placement mode radio buttons to the GUI (horizontal layout).
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
 function gui._add_mode_selector(parent, settings)
-    parent.add{
+    local flow = parent.add{
+        type = "flow",
+        name = "mode_flow",
+        direction = "horizontal",
+    }
+    flow.style.vertical_align = "center"
+    flow.style.horizontal_spacing = 12
+
+    flow.add{
         type = "label",
         caption = {"mineore.gui-mode-header"},
         style = "caption_label",
@@ -804,7 +816,7 @@ function gui._add_mode_selector(parent, settings)
     local current_mode = settings.placement_mode or "productivity"
 
     for _, mode in ipairs(PLACEMENT_MODES) do
-        parent.add{
+        flow.add{
             type = "radiobutton",
             name = "mineore_mode_" .. mode,
             caption = {"mineore.gui-mode-" .. mode},
@@ -866,12 +878,6 @@ end
 --- @param settings table Player settings
 --- @param effective_drill_name string|nil The drill name actually shown as selected in the drill selector
 function gui._add_module_selector(parent, scan_results, settings, effective_drill_name)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-module-header"},
-        style = "caption_label",
-    }
-
     -- Get the currently selected drill to check module slots.
     -- Use effective_drill_name (from _add_drill_selector) so that module slots
     -- match the drill actually shown as selected after fluid filtering.
@@ -1261,7 +1267,7 @@ function gui.read_settings(player)
     local frame = player.gui.screen[FRAME_NAME]
     if not frame then return nil end
 
-    local inner = frame.content.inner
+    local inner = frame.content.scroll_pane.inner
     local settings = {}
 
     -- Read resource type selection (when multiple ore types)
@@ -1315,12 +1321,15 @@ function gui.read_settings(player)
         end
     end
 
-    -- Read placement mode
-    for _, mode in ipairs(PLACEMENT_MODES) do
-        local radio = inner["mineore_mode_" .. mode]
-        if radio and radio.state then
-            settings.placement_mode = mode
-            break
+    -- Read placement mode (radio buttons are inside mode_flow)
+    local mode_flow = inner.mode_flow
+    if mode_flow then
+        for _, mode in ipairs(PLACEMENT_MODES) do
+            local radio = mode_flow["mineore_mode_" .. mode]
+            if radio and radio.state then
+                settings.placement_mode = mode
+                break
+            end
         end
     end
 

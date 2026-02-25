@@ -255,6 +255,34 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 **Related:** See Cursor Management pattern for how cursor is cleared after tool use.
 
+### Non-Buildable Tile Skip Pattern
+
+**Pattern:** When no foundation tile is selected, entity ghosts are not placed on non-buildable tiles (water, lava, oil ocean, frozen ocean). When a foundation tile is selected, foundation ghosts are placed first, then the entity ghost.
+
+**Implementation:**
+- Local function `has_non_buildable_tile()` in `scripts/ghost_util.lua` checks all tiles in an entity's footprint
+- Called from `ghost_util.place_ghost()` before entity ghost creation
+- If any tile collides with `"water_tile"` and no `ghost_util.foundation_tile` is set, returns `(nil, false)` — skipping placement
+- If foundation is set, calls `place_foundation_if_needed()` then proceeds with entity ghost
+
+**Rationale:** Without this check, entity ghosts would be placed over lava/water when no foundation is selected, creating unbuildable blueprints. Players must explicitly choose a foundation tile for planets with non-buildable terrain.
+
+### GUI Layout Structure
+
+**Pattern:** The configuration GUI uses a scroll pane to handle overflow, with compact layout for placement mode (horizontal) and drill modules (inline with drill selector).
+
+**Implementation:**
+- GUI hierarchy: `main_frame > content (frame) > scroll_pane > inner (flow)`
+- `read_settings()` navigates via `frame.content.scroll_pane.inner`
+- Scroll pane has `maximal_height = 500` to handle small screens
+- Placement mode radio buttons are inside `mode_flow` (horizontal flow) with label and radios on one line
+- `read_settings()` reads mode from `inner.mode_flow["mineore_mode_" .. mode]`
+- Drill module selector has no header label — placed directly after drill icon buttons in the drill section
+- `handle_radio_change()` uses `element.parent` which works correctly since radios are inside `mode_flow`
+
+**GUI section order:**
+1. Resource info → Resource selector (conditional) → Drill + Modules (inline) → Belt → Pipe (conditional) → Pole → Beacon → Placement Mode (horizontal) → Belt Direction → Polite checkbox → Foundation → Remember checkbox → Buttons
+
 ### Foundation Tile Placement Pattern
 
 **Pattern:** The player selects which foundation tile to use (landfill, foundation, ice-platform, etc.) from the GUI. When a foundation tile is selected, ghosts are placed under entities on non-buildable tiles. When "none" is selected, no foundation is placed.
