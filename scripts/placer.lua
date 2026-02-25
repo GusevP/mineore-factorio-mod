@@ -451,6 +451,9 @@ function placer.place(player, scan_results, settings)
     local belt_orientation = calculator.direction_to_orientation(belt_direction)
     local gap = result.gap or calculator.get_pair_gap(drill, belt_orientation)
 
+    -- Set foundation tile for ghost_util (nil means no foundation placement)
+    ghost_util.foundation_tile = settings.foundation_name
+
     -- Step 0: Demolish obstacles in the placement zone before placing ghosts
     -- In polite mode, skip the broad pre-pass. Each per-entity ghost placement
     -- via ghost_util.place_ghost handles polite demolition for its own footprint,

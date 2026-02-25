@@ -1,3 +1,9 @@
+Version: 1.0.0
+Date: 2026-02-25
+  Changes:
+    - Foundation tile selector added to GUI — choose landfill, foundation, ice-platform, or any modded foundation tile instead of automatic detection
+    - Foundation is no longer placed automatically; select the correct tile for your planet (landfill for Nauvis, foundation for Fulgora/Vulcanus, ice-platform for Aquilo)
+---------------------------------------------------------------------------------------------------
 Version: 0.9.0
 Date: 2026-02-25
   Features:

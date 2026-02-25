@@ -251,21 +251,23 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 **Related:** See Cursor Management pattern for how cursor is cleared after tool use.
 
-### Foundation Tile Auto-Placement Pattern
+### Foundation Tile Placement Pattern
 
-**Pattern:** When placing entity ghosts on non-buildable tiles (water, frozen ocean, etc.), foundation tile ghosts are automatically placed underneath so bots lay foundation before building the entity.
+**Pattern:** The player selects which foundation tile to use (landfill, foundation, ice-platform, etc.) from the GUI. When a foundation tile is selected, ghosts are placed under entities on non-buildable tiles. When "none" is selected, no foundation is placed.
 
 **Implementation:**
-- Local function `place_foundation_if_needed()` in `scripts/ghost_util.lua`
-- Called from `ghost_util.place_ghost()` before entity ghost creation — all entity types (drills, belts, poles, pipes, beacons) get foundation coverage automatically
-- Foundation tile discovery: `get_foundation_tiles()` iterates `prototypes.tile` for `is_foundation = true`, cached after first call
-- Tile check: `surface.get_tile(tx, ty).collides_with("water_tile")` — only attempts foundation on tiles with the `water_tile` collision layer
-- Tries each foundation tile via `surface.create_entity{name="tile-ghost", inner_name=tile_name}`, caching the last successful one (`preferred` index) since a given surface uses the same foundation type throughout
+- GUI selector `gui._add_foundation_selector()` in `scripts/gui.lua` — icon buttons for each `is_foundation` tile + "none" button
+- Foundation tiles discovered via `ghost_util.get_foundation_tiles()` — iterates `prototypes.tile` for `is_foundation = true`
+- `placer.place()` sets `ghost_util.foundation_tile = settings.foundation_name` before placement begins
+- Local function `place_foundation_if_needed()` in `scripts/ghost_util.lua` reads `ghost_util.foundation_tile`
+- Called from `ghost_util.place_ghost()` before entity ghost creation — all entity types get foundation coverage automatically
+- Tile check: `surface.get_tile(tx, ty).collides_with("water_tile")` — only places foundation on non-buildable tiles
 
 **Planet/surface support:**
-- Nauvis: places `landfill` on water
-- Aquilo: places `ice-platform` on frozen ocean
-- Any modded surface: automatically discovers and uses the correct `is_foundation` tile
+- Nauvis: player selects `landfill` for water
+- Fulgora/Vulcanus: player selects `foundation` for oil ocean/lava
+- Aquilo: player selects `ice-platform` for frozen ocean
+- Any modded surface: foundation tiles are auto-discovered from tile prototypes
 
 **Alt-selection cleanup:** The `on_player_alt_selected_area` handler in `control.lua` also removes `tile-ghost` entities in the selected area via `surface.find_entities_filtered{type="tile-ghost"}`.
 

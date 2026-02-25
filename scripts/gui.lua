@@ -2,6 +2,7 @@
 
 local gui = {}
 
+local ghost_util = require("scripts.ghost_util")
 local FRAME_NAME = "mineore_config_frame"
 local PLACEMENT_MODES = {"productivity", "efficient"}
 
@@ -255,6 +256,12 @@ function gui.create(player, scan_results, player_data)
         tooltip = {"mineore.gui-polite-tooltip"},
         state = settings.polite or false,
     }
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
+    -- Foundation tile selector
+    gui._add_foundation_selector(inner, settings, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -1170,6 +1177,83 @@ function gui._get_beacon_types()
     return beacon_list
 end
 
+--- Add foundation tile selector as locked choose-elem-buttons + "none" sprite-button.
+--- Allows the player to select which foundation tile to place under entities on non-buildable tiles.
+--- @param parent LuaGuiElement
+--- @param settings table Player settings
+--- @param player LuaPlayer
+function gui._add_foundation_selector(parent, settings, player)
+    parent.add{
+        type = "label",
+        caption = {"mineore.gui-foundation-header"},
+        style = "caption_label",
+    }
+
+    local flow = parent.add{
+        type = "flow",
+        name = "foundation_selector_flow",
+        direction = "horizontal",
+    }
+    flow.style.horizontal_spacing = 4
+
+    local foundation_types = ghost_util.get_foundation_tiles()
+
+    -- Filter foundation tiles by technology availability
+    local available = {}
+    for _, tile_name in ipairs(foundation_types) do
+        if is_entity_available(player, tile_name) then
+            available[#available + 1] = tile_name
+        end
+    end
+
+    local selected = settings.foundation_name
+    -- Verify remembered selection is still available
+    if selected then
+        local found = false
+        for _, tile_name in ipairs(available) do
+            if tile_name == selected then
+                found = true
+                break
+            end
+        end
+        if not found then
+            selected = nil
+        end
+    end
+
+    local has_selection = false
+    for _, tile_name in ipairs(available) do
+        local proto = prototypes.tile[tile_name]
+        local btn = flow.add{
+            type = "choose-elem-button",
+            name = "mineore_foundation_btn_" .. tile_name,
+            elem_type = "tile",
+            tile = tile_name,
+            style = "slot_sized_button",
+            tooltip = proto and proto.localised_name or tile_name,
+        }
+        btn.locked = true
+        btn.tags = {selector_group = "foundation", entity_name = tile_name}
+        if tile_name == selected then
+            btn.style = "slot_sized_button_pressed"
+            has_selection = true
+        end
+    end
+
+    -- "None" button (default)
+    local none_btn = flow.add{
+        type = "sprite-button",
+        name = "mineore_foundation_none",
+        sprite = "utility/close",
+        style = "slot_sized_button",
+        tooltip = {"mineore.gui-none"},
+    }
+    none_btn.tags = {selector_group = "foundation", entity_name = ""}
+    if not has_selection then
+        none_btn.style = "slot_sized_button_pressed"
+    end
+end
+
 --- Read the current GUI selections and return a settings table.
 --- @param player LuaPlayer
 --- @return table|nil settings
@@ -1288,6 +1372,12 @@ function gui.read_settings(player)
     local polite = inner.mineore_polite_checkbox
     if polite then
         settings.polite = polite.state
+    end
+
+    -- Read foundation tile selection
+    local foundation_flow = inner.foundation_selector_flow
+    if foundation_flow then
+        settings.foundation_name = gui._read_selector_from_flow(foundation_flow, "foundation")
     end
 
     -- Read remember checkbox

@@ -99,28 +99,30 @@ function ghost_util.demolish_conflicts(surface, force, player, name, position, d
     return blocked
 end
 
--- Cache of foundation tile names (populated on first use)
-local foundation_tile_cache = nil
+-- Foundation tile name set by placer before placement begins.
+-- When set, foundation ghosts are placed under entities on non-buildable tiles.
+-- When nil, no foundation is placed.
+ghost_util.foundation_tile = nil
 
 --- Get all foundation tile prototype names.
---- Cached after first call since the set of tiles doesn't change during a game session.
-local function get_foundation_tiles()
-    if foundation_tile_cache then return foundation_tile_cache end
-    foundation_tile_cache = {}
+--- @return string[] Array of foundation tile prototype names
+function ghost_util.get_foundation_tiles()
+    local tiles = {}
     for name, proto in pairs(prototypes.tile) do
         if proto.is_foundation then
-            foundation_tile_cache[#foundation_tile_cache + 1] = name
+            tiles[#tiles + 1] = name
         end
     end
-    return foundation_tile_cache
+    table.sort(tiles)
+    return tiles
 end
 
---- Attempt to place foundation tile ghosts for non-buildable tiles in an entity's footprint.
---- Discovers all foundation tiles (landfill, ice-platform, etc.) and tries each one.
---- Only places foundation on tiles that collide with "water_tile" (water, frozen ocean, etc.).
+--- Place foundation tile ghosts for non-buildable tiles in an entity's footprint.
+--- Uses the foundation tile set via ghost_util.foundation_tile.
+--- Only places foundation on tiles that collide with "water_tile" (water, lava, oil ocean, etc.).
 local function place_foundation_if_needed(surface, force, player, entity_name, position, direction)
-    local foundations = get_foundation_tiles()
-    if #foundations == 0 then return end
+    local foundation_name = ghost_util.foundation_tile
+    if not foundation_name then return end
 
     local proto = prototypes.entity[entity_name]
     if not proto then return end
@@ -140,41 +142,18 @@ local function place_foundation_if_needed(surface, force, player, entity_name, p
     local right = math.ceil(position.x + half_w) - 1
     local bottom = math.ceil(position.y + half_h) - 1
 
-    -- Track which foundation worked last to try it first (same surface = same foundation)
-    local preferred = 1
-
     for tx = left, right do
         for ty = top, bottom do
-            -- Only place foundation on non-buildable tiles (water, frozen ocean, etc.)
+            -- Only place foundation on non-buildable tiles (water, frozen ocean, lava, oil ocean, etc.)
             local tile = surface.get_tile(tx, ty)
             if tile.collides_with("water_tile") then
-                local pos = {tx + 0.5, ty + 0.5}
-                -- Try the preferred foundation first (likely correct for this surface)
-                local placed = surface.create_entity{
+                surface.create_entity{
                     name = "tile-ghost",
-                    inner_name = foundations[preferred],
-                    position = pos,
+                    inner_name = foundation_name,
+                    position = {tx + 0.5, ty + 0.5},
                     force = force,
                     player = player,
                 }
-                if not placed then
-                    -- Try remaining foundations
-                    for i, tile_name in ipairs(foundations) do
-                        if i ~= preferred then
-                            placed = surface.create_entity{
-                                name = "tile-ghost",
-                                inner_name = tile_name,
-                                position = pos,
-                                force = force,
-                                player = player,
-                            }
-                            if placed then
-                                preferred = i
-                                break
-                            end
-                        end
-                    end
-                end
             end
         end
     end
