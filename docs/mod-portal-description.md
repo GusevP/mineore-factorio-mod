@@ -5,11 +5,13 @@ Miner Planner automates mining drill placement on ore patches. Drag-select an ar
 ## Placement Modes
 
 ### Productivity
+
 Maximum drills, edge-to-edge, highest ore throughput.
 
 ![Productivity mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_prod.gif?raw=true)
 
 ### Efficient
+
 Fewest drills, staggered rows for maximum coverage per drill.
 
 ![Efficient mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_efficient.gif?raw=true)
@@ -19,7 +21,7 @@ Fewest drills, staggered rows for maximum coverage per drill.
 ## Features
 
 - **Drag-select placement** — select any ore patch and ghost miners appear in an optimal grid
-- **Two placement modes** — *Productivity* (maximum drills, edge-to-edge) or *Efficient* (fewest drills, staggered rows)
+- **Two placement modes** — _Productivity_ (maximum drills, edge-to-edge) or _Efficient_ (fewest drills, staggered rows)
 - **Full entity selection** — choose drill type, transport belt tier, electric pole type, beacon type, and quality for each
 - **Substation support** — 2x2 electric poles (substations) have specialized placement logic with splitters and dual belt output lines for 5x5+ drills in productivity mode
 - **Beacon support** — beacons fill alongside drill rows with configurable max and preferred counts per drill; includes beacon module selection
