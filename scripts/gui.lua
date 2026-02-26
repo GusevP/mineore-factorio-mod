@@ -148,19 +148,11 @@ function gui.create(player, scan_results, player_data)
         if not group then return false end
 
         local needs_fluid = group.required_fluid ~= nil
-        local drills_to_check = scan_results.compatible_drills
 
-        if needs_fluid then
-            drills_to_check = {}
-            for _, drill in ipairs(scan_results.compatible_drills) do
-                if drill.has_fluid_input then
-                    drills_to_check[#drills_to_check + 1] = drill
-                end
-            end
-        end
-
-        for _, drill in ipairs(drills_to_check) do
-            if is_entity_available(player, drill.name) then
+        for _, drill in ipairs(scan_results.compatible_drills) do
+            if needs_fluid and drill.name == "burner-mining-drill" then
+                -- skip burner drill for fluid-requiring ores
+            elseif is_entity_available(player, drill.name) then
                 return true
             end
         end

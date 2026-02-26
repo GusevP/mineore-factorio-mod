@@ -1,3 +1,8 @@
+Version: 1.0.3
+Date: 2026-02-26
+  Bugfixes:
+    - Fixed uranium ore showing "no compatible mining drills" when no drill with fluid input was researched — now correctly shows all non-burner drills
+---------------------------------------------------------------------------------------------------
 Version: 1.0.2
 Date: 2026-02-26
   Changes:
