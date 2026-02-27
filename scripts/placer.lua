@@ -657,7 +657,6 @@ function placer.place(player, scan_results, settings)
             settings.beacon_name,
             settings.beacon_quality or settings.quality or "normal",
             settings.beacon_module_name,
-            settings.beacon_module_count,
             effective_limit,
             gap,
             polite

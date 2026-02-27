@@ -225,7 +225,6 @@ script.on_event(defines.events.on_player_selected_area, function(event)
                     settings.beacon_name = nil
                     settings.beacon_quality = nil
                     settings.beacon_module_name = nil
-                    settings.beacon_module_count = nil
                 end
             end
             if settings.module_name and not prototypes.item[settings.module_name] then

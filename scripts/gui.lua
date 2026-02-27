@@ -35,6 +35,138 @@ local function is_entity_available(player, entity_name)
     return true
 end
 
+--- Check if a module is compatible with a beacon's allowed effects.
+--- A module is incompatible if it has any positive effect not in the beacon's allowed_effects.
+--- Negative side-effects (penalties) of disallowed types are ignored, matching Factorio's behavior.
+--- @param module_proto LuaItemPrototype Module item prototype
+--- @param beacon_proto LuaEntityPrototype Beacon entity prototype
+--- @return boolean
+local function is_module_compatible_with_beacon(module_proto, beacon_proto)
+    local allowed_fx = beacon_proto.allowed_effects
+    if not allowed_fx then
+        return true
+    end
+
+    local effects = module_proto.module_effects
+    if not effects then
+        return true
+    end
+
+    for effect_name, value in pairs(effects) do
+        local bonus = type(value) == "table" and value.bonus or value
+        if bonus and bonus > 0 and not allowed_fx[effect_name] then
+            return false
+        end
+    end
+
+    return true
+end
+
+--- Get elem_filters for modules compatible with a specific beacon.
+--- @param beacon_name string|nil Beacon entity name
+--- @return table[]|nil elem_filters array, or nil if no compatible modules exist
+function gui._get_beacon_module_filters(beacon_name)
+    if not beacon_name or beacon_name == "" then
+        return {{filter = "type", type = "module"}}
+    end
+
+    local beacon_proto = prototypes.entity[beacon_name]
+    if not beacon_proto or not beacon_proto.allowed_effects then
+        return {{filter = "type", type = "module"}}
+    end
+
+    local all_modules = prototypes.get_item_filtered({{filter = "type", type = "module"}})
+    local filters = {}
+
+    for name, module_proto in pairs(all_modules) do
+        if is_module_compatible_with_beacon(module_proto, beacon_proto) then
+            filters[#filters + 1] = {filter = "name", name = name}
+        end
+    end
+
+    if #filters == 0 then
+        return nil
+    end
+
+    return filters
+end
+
+--- Rebuild the beacon module row based on the selected beacon.
+--- @param mod_row LuaGuiElement The beacon_module_row flow
+--- @param beacon_name string|nil Selected beacon name (empty string or nil = none)
+--- @param current_module string|nil Currently selected module name
+function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module)
+    mod_row.clear()
+
+    if not beacon_name or beacon_name == "" then
+        mod_row.visible = false
+        return
+    end
+
+    local beacon_proto = prototypes.entity[beacon_name]
+    if not beacon_proto then
+        mod_row.visible = false
+        return
+    end
+
+    local max_slots = beacon_proto.module_inventory_size or 0
+    if max_slots == 0 then
+        mod_row.visible = false
+        return
+    end
+
+    local filters = gui._get_beacon_module_filters(beacon_name)
+    if not filters then
+        mod_row.visible = false
+        return
+    end
+
+    mod_row.visible = true
+
+    -- Validate current module is still compatible with this beacon
+    if current_module then
+        local valid = false
+        for _, f in ipairs(filters) do
+            if f.filter == "name" and f.name == current_module then
+                valid = true
+                break
+            elseif f.filter == "type" then
+                valid = true
+                break
+            end
+        end
+        if not valid then
+            current_module = nil
+        end
+    end
+
+    mod_row.add{type = "label", caption = {"mineore.gui-beacon-module"}}
+
+    local module_btn = mod_row.add{
+        type = "choose-elem-button",
+        name = "mineore_beacon_module_btn",
+        elem_type = "item",
+        item = current_module,
+        style = "slot_sized_button",
+    }
+    module_btn.elem_filters = filters
+end
+
+--- Update the beacon module row when beacon selection changes.
+--- Reads current module state before rebuilding.
+--- @param inner LuaGuiElement The inner flow containing beacon_module_row
+--- @param beacon_name string|nil Newly selected beacon name
+function gui._update_beacon_module_row(inner, beacon_name)
+    local mod_row = inner.beacon_module_row
+    if not mod_row then return end
+
+    local current_module = nil
+    local mod_btn = mod_row.mineore_beacon_module_btn
+    if mod_btn then current_module = mod_btn.elem_value end
+
+    gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module)
+end
+
 --- Create and show the configuration GUI after a resource scan.
 --- @param player LuaPlayer
 --- @param scan_results table Results from resource_scanner.scan()
@@ -744,7 +876,7 @@ function gui._add_beacon_selector(parent, settings, player)
         gui._add_inline_quality_dropdown(row, "beacon", settings.beacon_quality or settings.quality)
     end
 
-    -- Beacon module selector (unlocked choose-elem-button + count)
+    -- Beacon module row (rebuilt dynamically based on selected beacon)
     local mod_row = parent.add{
         type = "flow",
         name = "beacon_module_row",
@@ -754,37 +886,8 @@ function gui._add_beacon_selector(parent, settings, player)
     mod_row.style.horizontal_spacing = 8
     mod_row.style.top_margin = 4
 
-    mod_row.add{
-        type = "label",
-        caption = {"mineore.gui-beacon-module"},
-    }
-
-    local module_btn = mod_row.add{
-        type = "choose-elem-button",
-        name = "mineore_beacon_module_btn",
-        elem_type = "item",
-        item = settings.beacon_module_name,
-        style = "slot_sized_button",
-    }
-    module_btn.elem_filters = {{filter = "type", type = "module"}}
-
-    mod_row.add{
-        type = "label",
-        caption = "x",
-    }
-
-    -- Module count dropdown (1-8, default to what's configured or 2)
-    local count_items = {}
-    for i = 1, 8 do
-        count_items[i] = tostring(i)
-    end
-
-    mod_row.add{
-        type = "drop-down",
-        name = "mineore_beacon_module_count",
-        items = count_items,
-        selected_index = settings.beacon_module_count or 2,
-    }
+    local effective_beacon = has_selection and selected_beacon or nil
+    gui._rebuild_beacon_module_row(mod_row, effective_beacon, settings.beacon_module_name)
 end
 
 --- Add placement mode radio buttons to the GUI (horizontal layout).
@@ -1307,10 +1410,6 @@ function gui.read_settings(player)
         if mod_btn and mod_btn.elem_value then
             settings.beacon_module_name = mod_btn.elem_value
         end
-        local count_dd = beacon_mod_row.mineore_beacon_module_count
-        if count_dd then
-            settings.beacon_module_count = count_dd.selected_index
-        end
     end
 
     -- Read placement mode (radio buttons are inside mode_flow)
@@ -1454,6 +1553,15 @@ function gui.handle_selector_click(element)
 
     -- Select the clicked button
     element.style = "slot_sized_button_pressed"
+
+    -- When beacon selection changes, update the module row
+    if group == "beacon" then
+        local beacon_name = tags.entity_name
+        -- Navigate: element -> beacon_selector_flow -> beacon_selector_row -> inner
+        local inner = element.parent.parent.parent
+        gui._update_beacon_module_row(inner, beacon_name)
+    end
+
     return true
 end
 

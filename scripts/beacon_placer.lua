@@ -353,8 +353,7 @@ end
 --- @param belt_lines table Belt line metadata from calculator
 --- @param beacon_name string Beacon prototype name
 --- @param beacon_quality string Quality name for beacon ghosts
---- @param beacon_module_name string|nil Module to insert into beacons
---- @param beacon_module_count number|nil Number of modules per beacon
+--- @param beacon_module_name string|nil Module to insert into beacons (fills all slots)
 --- @param max_beacons_per_drill number Maximum beacons that can affect any single drill
 --- @param gap number Gap size between paired drill rows
 --- @param polite boolean|nil When true, respect polite placement
@@ -362,7 +361,7 @@ end
 --- @return number skipped Count of positions where placement failed
 function beacon_placer.place(surface, force, player, drill_positions, drill_info,
                              belt_lines, beacon_name, beacon_quality, beacon_module_name,
-                             beacon_module_count, max_beacons_per_drill, gap, polite)
+                             max_beacons_per_drill, gap, polite)
     if not beacon_name or beacon_name == "" then
         return 0, 0
     end
@@ -413,11 +412,10 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
             surface, force, player, beacon_name, pos, nil, quality, nil, polite)
 
         if was_placed then
-            -- Set module requests on the beacon ghost
+            -- Set module requests on the beacon ghost (fill all slots)
             if ghost and ghost.valid and beacon_module_name and beacon_module_name ~= "" then
                 local beacon_proto = prototypes.entity[beacon_info.name]
-                local max_modules = beacon_proto and beacon_proto.module_inventory_size or 0
-                local count = math.min(beacon_module_count or 1, max_modules)
+                local count = beacon_proto and beacon_proto.module_inventory_size or 0
                 local insert_plan = {}
                 for slot = 0, count - 1 do
                     insert_plan[#insert_plan + 1] = {
