@@ -227,40 +227,32 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
 
     if belt_line.orientation == "NS" then
         local x = belt_line.x
+        -- Positions are sorted ascending. For south flow, first in flow = index 1.
+        -- For north flow, first in flow = last index (largest y = southernmost).
+        local first_in_flow = (belt_direction == "south") and 1 or #drill_positions
 
         for drill_index, drill_center in ipairs(drill_positions) do
             -- drill_center is the y-position of the drill center
-            -- First drill: only UBI (entrance to underground section)
+            -- First drill in flow: only UBI (entrance to underground section)
             -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
             local ubi_y, ubo_y
             if belt_direction == "south" then
-                -- Belt flows south (items move downward/south):
-                -- - UBO (output/exit) at drill_center - 1, faces south (same as flow direction)
-                -- - UBI (input/entrance) at drill_center, faces south (same as flow direction)
-                -- Both face the same direction for auto-connection
                 ubo_y = drill_center - 1
                 ubi_y = drill_center
             else
-                -- Belt flows north (items move upward/north):
-                -- - UBO (output/exit) at drill_center + 1, faces north (same as flow direction)
-                -- - UBI (input/entrance) at drill_center, faces north (same as flow direction)
-                -- Both face the same direction for auto-connection
                 ubo_y = drill_center + 1
                 ubi_y = drill_center
             end
 
             -- Place UBI (entrance) for all drills
-            -- IMPORTANT: Must pass type="input" explicitly during creation
             local ubi_pos = {x = x, y = ubi_y}
             local ubi_ghost, p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
 
-            -- Place UBO (exit) for all drills except the first
-            -- IMPORTANT: Must pass type="output" explicitly during creation
-            -- The belt_to_ground_type property is read-only, so we can't change it after creation
-            if drill_index > 1 then
+            -- Place UBO (exit) for all drills except the first in flow direction
+            if drill_index ~= first_in_flow then
                 local ubo_pos = {x = x, y = ubo_y}
                 local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
                     surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
@@ -271,40 +263,32 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
         end
     else -- EW
         local y = belt_line.y
+        -- Positions are sorted ascending. For east flow, first in flow = index 1.
+        -- For west flow, first in flow = last index (largest x = rightmost).
+        local first_in_flow = (belt_direction == "east") and 1 or #drill_positions
 
         for drill_index, drill_center in ipairs(drill_positions) do
             -- drill_center is the x-position of the drill center
-            -- First drill: only UBI (entrance to underground section)
+            -- First drill in flow: only UBI (entrance to underground section)
             -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
             local ubi_x, ubo_x
             if belt_direction == "east" then
-                -- Belt flows east (items move rightward/east):
-                -- - UBO (output/exit) at drill_center - 1, faces east (same as flow direction)
-                -- - UBI (input/entrance) at drill_center, faces east (same as flow direction)
-                -- Both face the same direction for auto-connection
                 ubo_x = drill_center - 1
                 ubi_x = drill_center
             else
-                -- Belt flows west (items move leftward/west):
-                -- - UBO (output/exit) at drill_center + 1, faces west (same as flow direction)
-                -- - UBI (input/entrance) at drill_center, faces west (same as flow direction)
-                -- Both face the same direction for auto-connection
                 ubo_x = drill_center + 1
                 ubi_x = drill_center
             end
 
             -- Place UBI (entrance) for all drills
-            -- IMPORTANT: Must pass type="input" explicitly during creation
             local ubi_pos = {x = ubi_x, y = y}
             local ubi_ghost, p, s = belt_placer._place_underground_ghost(
                 surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
             placed = placed + p
             skipped = skipped + s
 
-            -- Place UBO (exit) for all drills except the first
-            -- IMPORTANT: Must pass type="output" explicitly during creation
-            -- The belt_to_ground_type property is read-only, so we can't change it after creation
-            if drill_index > 1 then
+            -- Place UBO (exit) for all drills except the first in flow direction
+            if drill_index ~= first_in_flow then
                 local ubo_pos = {x = ubo_x, y = y}
                 local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
                     surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
@@ -418,6 +402,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
         if belt_line.orientation == "NS" then
             local col1_x = belt_line.x - 0.5
             local col2_x = belt_line.x + 0.5
+            local first_in_flow = (belt_direction == "south") and 1 or #drill_positions
 
             for drill_index, drill_center in ipairs(drill_positions) do
                 local ubo_along, splitter_along, ubi_along
@@ -442,8 +427,8 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                     skipped = skipped + s
                 end
 
-                -- 2. UBO in both columns before splitter (skip for first drill)
-                if drill_index > 1 then
+                -- 2. UBO in both columns before splitter (skip for first drill in flow direction)
+                if drill_index ~= first_in_flow then
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = col1_x, y = ubo_along}, belt_dir_define, quality, "output", polite)
@@ -474,6 +459,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
         else -- EW orientation
             local col1_y = belt_line.y - 0.5
             local col2_y = belt_line.y + 0.5
+            local first_in_flow = (belt_direction == "east") and 1 or #drill_positions
 
             for drill_index, drill_center in ipairs(drill_positions) do
                 local ubo_along, splitter_along, ubi_along
@@ -498,8 +484,8 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                     skipped = skipped + s
                 end
 
-                -- 2. UBO in both columns before splitter (skip for first drill)
-                if drill_index > 1 then
+                -- 2. UBO in both columns before splitter (skip for first drill in flow direction)
+                if drill_index ~= first_in_flow then
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubo_along, y = col1_y}, belt_dir_define, quality, "output", polite)
