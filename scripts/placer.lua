@@ -483,11 +483,12 @@ function placer.place(player, scan_results, settings)
                 local count = math.min(settings.module_count or 1, max_modules)
                 if count > 0 then
                     local insert_plan = {}
+                    local mod_quality = settings.module_quality or settings.quality or "normal"
                     for slot = 0, count - 1 do
                         insert_plan[#insert_plan + 1] = {
                         id = {
                             name = settings.module_name,
-                            quality = settings.quality or "normal",
+                            quality = mod_quality,
                         },
                         items = {
                             in_inventory = {
@@ -657,6 +658,7 @@ function placer.place(player, scan_results, settings)
             settings.beacon_name,
             settings.beacon_quality or settings.quality or "normal",
             settings.beacon_module_name,
+            settings.beacon_module_quality or settings.quality or "normal",
             effective_limit,
             gap,
             polite

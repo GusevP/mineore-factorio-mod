@@ -95,7 +95,8 @@ end
 --- @param mod_row LuaGuiElement The beacon_module_row flow
 --- @param beacon_name string|nil Selected beacon name (empty string or nil = none)
 --- @param current_module string|nil Currently selected module name
-function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module)
+--- @param current_module_quality string|nil Currently selected module quality
+function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, current_module_quality)
     mod_row.clear()
 
     if not beacon_name or beacon_name == "" then
@@ -150,6 +151,11 @@ function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module)
         style = "slot_sized_button",
     }
     module_btn.elem_filters = filters
+
+    if script.feature_flags.quality then
+        mod_row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(mod_row, "beacon_module", current_module_quality)
+    end
 end
 
 --- Update the beacon module row when beacon selection changes.
@@ -164,7 +170,9 @@ function gui._update_beacon_module_row(inner, beacon_name)
     local mod_btn = mod_row.mineore_beacon_module_btn
     if mod_btn then current_module = mod_btn.elem_value end
 
-    gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module)
+    local current_quality = gui._read_quality_dropdown(mod_row, "beacon_module")
+
+    gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, current_quality)
 end
 
 --- Create and show the configuration GUI after a resource scan.
@@ -887,7 +895,8 @@ function gui._add_beacon_selector(parent, settings, player)
     mod_row.style.top_margin = 4
 
     local effective_beacon = has_selection and selected_beacon or nil
-    gui._rebuild_beacon_module_row(mod_row, effective_beacon, settings.beacon_module_name)
+    gui._rebuild_beacon_module_row(mod_row, effective_beacon,
+        settings.beacon_module_name, settings.beacon_module_quality)
 end
 
 --- Add placement mode radio buttons to the GUI (horizontal layout).
@@ -1038,6 +1047,11 @@ function gui._add_module_selector(parent, scan_results, settings, effective_dril
         selected_index = current_count,
         tags = {max_slots = max_slots},
     }
+
+    if script.feature_flags.quality then
+        mod_flow.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(mod_flow, "drill_module", settings.module_quality)
+    end
 end
 
 --- Add a quality dropdown inline in a row.
@@ -1464,6 +1478,8 @@ function gui.read_settings(player)
         settings.pipe_quality = gui._read_quality_dropdown(pipe_row, "pipe")
         settings.pole_quality = gui._read_quality_dropdown(pole_row, "pole")
         settings.beacon_quality = gui._read_quality_dropdown(beacon_row, "beacon")
+        settings.module_quality = gui._read_quality_dropdown(mod_flow, "drill_module")
+        settings.beacon_module_quality = gui._read_quality_dropdown(beacon_mod_row, "beacon_module")
         -- Use belt quality as the general quality fallback, or "normal"
         settings.quality = settings.belt_quality or "normal"
     end
