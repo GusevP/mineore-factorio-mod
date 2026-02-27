@@ -366,66 +366,75 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             local body_along = drill_info.height
             local half = math.floor(body_along / 2)
 
-            for i, drill_center in ipairs(drill_positions) do
-                if i == 1 then
-                    -- Before first drill: place upstream of drill body
-                    if belt_direction == "south" then
-                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center - half - 1}
-                    else
-                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center + half + 1}
-                    end
-                end
+            -- Determine first/last drill in flow direction
+            -- drill_positions sorted ascending; for south flow first=smallest, for north flow first=largest
+            local upstream_drill = belt_direction == "south" and drill_positions[1] or drill_positions[#drill_positions]
+            local downstream_drill = belt_direction == "south" and drill_positions[#drill_positions] or drill_positions[1]
 
-                if i < #drill_positions then
-                    -- Between drill i and drill i+1: midpoint of gap between belt sections
-                    local next_center = drill_positions[i + 1]
-                    if belt_direction == "south" then
-                        local mid = (drill_center + 1 + next_center - 1) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
-                    else
-                        local mid = (drill_center - 1 + next_center + 1) / 2
-                        candidates[#candidates + 1] = {x = belt_line.x, y = mid}
-                    end
-                else
-                    -- After last drill: place downstream of drill body
-                    if belt_direction == "south" then
-                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center + half + 1}
-                    else
-                        candidates[#candidates + 1] = {x = belt_line.x, y = drill_center - half - 1}
-                    end
-                end
+            -- Upstream of first drill in flow (outside drill body)
+            if belt_direction == "south" then
+                candidates[#candidates + 1] = {x = belt_line.x, y = upstream_drill - half - 1}
+            else
+                candidates[#candidates + 1] = {x = belt_line.x, y = upstream_drill + half + 1}
             end
+
+            -- Gaps between adjacent drills
+            for i = 1, #drill_positions - 1 do
+                local curr = drill_positions[i]
+                local next_center = drill_positions[i + 1]
+                local mid
+                if belt_direction == "south" then
+                    mid = (curr + 1 + next_center - 1) / 2
+                else
+                    mid = (curr - 1 + next_center + 1) / 2
+                end
+                candidates[#candidates + 1] = {x = belt_line.x, y = mid}
+            end
+
+            -- Downstream of last drill in flow (outside drill body)
+            if belt_direction == "south" then
+                candidates[#candidates + 1] = {x = belt_line.x, y = downstream_drill + half + 1}
+            else
+                candidates[#candidates + 1] = {x = belt_line.x, y = downstream_drill - half - 1}
+            end
+
+            table.sort(candidates, function(a, b) return a.y < b.y end)
 
         else -- EW
             local body_along = drill_info.width
             local half = math.floor(body_along / 2)
 
-            for i, drill_center in ipairs(drill_positions) do
-                if i == 1 then
-                    if belt_direction == "east" then
-                        candidates[#candidates + 1] = {x = drill_center - half - 1, y = belt_line.y}
-                    else
-                        candidates[#candidates + 1] = {x = drill_center + half + 1, y = belt_line.y}
-                    end
-                end
+            local upstream_drill = belt_direction == "east" and drill_positions[1] or drill_positions[#drill_positions]
+            local downstream_drill = belt_direction == "east" and drill_positions[#drill_positions] or drill_positions[1]
 
-                if i < #drill_positions then
-                    local next_center = drill_positions[i + 1]
-                    if belt_direction == "east" then
-                        local mid = (drill_center + 1 + next_center - 1) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
-                    else
-                        local mid = (drill_center - 1 + next_center + 1) / 2
-                        candidates[#candidates + 1] = {x = mid, y = belt_line.y}
-                    end
-                else
-                    if belt_direction == "east" then
-                        candidates[#candidates + 1] = {x = drill_center + half + 1, y = belt_line.y}
-                    else
-                        candidates[#candidates + 1] = {x = drill_center - half - 1, y = belt_line.y}
-                    end
-                end
+            -- Upstream of first drill in flow
+            if belt_direction == "east" then
+                candidates[#candidates + 1] = {x = upstream_drill - half - 1, y = belt_line.y}
+            else
+                candidates[#candidates + 1] = {x = upstream_drill + half + 1, y = belt_line.y}
             end
+
+            -- Gaps between adjacent drills
+            for i = 1, #drill_positions - 1 do
+                local curr = drill_positions[i]
+                local next_center = drill_positions[i + 1]
+                local mid
+                if belt_direction == "east" then
+                    mid = (curr + 1 + next_center - 1) / 2
+                else
+                    mid = (curr - 1 + next_center + 1) / 2
+                end
+                candidates[#candidates + 1] = {x = mid, y = belt_line.y}
+            end
+
+            -- Downstream of last drill in flow
+            if belt_direction == "east" then
+                candidates[#candidates + 1] = {x = downstream_drill + half + 1, y = belt_line.y}
+            else
+                candidates[#candidates + 1] = {x = downstream_drill - half - 1, y = belt_line.y}
+            end
+
+            table.sort(candidates, function(a, b) return a.x < b.x end)
         end
 
         -- Place substations at candidates:
@@ -433,6 +442,10 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
         -- - Space intermediate ones by wire distance (so they connect to each other)
         -- - Skip positions that would overlap with existing entity ghosts (belt/splitter)
         local sub_half = pole_info.width / 2
+        -- Candidates are spaced by drill body size. Subtract it from wire distance
+        -- so the triggered candidate is still within wire reach of the last placed one.
+        local body_along = belt_line.orientation == "NS" and drill_info.height or drill_info.width
+        local spacing_threshold = math.max(body_along, max_spacing - body_along)
         local last_placed_pos = nil
         for idx, cand in ipairs(candidates) do
             local is_first = (idx == 1)
@@ -446,8 +459,7 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
                 else
                     dist = math.abs(cand.x - last_placed_pos.x)
                 end
-                -- Place when approaching wire distance limit (with margin for entity size)
-                if dist >= max_spacing - pole_info.height then
+                if dist >= spacing_threshold then
                     should_place = true
                 end
             end
