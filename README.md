@@ -31,8 +31,9 @@ Fewest drills, staggered rows for maximum coverage per drill.
 - **Compatible electric poles** — small electric pole (wooden), medium electric pole, and Krastorio 2 small iron pole (if available)
 - **All resources** — works with every solid minable resource across all planets (Nauvis, Vulcanus, Fulgora, Gleba)
 - **Icon-based GUI** — choose-elem-button selectors for all entity types (following P.U.M.P. pattern)
-- **Module support** — pre-request modules on ghost drills and beacons (speed, productivity, efficiency, quality)
-- **Quality support** — per-entity quality selection for drills, belts, poles, and beacons (Space Age)
+- **Module support** — pre-request modules on ghost drills and beacons (speed, productivity, efficiency, quality), with per-module quality selection
+- **Quality support** — per-entity quality selection for drills, belts, poles, and beacons, plus independent quality for drill and beacon modules (Space Age)
+- **Smart beacon modules** — beacon module selector automatically filters to only show compatible modules based on beacon's allowed effects; all module slots filled automatically
 - **Belt direction** — choose North, South, East, or West belt flow direction
 - **Remember settings** — skip the GUI on repeat use by remembering your last configuration
 - **Pipe placement** — automatic pipe connections between drills when mining fluid-requiring resources (e.g., uranium ore with sulfuric acid)

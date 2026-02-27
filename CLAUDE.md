@@ -129,6 +129,56 @@ local ghost = surface.create_entity{
 - Version 0.10.0 attempt: tried to use `ghost.rotate()` to flip UBO from "input" to "output" after creation, but this doesn't update the ghost sprite
 - Fixed in current version: pass `type="output"` parameter during ghost creation for UBO entities
 
+### First-In-Flow Direction Pattern
+
+**Pattern:** `drill_along_positions` is always sorted ascending (by x for EW, by y for NS). The "first drill in flow" is NOT always index 1 — for north/west flow, the first drill in flow is the LAST element in the sorted array.
+
+**Implementation:**
+- In `belt_placer.lua`, both `_place_underground_belts()` and `_place_substation_5x5_belts()` compute `first_in_flow`:
+  ```lua
+  -- NS block:
+  local first_in_flow = (belt_direction == "south") and 1 or #drill_positions
+  -- EW block:
+  local first_in_flow = (belt_direction == "east") and 1 or #drill_positions
+  ```
+- The first drill in flow gets only UBI (no UBO), subsequent drills get both UBI and UBO
+- Uses `drill_index ~= first_in_flow` instead of `drill_index > 1`
+
+**Also applies to `pole_placer.lua`:**
+- `place_substations_productive_5x5()` computes `upstream_drill`/`downstream_drill` based on flow direction
+- Candidate positions sorted after generation to ensure consistent placement order
+
+**Previous bugs:**
+- Before 1.1.0: `drill_index > 1` assumed ascending sort = flow direction, causing missing UBO/substations for north/west flow
+
+### Beacon Module Compatibility Pattern
+
+**Pattern:** Beacon module selector filters to only show modules compatible with the selected beacon's `allowed_effects`.
+
+**Implementation:**
+- Local function `is_module_compatible_with_beacon(module_proto, beacon_proto)` in `scripts/gui.lua`
+- Checks each module effect against beacon's `allowed_effects` dictionary
+- Only **positive** effects (`bonus > 0`) of disallowed types reject a module — negative side-effects (penalties) are ignored
+- Function `gui._get_beacon_module_filters(beacon_name)` builds `elem_filters` for the choose-elem-button
+- Function `gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, current_module_quality)` dynamically rebuilds the module row when beacon selection changes
+- All beacon module slots are filled automatically using `module_inventory_size` from the beacon prototype
+
+**Key detail:** Speed modules have `quality = -0.1` (a penalty on quality effect). Using `bonus ~= 0` would incorrectly reject speed modules from beacons that don't allow quality. The fix uses `bonus > 0` to only check positive contributions.
+
+### Module Quality Pattern
+
+**Pattern:** Module quality is selected independently from entity quality, allowing different quality levels for the entity and its modules.
+
+**Implementation:**
+- `gui._add_inline_quality_dropdown()` with prefix pattern creates named dropdowns:
+  - `"drill_module"` prefix → `mineore_quality_drill_module` dropdown
+  - `"beacon_module"` prefix → `mineore_quality_beacon_module` dropdown
+- `gui._read_quality_dropdown()` reads quality from a prefixed dropdown
+- `read_settings()` produces `settings.module_quality` and `settings.beacon_module_quality`
+- `placer.lua` uses `settings.module_quality or settings.quality or "normal"` for drill module insert_plan
+- `beacon_placer.place()` accepts `beacon_module_quality` parameter, uses it for module insert_plan
+- Quality dropdowns only shown when `script.feature_flags.quality` is true (Space Age DLC)
+
 ### Beacon Inter-Pair Spacing Pattern
 
 **Pattern:** When beacons are selected, the inter-pair gap is sized to exactly match the beacon width, ensuring beacons are flush with drills on both sides. Without beacons, efficient mode spacing is used.

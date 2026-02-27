@@ -1,3 +1,14 @@
+Version: 1.1.0
+Date: 2026-02-28
+  Features:
+    - Module quality selectors for drill modules and beacon modules — choose quality independently from entity quality (Space Age)
+    - Beacon module selector now filters to only show modules compatible with the selected beacon's allowed effects
+    - Beacon module slots are filled automatically based on beacon prototype — removed manual module count selector
+  Bugfixes:
+    - Fixed underground belts (UBI/UBO) not placed for the last drill when using north or west belt flow directions
+    - Fixed substations not placed when using north or west belt flow directions
+    - Fixed substations placed too far apart, causing gaps in power coverage and wire connection failures
+---------------------------------------------------------------------------------------------------
 Version: 1.0.3
 Date: 2026-02-26
   Bugfixes:
