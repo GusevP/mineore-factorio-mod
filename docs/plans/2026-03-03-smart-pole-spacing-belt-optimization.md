@@ -103,14 +103,14 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 **Files:**
 - Modify: `scripts/pole_placer.lua`
 
-- [ ] Modify `get_pole_info(pole_name)` to accept optional `quality` parameter. Pass quality to `proto.get_supply_area_distance(quality)` and `proto.get_max_wire_distance(quality)` so returned values are quality-adjusted
-- [ ] Add new function `pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)`:
+- [x] Modify `get_pole_info(pole_name)` to accept optional `quality` parameter. Pass quality to `proto.get_supply_area_distance(quality)` and `proto.get_max_wire_distance(quality)` so returned values are quality-adjusted
+- [x] Add new function `pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)`:
   - Computes `effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)`
   - Computes `interval = math.max(1, math.floor(effective_reach / drill_spacing))`
   - Determines first-in-flow index (respects First-In-Flow Direction Pattern): for south/east flow starts from index 1, for north/west flow starts from last index and walks backward
   - Starting from first-in-flow drill, marks every `interval`-th position
   - Returns `positions_set` (table mapping drill index -> true) and `interval`
-- [ ] Manual test: call `get_pole_info("medium-electric-pole")` with and without quality, verify values differ for non-normal quality
+- [x] Manual test: call `get_pole_info("medium-electric-pole")` with and without quality, verify values differ for non-normal quality
 
 ### Task 2: Refactor substation functions to use unified calculator
 

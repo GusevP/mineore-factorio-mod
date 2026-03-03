@@ -23,8 +23,9 @@ local pole_placer = {}
 
 --- Get prototype data for an electric pole entity.
 --- @param pole_name string Prototype name of the pole/substation
+--- @param quality string|nil Quality name (e.g. "normal", "uncommon", "rare"). Defaults to nil (base values).
 --- @return table|nil {supply_area_distance, max_wire_distance, width, height} or nil if not found
-function pole_placer.get_pole_info(pole_name)
+function pole_placer.get_pole_info(pole_name, quality)
     local proto = prototypes.entity[pole_name]
     if not proto then
         return nil
@@ -37,11 +38,55 @@ function pole_placer.get_pole_info(pole_name)
 
     return {
         name = pole_name,
-        supply_area_distance = proto.get_supply_area_distance(),
-        max_wire_distance = proto.get_max_wire_distance(),
+        supply_area_distance = proto.get_supply_area_distance(quality),
+        max_wire_distance = proto.get_max_wire_distance(quality),
         width = width,
         height = height,
     }
+end
+
+--- Calculate which drill indices should receive a pole/substation.
+--- Uses supply area and wire distance to determine optimal spacing.
+--- Respects First-In-Flow Direction Pattern: south/east start from index 1,
+--- north/west start from last index and walk backward.
+---
+--- @param pole_info table {supply_area_distance, max_wire_distance} from get_pole_info()
+--- @param drill_count number Total number of drills along the belt line
+--- @param drill_spacing number Distance between consecutive drill centers (in tiles)
+--- @param belt_direction string Belt flow direction ("north", "south", "east", "west")
+--- @return table positions_set Table mapping drill index (1-based) -> true for indices that get a pole
+--- @return number interval How many drills apart poles are placed
+function pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)
+    local positions_set = {}
+
+    if drill_count <= 0 or drill_spacing <= 0 then
+        return positions_set, 1
+    end
+
+    local effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)
+    local interval = math.max(1, math.floor(effective_reach / drill_spacing))
+
+    -- Determine iteration direction based on flow
+    -- south/east: first-in-flow is index 1 (ascending sort = flow direction)
+    -- north/west: first-in-flow is last index (ascending sort is opposite to flow)
+    local start_idx, end_idx, step
+    if belt_direction == "south" or belt_direction == "east" then
+        start_idx = 1
+        end_idx = drill_count
+        step = interval
+    else
+        start_idx = drill_count
+        end_idx = 1
+        step = -interval
+    end
+
+    local idx = start_idx
+    while (step > 0 and idx <= end_idx) or (step < 0 and idx >= end_idx) do
+        positions_set[idx] = true
+        idx = idx + step
+    end
+
+    return positions_set, interval
 end
 
 --- Place ghost electric poles along all belt lines.
