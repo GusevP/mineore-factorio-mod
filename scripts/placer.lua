@@ -561,6 +561,40 @@ function placer.place(player, scan_results, settings)
         end
     end
 
+    -- For productive_5x5 substation mode, compute which inter-drill gaps have substations
+    -- This lets belt_placer use transport belts instead of underground where no substation exists
+    local substation_gap_sets = nil
+    if substation_mode == "productive_5x5" then
+        local pole_quality = settings.pole_quality or settings.quality or "normal"
+        local pole_info_for_gaps = pole_placer.get_pole_info(settings.pole_name, pole_quality)
+        if pole_info_for_gaps then
+            substation_gap_sets = {}
+            for i, bl in ipairs(result.belt_lines) do
+                local drills = bl.drill_along_positions or {}
+                local orientation = bl.orientation or "NS"
+                local drill_spacing = orientation == "NS" and drill.height or drill.width
+                local positions_set = pole_placer.calculate_positions(
+                    pole_info_for_gaps, #drills, drill_spacing, belt_direction)
+
+                -- Map drill positions_set to gap indices
+                -- Gap index g = gap between drill_positions[g] and drill_positions[g+1]
+                local gap_set = {}
+                for d, _ in pairs(positions_set) do
+                    if belt_direction == "south" or belt_direction == "east" then
+                        if d <= #drills - 1 then
+                            gap_set[d] = true
+                        end
+                    else
+                        if d - 1 >= 1 then
+                            gap_set[d - 1] = true
+                        end
+                    end
+                end
+                substation_gap_sets[i] = gap_set
+            end
+        end
+    end
+
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0
     local belts_skipped = 0
@@ -582,7 +616,8 @@ function placer.place(player, scan_results, settings)
                 settings.belt_quality or settings.quality or "normal",
                 belt_dir_define,
                 belt_direction,
-                polite
+                polite,
+                substation_gap_sets
             )
         else
             belts_placed, belts_skipped = belt_placer.place(

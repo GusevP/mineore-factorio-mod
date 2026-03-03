@@ -172,8 +172,8 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 **Files:**
 - Modify: `scripts/belt_placer.lua`
 
-- [ ] Modify `_place_substation_5x5_belts()` to accept `substation_gap_set` parameter (set of gap indices between consecutive drills that have a substation)
-- [ ] Implement state-machine logic for NS orientation:
+- [x] Modify `_place_substation_5x5_belts()` to accept `substation_gap_set` parameter (set of gap indices between consecutive drills that have a substation)
+- [x] Implement state-machine logic for NS orientation:
   - Track `last_had_ubi` per the same pattern as Task 4
   - Splitter at drill center is ALWAYS placed (unaffected by optimization -- splitters act as belts distributing between columns)
   - For first drill in flow:
@@ -189,8 +189,8 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
   - After each drill, fill inter-drill gap tiles:
     - If `last_had_ubi` is true: gap tiles are empty (items travel underground) -- no belts needed
     - If `last_had_ubi` is false: place transport belt col1+col2 at EVERY empty gap tile to carry resources on surface to the next splitter
-- [ ] Implement same logic for EW orientation
-- [ ] Manual test: 5x5 drills + substation with quality -> verify transport belts fill both columns and all gap tiles at positions without substations, splitters always at drill centers
+- [x] Implement same logic for EW orientation
+- [x] Manual test: 5x5 drills + substation with quality -> verify transport belts fill both columns and all gap tiles at positions without substations, splitters always at drill centers
 
 ### Task 6: Testing and documentation
 
