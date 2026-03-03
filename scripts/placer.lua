@@ -532,6 +532,26 @@ function placer.place(player, scan_results, settings)
     -- The beacon placer also builds an explicit blocked tile set for
     -- efficient pre-filtering of candidate positions.
 
+    -- Pre-calculate pole positions for smart spacing
+    -- For 1x1 poles: compute which drill indices get a pole based on supply area and wire distance
+    -- For substations: handled by their own placement functions
+    -- For no pole: nil (belt_placer will use this in future optimization)
+    local pole_position_sets = nil
+    if settings.pole_name and settings.pole_name ~= "" and not substation_active then
+        local pole_quality = settings.pole_quality or settings.quality or "normal"
+        local pole_info_for_calc = pole_placer.get_pole_info(settings.pole_name, pole_quality)
+        if pole_info_for_calc then
+            pole_position_sets = {}
+            for i, bl in ipairs(result.belt_lines) do
+                local drill_positions = bl.drill_along_positions or {}
+                local orientation = bl.orientation or "NS"
+                local drill_spacing = orientation == "NS" and drill.height or drill.width
+                pole_position_sets[i] = pole_placer.calculate_positions(
+                    pole_info_for_calc, #drill_positions, drill_spacing, belt_direction)
+            end
+        end
+    end
+
     -- Step 2: Place belts in the gap between paired drill rows
     local belts_placed = 0
     local belts_skipped = 0
@@ -633,7 +653,8 @@ function placer.place(player, scan_results, settings)
                 result.outer_edge_positions,
                 result.is_small_drill,
                 belt_direction,
-                polite
+                polite,
+                pole_position_sets
             )
         end
     end

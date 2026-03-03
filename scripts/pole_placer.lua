@@ -105,9 +105,10 @@ end
 --- @param is_small_drill boolean|nil Whether this is a 2x2 (small) drill
 --- @param belt_direction string|nil Belt flow direction ("north", "south", "east", "west")
 --- @param polite boolean|nil When true, respect polite placement
+--- @param pole_position_sets table|nil Pre-calculated pole positions per belt line {[belt_line_index] = {[drill_index]=true}}
 --- @return number placed Count of pole ghosts placed
 --- @return number skipped Count of positions where placement failed
-function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, belt_direction, polite)
+function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, belt_direction, polite, pole_position_sets)
     if not pole_name or pole_name == "" then
         return 0, 0
     end
@@ -172,17 +173,18 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
             end
         end
     else
-        -- 3x3+ drills: poles use fixed pattern (UBO-UBI-Pole at each drill position)
+        -- 3x3+ drills: poles placed at smart intervals based on supply area and wire distance
         belt_direction = belt_direction or "south"
-        for _, belt_line in ipairs(belt_lines) do
+        for i, belt_line in ipairs(belt_lines) do
+            local positions = pole_position_sets and pole_position_sets[i] or nil
             if belt_line.orientation == "NS" then
                 local p, s = pole_placer._place_ns_poles(
-                    surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite)
+                    surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite, positions)
                 placed = placed + p
                 skipped = skipped + s
             elseif belt_line.orientation == "EW" then
                 local p, s = pole_placer._place_ew_poles(
-                    surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite)
+                    surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite, positions)
                 placed = placed + p
                 skipped = skipped + s
             end
@@ -243,9 +245,9 @@ function pole_placer._place_pole_column(surface, force, player, orientation, cro
     return placed, skipped
 end
 
---- Place poles along a north-south oriented belt line using fixed pattern.
---- For 3x3+ drills: places one pole after each UBI (drill_center + 1 tile in flow direction).
---- The x-position is the center of the gap, snapped to the correct tile alignment.
+--- Place poles along a north-south oriented belt line.
+--- For 3x3+ drills: places pole after UBI (drill_center + 1 tile in flow direction).
+--- When pole_positions is provided, only places at drill indices in the set.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -255,9 +257,10 @@ end
 --- @param quality string Quality name
 --- @param belt_direction string Belt flow direction ("north" or "south")
 --- @param polite boolean|nil Polite mode flag
+--- @param pole_positions table|nil Set of drill indices that get a pole {[index]=true}, nil means all
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite)
+function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, pole_info, quality, belt_direction, polite, pole_positions)
     local placed = 0
     local skipped = 0
 
@@ -268,7 +271,12 @@ function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, 
     -- This places the pole after the UBI (which is at drill_center)
     local drill_positions = belt_line.drill_along_positions or {}
 
-    for _, drill_center in ipairs(drill_positions) do
+    for drill_index, drill_center in ipairs(drill_positions) do
+        -- Skip positions not in the pole_positions set (if provided)
+        if pole_positions and not pole_positions[drill_index] then
+            goto continue_ns
+        end
+
         local pole_y
         if belt_direction == "south" then
             -- Belt flows south: pole goes 1 tile south of drill center (after UBI)
@@ -290,14 +298,16 @@ function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, 
         local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
+
+        ::continue_ns::
     end
 
     return placed, skipped
 end
 
---- Place poles along an east-west oriented belt line using fixed pattern.
---- For 3x3+ drills: places one pole after each UBI (drill_center + 1 tile in flow direction).
---- The y-position is the center of the gap, snapped to the correct tile alignment.
+--- Place poles along an east-west oriented belt line.
+--- For 3x3+ drills: places pole after UBI (drill_center + 1 tile in flow direction).
+--- When pole_positions is provided, only places at drill indices in the set.
 --- @param surface LuaSurface
 --- @param force string
 --- @param player LuaPlayer
@@ -307,9 +317,10 @@ end
 --- @param quality string Quality name
 --- @param belt_direction string Belt flow direction ("east" or "west")
 --- @param polite boolean|nil Polite mode flag
+--- @param pole_positions table|nil Set of drill indices that get a pole {[index]=true}, nil means all
 --- @return number placed
 --- @return number skipped
-function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite)
+function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite, pole_positions)
     local placed = 0
     local skipped = 0
 
@@ -320,7 +331,12 @@ function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, 
     -- This places the pole after the UBI (which is at drill_center)
     local drill_positions = belt_line.drill_along_positions or {}
 
-    for _, drill_center in ipairs(drill_positions) do
+    for drill_index, drill_center in ipairs(drill_positions) do
+        -- Skip positions not in the pole_positions set (if provided)
+        if pole_positions and not pole_positions[drill_index] then
+            goto continue_ew
+        end
+
         local pole_x
         if belt_direction == "east" then
             -- Belt flows east: pole goes 1 tile east of drill center (after UBI)
@@ -342,6 +358,8 @@ function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, 
         local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
         placed = placed + p
         skipped = skipped + s
+
+        ::continue_ew::
     end
 
     return placed, skipped

@@ -130,16 +130,16 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 - Modify: `scripts/pole_placer.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] In `placer.place()`, before belt placement, calculate pole positions:
+- [x] In `placer.place()`, before belt placement, calculate pole positions:
   - Get pole_info with quality: `pole_placer.get_pole_info(settings.pole_name, pole_quality)`
   - Call `pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)`
   - For substation modes NOT in belt gap (productive_3x3, efficient): use empty position set for belt optimization
   - For productive_5x5 substation mode: pre-calculate which inter-drill gaps get substations (from same `calculate_positions()`)
   - For no pole selected: use empty position set
   - Pass position set to both pole_placer and belt_placer
-- [ ] Modify `_place_ns_poles()` and `_place_ew_poles()` to accept `pole_positions` set parameter and only place poles at positions in the set (skip positions not in set)
-- [ ] Update `pole_placer.place()` to accept pre-calculated pole position sets and pass through to NS/EW placement functions
-- [ ] Manual test: 3x3 drills + medium electric pole -> verify poles placed at intervals, not at every drill
+- [x] Modify `_place_ns_poles()` and `_place_ew_poles()` to accept `pole_positions` set parameter and only place poles at positions in the set (skip positions not in set)
+- [x] Update `pole_placer.place()` to accept pre-calculated pole position sets and pass through to NS/EW placement functions
+- [x] Manual test: 3x3 drills + medium electric pole -> verify poles placed at intervals, not at every drill
 
 ### Task 4: Adaptive belt placement for single-column layout (3x3+ drills with 1x1 poles)
 
