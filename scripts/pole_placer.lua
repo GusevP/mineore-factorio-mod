@@ -86,6 +86,10 @@ function pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, 
         idx = idx + step
     end
 
+    -- Always include both endpoints to ensure full supply area coverage
+    positions_set[1] = true
+    positions_set[drill_count] = true
+
     return positions_set, interval
 end
 

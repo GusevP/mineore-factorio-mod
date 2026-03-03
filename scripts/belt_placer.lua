@@ -247,6 +247,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             local drill_center = drill_positions[drill_index]
             local has_pole = has_any_poles and pole_positions[drill_index]
             local is_first = (iter_idx == 1)
+            local is_last = (iter_idx == #order)
 
             -- ubo_y: upstream of drill center (where UBO exits previous underground)
             -- ubi_y: at drill center (where UBI enters next underground)
@@ -340,6 +341,30 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                     skipped = skipped + s
                 end
             end
+
+            -- 4. Fill inter-drill gap tiles when items travel on surface
+            -- For 4x4+ drills, there are unfilled tiles between consecutive drills
+            if not is_last and not last_had_ubi then
+                local next_drill_index = order[iter_idx + 1]
+                local next_center = drill_positions[next_drill_index]
+
+                local fill_y_min, fill_y_max
+                if belt_direction == "south" then
+                    fill_y_min = gap_y + 1
+                    fill_y_max = next_center - 2
+                else
+                    fill_y_min = next_center + 2
+                    fill_y_max = gap_y - 1
+                end
+
+                for y = fill_y_min, fill_y_max do
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
+            end
         end
 
     else -- EW orientation
@@ -359,6 +384,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             local drill_center = drill_positions[drill_index]
             local has_pole = has_any_poles and pole_positions[drill_index]
             local is_first = (iter_idx == 1)
+            local is_last = (iter_idx == #order)
 
             local ubo_x, ubi_x, gap_x
             if belt_direction == "east" then
@@ -432,6 +458,29 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                     local p, s = belt_placer._place_ghost(
                         surface, force, player, belt_name,
                         {x = gap_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
+            end
+
+            -- 4. Fill inter-drill gap tiles when items travel on surface
+            if not is_last and not last_had_ubi then
+                local next_drill_index = order[iter_idx + 1]
+                local next_center = drill_positions[next_drill_index]
+
+                local fill_x_min, fill_x_max
+                if belt_direction == "east" then
+                    fill_x_min = gap_x + 1
+                    fill_x_max = next_center - 2
+                else
+                    fill_x_min = next_center + 2
+                    fill_x_max = gap_x - 1
+                end
+
+                for x = fill_x_min, fill_x_max do
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = y}, belt_dir_define, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
                 end
@@ -556,12 +605,12 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 local is_last = (iter_idx == #order)
 
                 -- Determine if this drill's downstream gap has a substation
+                -- gap_set includes endpoint entries (gap_set[0] and gap_set[#drills])
+                -- so last drill correctly detects the endpoint substation
                 local downstream_has_sub
                 if gap_set == nil then
                     -- No optimization info: old behavior (UBI/UBO at every drill)
                     downstream_has_sub = true
-                elseif is_last then
-                    downstream_has_sub = false
                 elseif belt_direction == "south" then
                     downstream_has_sub = gap_set[drill_index] or false
                 else
@@ -704,8 +753,6 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 local downstream_has_sub
                 if gap_set == nil then
                     downstream_has_sub = true
-                elseif is_last then
-                    downstream_has_sub = false
                 elseif belt_direction == "east" then
                     downstream_has_sub = gap_set[drill_index] or false
                 else

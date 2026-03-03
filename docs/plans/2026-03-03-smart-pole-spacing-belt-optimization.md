@@ -20,17 +20,19 @@ pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_dire
 ```
 
 This function:
-  1. Computes `effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)`
-  2. Computes `interval = math.max(1, math.floor(effective_reach / drill_spacing))`
-  3. Starting from first-in-flow drill, marks every `interval`-th position
-  4. Returns a set of drill indices
+
+1. Computes `effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)`
+2. Computes `interval = math.max(1, math.floor(effective_reach / drill_spacing))`
+3. Starting from first-in-flow drill, marks every `interval`-th position
+4. Returns a set of drill indices
 
 All callers use this one function:
-  - `pole_placer.place()` for 1x1 poles (NEW - currently places at every drill)
-  - `place_substations_productive_3x3()` (REPLACES inline calculation at line 536)
-  - `place_substations_efficient()` (REPLACES inline calculation at line 574)
-  - `place_substations_productive_5x5()` (REPLACES inline calculation at line 660)
-  - `placer.lua` passes the result to `belt_placer` for belt optimization
+
+- `pole_placer.place()` for 1x1 poles (NEW - currently places at every drill)
+- `place_substations_productive_3x3()` (REPLACES inline calculation at line 536)
+- `place_substations_efficient()` (REPLACES inline calculation at line 574)
+- `place_substations_productive_5x5()` (REPLACES inline calculation at line 660)
+- `placer.lua` passes the result to `belt_placer` for belt optimization
 
 ## Key Insight: Belt Optimization
 
@@ -101,6 +103,7 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 ### Task 1: Quality-aware pole info and unified position calculator
 
 **Files:**
+
 - Modify: `scripts/pole_placer.lua`
 
 - [x] Modify `get_pole_info(pole_name)` to accept optional `quality` parameter. Pass quality to `proto.get_supply_area_distance(quality)` and `proto.get_max_wire_distance(quality)` so returned values are quality-adjusted
@@ -115,6 +118,7 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 ### Task 2: Refactor substation functions to use unified calculator
 
 **Files:**
+
 - Modify: `scripts/pole_placer.lua`
 - Modify: `scripts/placer.lua`
 
@@ -127,6 +131,7 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 ### Task 3: Smart 1x1 pole placement using unified calculator
 
 **Files:**
+
 - Modify: `scripts/pole_placer.lua`
 - Modify: `scripts/placer.lua`
 
@@ -144,6 +149,7 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 ### Task 4: Adaptive belt placement for single-column layout (3x3+ drills with 1x1 poles)
 
 **Files:**
+
 - Modify: `scripts/belt_placer.lua`
 
 - [x] Modify `belt_placer.place()` to accept new optional parameter `pole_position_sets` (table mapping belt_line index -> pole position set). Pass through to `_place_underground_belts()`
@@ -170,6 +176,7 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 ### Task 5: Adaptive belt placement for dual-column layout (5x5+ drills with substations)
 
 **Files:**
+
 - Modify: `scripts/belt_placer.lua`
 
 - [x] Modify `_place_substation_5x5_belts()` to accept `substation_gap_set` parameter (set of gap indices between consecutive drills that have a substation)
@@ -192,18 +199,29 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 - [x] Implement same logic for EW orientation
 - [x] Manual test: 5x5 drills + substation with quality -> verify transport belts fill both columns and all gap tiles at positions without substations, splitters always at drill centers
 
+### Task BUGFIXES: Fix placement bugs
+
+**Files:**
+
+- Modify: `scripts/belt_placer.lua`
+- Modify: `scripts/placer.lua`
+
+- [x] Belts in 5x5 mod without substance/pole fills only 2 tiles around splitter, not all free tiles.
+- [x] If we place the substance or pole at the end of the pairs column, the last belt should be UBI.
+- [x] Seems like logic to place pole/substance at start and in the end of pairs column is not working here anymore. But we still must be sure that we cover all drills with supply area.
+
 ### Task 6: Testing and documentation
 
-- [ ] Manual test: 3x3 drills + medium-electric-pole (normal quality) -> poles at intervals, transport belts filling all positions between poles across multiple drills
-- [ ] Manual test: 3x3 drills + small-electric-pole -> different interval (supply area smaller)
-- [ ] Manual test: 3x3 drills + substation (productive 3x3) -> all transport belts in belt gap (no poles in gap)
-- [ ] Manual test: 3x3 drills + substation (efficient) -> all transport belts in belt gap
-- [ ] Manual test: 5x5 drills + substation (productive 5x5) -> transport belts in BOTH columns AND all gap tiles at positions without substations, splitters always at drill centers
-- [ ] Manual test: 5x5 drills + substation + quality -> fewer substations, more transport belt pairs filling columns and gaps
+- [x] Manual test: 3x3 drills + medium-electric-pole (normal quality) -> poles at intervals, transport belts filling all positions between poles across multiple drills
+- [x] Manual test: 3x3 drills + small-electric-pole -> different interval (supply area smaller)
+- [x] Manual test: 3x3 drills + substation (productive 3x3) -> all transport belts in belt gap (no poles in gap)
+- [x] Manual test: 3x3 drills + substation (efficient) -> all transport belts in belt gap
+- [x] Manual test: 5x5 drills + substation (productive 5x5) -> transport belts in BOTH columns AND all gap tiles at positions without substations, splitters always at drill centers
+- [x] Manual test: 5x5 drills + substation + quality -> fewer substations, more transport belt pairs filling columns and gaps
 - [ ] Manual test: 5x5 drills + medium pole -> verify correct spacing with belt fill
 - [ ] Manual test: no pole selected -> all transport belts (no underground)
-- [ ] Manual test: north/west flow directions -> verify first-in-flow correctness
-- [ ] Manual test: quality pole (if Space Age DLC available) -> wider spacing
+- [x] Manual test: north/west flow directions -> verify first-in-flow correctness
+- [x] Manual test: quality pole (if Space Age DLC available) -> wider spacing
 - [ ] Update CLAUDE.md: replace "Fixed Pole Spacing Pattern" with "Smart Pole Spacing Pattern" describing supply-area-aware placement with unified calculator
 - [ ] Update CLAUDE.md: add "Belt Optimization Pattern" describing transport belt substitution for UBO/UBI in both single-column and dual-column layouts, including gap filling across multiple drills for large supply areas
 - [ ] Move this plan to `docs/plans/completed/`

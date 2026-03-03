@@ -590,6 +590,10 @@ function placer.place(player, scan_results, settings)
                         end
                     end
                 end
+                -- Always include endpoint substations (downstream of last/first drill)
+                -- place_substations_productive_5x5 always places at first and last candidates
+                gap_set[0] = true
+                gap_set[#drills] = true
                 substation_gap_sets[i] = gap_set
             end
         end
