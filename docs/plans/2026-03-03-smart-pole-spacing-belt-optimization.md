@@ -118,11 +118,11 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 - Modify: `scripts/pole_placer.lua`
 - Modify: `scripts/placer.lua`
 
-- [ ] Update `place_substations_productive_3x3()`: replace inline `effective_reach`/`interval` calculation (line 536-537) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
-- [ ] Update `place_substations_efficient()`: replace inline `effective_reach`/`interval` calculation (line 574-575) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
-- [ ] Update `place_substations_productive_5x5()`: replace inline `effective_reach`/`spacing` calculation (line 660-661) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
-- [ ] In `placer.place()`, pass quality when calling `pole_placer.get_pole_info()` for substation mode detection and placement
-- [ ] Manual test: verify all substation modes still place correctly after refactor (no behavior change yet)
+- [x] Update `place_substations_productive_3x3()`: replace inline `effective_reach`/`interval` calculation (line 536-537) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
+- [x] Update `place_substations_efficient()`: replace inline `effective_reach`/`interval` calculation (line 574-575) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
+- [x] Update `place_substations_productive_5x5()`: replace inline `effective_reach`/`spacing` calculation (line 660-661) with call to `calculate_positions()`. Pass quality to `get_pole_info()`
+- [x] In `placer.place()`, pass quality when calling `pole_placer.get_pole_info()` for substation mode detection and placement
+- [x] Manual test: verify all substation modes still place correctly after refactor (no behavior change yet)
 
 ### Task 3: Smart 1x1 pole placement using unified calculator
 

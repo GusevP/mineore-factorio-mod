@@ -592,8 +592,8 @@ function placer.place(player, scan_results, settings)
     if settings.pole_name and settings.pole_name ~= "" and #result.belt_lines > 0 then
         if substation_mode then
             -- Substation mode: use specialized placement functions
-            local pole_info = pole_placer.get_pole_info(settings.pole_name)
             local pole_quality = settings.pole_quality or settings.quality or "normal"
+            local pole_info = pole_placer.get_pole_info(settings.pole_name, pole_quality)
 
             if pole_info then
                 if substation_mode == "productive_5x5" then

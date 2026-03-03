@@ -393,9 +393,6 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
     local placed = 0
     local skipped = 0
 
-    -- Max distance between substations: use wire distance to ensure they connect
-    local max_spacing = pole_info.max_wire_distance
-
     for _, belt_line in ipairs(belt_lines) do
         local drill_positions = belt_line.drill_along_positions or {}
         if #drill_positions == 0 then goto continue end
@@ -482,34 +479,37 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             table.sort(candidates, function(a, b) return a.x < b.x end)
         end
 
-        -- Place substations at candidates:
-        -- - Always place at first and last positions (so all drills have power)
-        -- - Space intermediate ones by wire distance (so they connect to each other)
-        -- - Skip positions that would overlap with existing entity ghosts (belt/splitter)
-        local sub_half = pole_info.width / 2
-        -- Candidates are spaced by drill body size. Subtract it from wire distance
-        -- so the triggered candidate is still within wire reach of the last placed one.
+        -- Use unified calculator for substation spacing
         local body_along = belt_line.orientation == "NS" and drill_info.height or drill_info.width
-        local spacing_threshold = math.max(body_along, max_spacing - body_along)
-        local last_placed_pos = nil
-        for idx, cand in ipairs(candidates) do
-            local is_first = (idx == 1)
-            local is_last = (idx == #candidates)
-            local should_place = is_first or is_last
+        local positions_set = pole_placer.calculate_positions(pole_info, #drill_positions, body_along, belt_direction)
 
-            if not should_place and last_placed_pos then
-                local dist
-                if belt_line.orientation == "NS" then
-                    dist = math.abs(cand.y - last_placed_pos.y)
-                else
-                    dist = math.abs(cand.x - last_placed_pos.x)
-                end
-                if dist >= spacing_threshold then
-                    should_place = true
+        -- Map drill indices to candidate indices
+        -- Candidates: 1=before first drill, 2..N=between drills, N+1=after last drill
+        -- Always place at endpoints (first and last candidates)
+        local should_place_set = {}
+        should_place_set[1] = true
+        should_place_set[#candidates] = true
+        if belt_direction == "south" or belt_direction == "east" then
+            -- South/east flow: drill d's downstream gap = candidate d+1
+            for d, _ in pairs(positions_set) do
+                if d + 1 <= #candidates then
+                    should_place_set[d + 1] = true
                 end
             end
+        else
+            -- North/west flow: drill d's downstream gap = candidate d
+            for d, _ in pairs(positions_set) do
+                if d >= 1 then
+                    should_place_set[d] = true
+                end
+            end
+        end
 
-            if should_place then
+        -- Place substations at selected candidates
+        -- Skip positions that would overlap with existing entity ghosts (belt/splitter)
+        local sub_half = pole_info.width / 2
+        for idx, cand in ipairs(candidates) do
+            if should_place_set[idx] then
                 -- Snap to integer coordinates for 2x2 entity
                 local pos = {
                     x = math.floor(cand.x + 0.5),
@@ -532,9 +532,6 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
                     local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
-                    if p > 0 then
-                        last_placed_pos = pos
-                    end
                 end
             end
         end
@@ -567,25 +564,21 @@ function pole_placer.place_substations_productive_3x3(surface, force, player, be
     local skipped = 0
     local removed_positions = {}
 
-    local body_along = nil
-    local spacing_along = nil
-
     for _, belt_line in ipairs(belt_lines) do
         local side2_positions = belt_line.drill_side2_positions or {}
         if #side2_positions == 0 then goto continue end
 
         if belt_line.orientation == "NS" then
-            body_along = drill_info.height
-            spacing_along = body_along
+            local drill_spacing = drill_info.height
 
-            local effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)
-            local interval = math.max(1, math.floor(effective_reach / spacing_along))
+            -- Use unified calculator for substation spacing
+            local positions_set = pole_placer.calculate_positions(pole_info, #side2_positions, drill_spacing, belt_direction)
 
             -- Right column x-position: belt center + gap/2 + half drill width
             local right_x = belt_line.x + gap / 2 + drill_info.width / 2
 
             for i, drill_center_y in ipairs(side2_positions) do
-                if (i - 1) % interval == 0 then
+                if positions_set[i] then
                     -- Find and destroy the existing drill ghost at this position
                     local drill_pos = {x = right_x, y = drill_center_y}
                     local area = {
@@ -613,17 +606,16 @@ function pole_placer.place_substations_productive_3x3(surface, force, player, be
             end
 
         else -- EW
-            body_along = drill_info.width
-            spacing_along = body_along
+            local drill_spacing = drill_info.width
 
-            local effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)
-            local interval = math.max(1, math.floor(effective_reach / spacing_along))
+            -- Use unified calculator for substation spacing
+            local positions_set = pole_placer.calculate_positions(pole_info, #side2_positions, drill_spacing, belt_direction)
 
             -- Bottom row y-position: belt center + gap/2 + half drill height
             local bottom_y = belt_line.y + gap / 2 + drill_info.height / 2
 
             for i, drill_center_x in ipairs(side2_positions) do
-                if (i - 1) % interval == 0 then
+                if positions_set[i] then
                     local drill_pos = {x = drill_center_x, y = bottom_y}
                     local area = {
                         {drill_pos.x - 0.1, drill_pos.y - 0.1},
@@ -681,45 +673,29 @@ function pole_placer.place_substations_efficient(surface, force, player, belt_li
     end
 
     local orientation = belt_lines[1].orientation or "NS"
-
-    -- Determine along-axis extent from all belt lines
-    local along_min, along_max
-    for _, belt_line in ipairs(belt_lines) do
-        if orientation == "NS" then
-            if not along_min or belt_line.y_min < along_min then along_min = belt_line.y_min end
-            if not along_max or belt_line.y_max > along_max then along_max = belt_line.y_max end
-        else
-            if not along_min or belt_line.x_min < along_min then along_min = belt_line.x_min end
-            if not along_max or belt_line.x_max > along_max then along_max = belt_line.x_max end
-        end
-    end
-
-    if not along_min then return 0, 0 end
-
-    local half_along = orientation == "NS" and drill_info.height / 2 or drill_info.width / 2
-    local along_start = along_min - half_along
-    local along_end = along_max + half_along
-
-    -- Calculate spacing along belt direction based on wire reach
     local body_along = orientation == "NS" and drill_info.height or drill_info.width
-    local effective_reach = math.min(pole_info.supply_area_distance * 2, pole_info.max_wire_distance)
-    local spacing = math.max(body_along, math.floor(effective_reach / body_along) * body_along)
-    if spacing < body_along then spacing = body_along end
+
+    -- Use drill positions from first belt line as reference for spacing
+    local drill_positions = belt_lines[1].drill_along_positions or {}
+    if #drill_positions == 0 then return 0, 0 end
+
+    -- Use unified calculator for substation spacing
+    local positions_set = pole_placer.calculate_positions(pole_info, #drill_positions, body_along, belt_direction)
 
     for _, cross_pos in ipairs(inter_pair_centers) do
-        local along = along_start + spacing / 2
-        while along <= along_end do
-            local pos
-            if orientation == "NS" then
-                pos = {x = cross_pos, y = math.floor(along)}
-            else
-                pos = {x = math.floor(along), y = cross_pos}
-            end
+        for i, along_pos in ipairs(drill_positions) do
+            if positions_set[i] then
+                local pos
+                if orientation == "NS" then
+                    pos = {x = cross_pos, y = math.floor(along_pos)}
+                else
+                    pos = {x = math.floor(along_pos), y = cross_pos}
+                end
 
-            local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
-            placed = placed + p
-            skipped = skipped + s
-            along = along + spacing
+                local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
+                placed = placed + p
+                skipped = skipped + s
+            end
         end
     end
 
