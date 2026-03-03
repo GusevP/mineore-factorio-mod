@@ -212,6 +212,44 @@ function placer._recompute_pole_positions(belt_lines, drill, gap)
     return pole_gap_positions, outer_edge_positions
 end
 
+--- Recompute inter_pair_centers from surviving belt lines.
+--- Called after belt-line filtering so that efficient-mode substation placement
+--- uses gap midpoints that match the filtered layout.
+--- @param belt_lines table Filtered belt lines
+--- @param drill table Drill info with width, height
+--- @param gap number Gap size between paired rows
+--- @return table inter_pair_centers
+function placer._recompute_inter_pair_centers(belt_lines, drill, gap)
+    if #belt_lines < 2 then
+        return {}
+    end
+
+    local half_w = drill.width / 2
+    local half_h = drill.height / 2
+    local gap_half = gap / 2
+    local orientation = belt_lines[1].orientation or "NS"
+
+    local pair_edge_min = {}
+    local pair_edge_max = {}
+    for _, bl in ipairs(belt_lines) do
+        if orientation == "NS" then
+            local pair_start = bl.x - half_w - gap_half
+            pair_edge_min[#pair_edge_min + 1] = pair_start - half_w
+            pair_edge_max[#pair_edge_max + 1] = pair_start + drill.width + gap + half_w
+        else
+            local pair_start = bl.y - half_h - gap_half
+            pair_edge_min[#pair_edge_min + 1] = pair_start - half_h
+            pair_edge_max[#pair_edge_max + 1] = pair_start + drill.height + gap + half_h
+        end
+    end
+
+    local centers = {}
+    for i = 1, #pair_edge_max - 1 do
+        centers[#centers + 1] = (pair_edge_max[i] + pair_edge_min[i + 1]) / 2
+    end
+    return centers
+end
+
 --- Filter belt lines to only include positions where drills were actually placed.
 --- This prevents orphaned infrastructure when drills are skipped (e.g., polite mode).
 --- @param belt_lines table Array of belt line metadata from calculator
@@ -524,6 +562,11 @@ function placer.place(player, scan_results, settings)
             result.pole_gap_positions, result.outer_edge_positions =
                 placer._recompute_pole_positions(result.belt_lines, drill, gap)
         end
+
+        -- Recompute inter-pair centers so efficient-mode substation placement
+        -- indices stay aligned with the filtered belt_lines array.
+        result.inter_pair_centers =
+            placer._recompute_inter_pair_centers(result.belt_lines, drill, gap)
     end
 
     -- Placement pipeline: drills -> belts -> poles -> beacons
@@ -536,6 +579,7 @@ function placer.place(player, scan_results, settings)
     -- For 1x1 poles: compute which drill indices get a pole based on supply area and wire distance
     -- For substations: handled by their own placement functions
     -- For no pole: nil (belt_placer treats nil as all transport belts)
+    local spacing_along = calculator.get_spacing(drill, settings.placement_mode)
     local pole_position_sets = nil
     if settings.pole_name and settings.pole_name ~= "" and not substation_active then
         local pole_quality = settings.pole_quality or settings.quality or "normal"
@@ -544,10 +588,8 @@ function placer.place(player, scan_results, settings)
             pole_position_sets = {}
             for i, bl in ipairs(result.belt_lines) do
                 local drill_positions = bl.drill_along_positions or {}
-                local orientation = bl.orientation or "NS"
-                local drill_spacing = orientation == "NS" and drill.height or drill.width
                 pole_position_sets[i] = pole_placer.calculate_positions(
-                    pole_info_for_calc, #drill_positions, drill_spacing, belt_direction)
+                    pole_info_for_calc, #drill_positions, spacing_along, belt_direction)
             end
         end
     end
@@ -571,10 +613,8 @@ function placer.place(player, scan_results, settings)
             substation_gap_sets = {}
             for i, bl in ipairs(result.belt_lines) do
                 local drills = bl.drill_along_positions or {}
-                local orientation = bl.orientation or "NS"
-                local drill_spacing = orientation == "NS" and drill.height or drill.width
                 local positions_set = pole_placer.calculate_positions(
-                    pole_info_for_gaps, #drills, drill_spacing, belt_direction)
+                    pole_info_for_gaps, #drills, spacing_along, belt_direction)
 
                 -- Map drill positions_set to gap indices
                 -- Gap index g = gap between drill_positions[g] and drill_positions[g+1]
@@ -686,7 +726,8 @@ function placer.place(player, scan_results, settings)
                     poles_placed, poles_skipped = pole_placer.place_substations_efficient(
                         surface, force, player,
                         result.belt_lines, drill, pole_info, pole_quality,
-                        belt_direction, result.inter_pair_centers or {}, polite
+                        belt_direction, result.inter_pair_centers or {}, polite,
+                        spacing_along
                     )
                 end
             end
