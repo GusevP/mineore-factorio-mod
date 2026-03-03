@@ -146,9 +146,9 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 **Files:**
 - Modify: `scripts/belt_placer.lua`
 
-- [ ] Modify `belt_placer.place()` to accept new optional parameter `pole_position_sets` (table mapping belt_line index -> pole position set). Pass through to `_place_underground_belts()`
-- [ ] Modify `_place_underground_belts()` to accept `pole_positions` parameter (set of drill indices with poles in belt gap)
-- [ ] Implement state-machine logic for NS orientation:
+- [x] Modify `belt_placer.place()` to accept new optional parameter `pole_position_sets` (table mapping belt_line index -> pole position set). Pass through to `_place_underground_belts()`
+- [x] Modify `_place_underground_belts()` to accept `pole_positions` parameter (set of drill indices with poles in belt gap)
+- [x] Implement state-machine logic for NS orientation:
   - Track `last_had_ubi` (whether previous drill in flow order created UBI underground entrance)
   - For first drill in flow:
     - Has pole: place UBI. Set `last_had_ubi = true`
@@ -163,9 +163,9 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
     - Gap position (downstream of drill center):
       - Has pole: skip (pole_placer handles this)
       - No pole: place transport belt
-- [ ] Implement same logic for EW orientation (mirror NS with x/y swap)
-- [ ] Handle edge case: if `pole_positions` is nil or empty, place all transport belts (no poles = no underground needed)
-- [ ] Manual test: verify belt continuity -- surface belts fill all positions between UBO and UBI across multiple drills
+- [x] Implement same logic for EW orientation (mirror NS with x/y swap)
+- [x] Handle edge case: if `pole_positions` is nil or empty, place all transport belts (no poles = no underground needed)
+- [x] Manual test: verify belt continuity -- surface belts fill all positions between UBO and UBI across multiple drills
 
 ### Task 5: Adaptive belt placement for dual-column layout (5x5+ drills with substations)
 

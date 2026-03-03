@@ -79,9 +79,10 @@ end
 --- @param gap number Gap size between paired rows (always 1)
 --- @param belt_direction string|nil "north", "south", "east", or "west" (belt flow direction)
 --- @param polite boolean|nil When true, respect polite placement
+--- @param pole_position_sets table|nil Per-belt-line pole positions {[belt_line_index] = {[drill_index]=true}}
 --- @return number placed Count of belt ghosts placed
 --- @return number skipped Count of positions where placement failed
-function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_name, belt_quality, gap, belt_direction, polite)
+function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_name, belt_quality, gap, belt_direction, polite, pole_position_sets)
     if not belt_name or belt_name == "" then
         return 0, 0
     end
@@ -111,12 +112,13 @@ function belt_placer.place(surface, force, player, belt_lines, drill_info, belt_
     local placed = 0
     local skipped = 0
 
-    for _, belt_line in ipairs(belt_lines) do
+    for i, belt_line in ipairs(belt_lines) do
         local p, s
         if use_underground then
+            local pole_positions = pole_position_sets and pole_position_sets[i] or nil
             p, s = belt_placer._place_underground_belts(
                 surface, force, player, belt_line, drill_info,
-                underground_name, belt_name, quality, belt_dir_define, belt_direction, polite)
+                underground_name, belt_name, quality, belt_dir_define, belt_direction, polite, pole_positions)
         else
             p, s = belt_placer._place_plain_belts(
                 surface, force, player, belt_line, drill_info,
@@ -177,22 +179,20 @@ function belt_placer._place_plain_belts(surface, force, player, belt_line, drill
     return placed, skipped
 end
 
---- Place underground belts for 3x3+ drills.
---- For each drill along the belt line, places underground belt pairs:
----   - First drill: only UBI (entrance to underground section)
----   - Subsequent drills: UBI (entrance to next section) then UBO (exit from previous section)
---- The 1-tile gap between drill pairs is left free for poles.
+--- Place belts for 3x3+ drills using adaptive placement.
+--- When pole_positions is provided, uses a state machine to place underground belts
+--- only where poles occupy the gap, and transport belts everywhere else.
+--- When pole_positions is nil or empty, places all transport belts (no underground needed).
+---
+--- State machine logic (iterates in flow direction):
+---   First drill: if has pole -> UBI at center; if no pole -> belt at center + belt at gap
+---   Subsequent drills:
+---     UBO position: if last_had_ubi -> UBO (exit); else -> belt
+---     Center: if has pole -> UBI (entrance); else -> belt
+---     Gap: if has pole -> skip (pole_placer handles); else -> belt
 ---
 --- CRITICAL: Underground belt input/output type must be specified during creation.
 --- Both UBI and UBO face the same direction (belt flow direction) for proper auto-connection.
---- UBI is created with type="input", UBO is created with type="output".
---- The belt_to_ground_type property is read-only and cannot be changed after creation.
----
---- For NS orientation (belt flows south):
----   First drill: only UBI at drill_center_y (type="input")
----   Subsequent drills: UBI at drill_center_y (type="input"), UBO at drill_center_y - 1 (type="output")
----
---- For belt flowing north, UBO/UBI positions are mirrored.
 ---
 --- @param surface LuaSurface
 --- @param force string
@@ -200,101 +200,241 @@ end
 --- @param belt_line table Belt line metadata from calculator
 --- @param drill_info table Drill info (width, height)
 --- @param underground_name string Underground belt prototype name
---- @param belt_name string Regular belt prototype name (unused but kept for consistency)
+--- @param belt_name string Regular belt prototype name (used for surface belt sections)
 --- @param quality string Quality name
 --- @param belt_dir_define defines.direction Belt flow direction
 --- @param belt_direction string "north", "south", "east", or "west"
 --- @param polite boolean|nil Polite mode flag
+--- @param pole_positions table|nil Set of drill indices with poles {[index]=true}, nil/empty = all belts
 --- @return number placed
 --- @return number skipped
-function belt_placer._place_underground_belts(surface, force, player, belt_line, drill_info, underground_name, belt_name, quality, belt_dir_define, belt_direction, polite)
+function belt_placer._place_underground_belts(surface, force, player, belt_line, drill_info, underground_name, belt_name, quality, belt_dir_define, belt_direction, polite, pole_positions)
     local placed = 0
     local skipped = 0
 
-    -- Both UBI (entrance/input) and UBO (exit/output) face the same direction (belt flow direction).
-    -- This allows Factorio's auto-connection system to properly pair them.
-    -- The belt_to_ground_type parameter ("input"/"output") determines which sprite is shown:
-    --   - "input" uses UndergroundBeltPrototype.structure.direction_in (entrance visual)
-    --   - "output" uses UndergroundBeltPrototype.structure.direction_out (exit visual)
-    -- For a south-flowing belt: both UBI and UBO have direction=south
-    -- For a north-flowing belt: both UBI and UBO have direction=north
-    -- For an east-flowing belt: both UBI and UBO have direction=east
-    -- For a west-flowing belt: both UBI and UBO have direction=west
+    local drill_positions = belt_line.drill_along_positions or {}
+    if #drill_positions == 0 then
+        return 0, 0
+    end
+
+    -- Both UBI and UBO face the same direction (belt flow direction)
     local ubi_dir = belt_dir_define
     local ubo_dir = belt_dir_define
 
-    local drill_positions = belt_line.drill_along_positions or {}
+    -- Check if any poles exist in the position set
+    local has_any_poles = false
+    if pole_positions then
+        for _ in pairs(pole_positions) do
+            has_any_poles = true
+            break
+        end
+    end
 
     if belt_line.orientation == "NS" then
         local x = belt_line.x
-        -- Positions are sorted ascending. For south flow, first in flow = index 1.
-        -- For north flow, first in flow = last index (largest y = southernmost).
-        local first_in_flow = (belt_direction == "south") and 1 or #drill_positions
 
-        for drill_index, drill_center in ipairs(drill_positions) do
-            -- drill_center is the y-position of the drill center
-            -- First drill in flow: only UBI (entrance to underground section)
-            -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
-            local ubi_y, ubo_y
+        -- Build iteration order: state machine requires flow direction order
+        local order = {}
+        if belt_direction == "south" then
+            for i = 1, #drill_positions do order[#order + 1] = i end
+        else -- north
+            for i = #drill_positions, 1, -1 do order[#order + 1] = i end
+        end
+
+        local last_had_ubi = false
+
+        for iter_idx, drill_index in ipairs(order) do
+            local drill_center = drill_positions[drill_index]
+            local has_pole = has_any_poles and pole_positions[drill_index]
+            local is_first = (iter_idx == 1)
+
+            -- ubo_y: upstream of drill center (where UBO exits previous underground)
+            -- ubi_y: at drill center (where UBI enters next underground)
+            -- gap_y: downstream of drill center (where pole goes, or belt if no pole)
+            local ubo_y, ubi_y, gap_y
             if belt_direction == "south" then
                 ubo_y = drill_center - 1
                 ubi_y = drill_center
+                gap_y = drill_center + 1
             else
                 ubo_y = drill_center + 1
                 ubi_y = drill_center
+                gap_y = drill_center - 1
             end
 
-            -- Place UBI (entrance) for all drills
-            local ubi_pos = {x = x, y = ubi_y}
-            local ubi_ghost, p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
-            placed = placed + p
-            skipped = skipped + s
+            if is_first then
+                -- First drill in flow: no UBO position
+                if has_pole then
+                    -- UBI at drill center (entrance to underground to pass under pole)
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = x, y = ubi_y}, ubi_dir, quality, "input", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = true
+                    -- Gap: pole_placer handles this position
+                else
+                    -- Transport belt at drill center
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = ubi_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    -- Transport belt at gap position
+                    p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = gap_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = false
+                end
+            else
+                -- Subsequent drills: handle UBO/belt, center, and gap positions
 
-            -- Place UBO (exit) for all drills except the first in flow direction
-            if drill_index ~= first_in_flow then
-                local ubo_pos = {x = x, y = ubo_y}
-                local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
-                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+                -- 1. UBO/belt position (upstream of drill center)
+                if last_had_ubi then
+                    -- UBO exits the underground section from previous UBI
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = x, y = ubo_y}, ubo_dir, quality, "output", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = false
+                else
+                    -- Surface transport belt
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = ubo_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
 
-                placed = placed + p2
-                skipped = skipped + s2
+                -- 2. Drill center position
+                if has_pole then
+                    -- UBI at drill center (entrance to underground to pass under pole)
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = x, y = ubi_y}, ubi_dir, quality, "input", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = true
+                else
+                    -- Surface transport belt
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = ubi_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    -- last_had_ubi stays false
+                end
+
+                -- 3. Gap position (downstream of drill center)
+                if has_pole then
+                    -- Skip: pole_placer puts the pole here
+                else
+                    -- Surface transport belt
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = gap_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
             end
         end
-    else -- EW
-        local y = belt_line.y
-        -- Positions are sorted ascending. For east flow, first in flow = index 1.
-        -- For west flow, first in flow = last index (largest x = rightmost).
-        local first_in_flow = (belt_direction == "east") and 1 or #drill_positions
 
-        for drill_index, drill_center in ipairs(drill_positions) do
-            -- drill_center is the x-position of the drill center
-            -- First drill in flow: only UBI (entrance to underground section)
-            -- Subsequent drills: UBO (exit from previous section) then UBI (entrance to next section)
-            local ubi_x, ubo_x
+    else -- EW orientation
+        local y = belt_line.y
+
+        -- Build iteration order: state machine requires flow direction order
+        local order = {}
+        if belt_direction == "east" then
+            for i = 1, #drill_positions do order[#order + 1] = i end
+        else -- west
+            for i = #drill_positions, 1, -1 do order[#order + 1] = i end
+        end
+
+        local last_had_ubi = false
+
+        for iter_idx, drill_index in ipairs(order) do
+            local drill_center = drill_positions[drill_index]
+            local has_pole = has_any_poles and pole_positions[drill_index]
+            local is_first = (iter_idx == 1)
+
+            local ubo_x, ubi_x, gap_x
             if belt_direction == "east" then
                 ubo_x = drill_center - 1
                 ubi_x = drill_center
+                gap_x = drill_center + 1
             else
                 ubo_x = drill_center + 1
                 ubi_x = drill_center
+                gap_x = drill_center - 1
             end
 
-            -- Place UBI (entrance) for all drills
-            local ubi_pos = {x = ubi_x, y = y}
-            local ubi_ghost, p, s = belt_placer._place_underground_ghost(
-                surface, force, player, underground_name, ubi_pos, ubi_dir, quality, "input", polite)
-            placed = placed + p
-            skipped = skipped + s
+            if is_first then
+                if has_pole then
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = true
+                else
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = ubi_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = gap_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = false
+                end
+            else
+                -- 1. UBO/belt position (upstream of drill center)
+                if last_had_ubi then
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = ubo_x, y = y}, ubo_dir, quality, "output", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = false
+                else
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = ubo_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
 
-            -- Place UBO (exit) for all drills except the first in flow direction
-            if drill_index ~= first_in_flow then
-                local ubo_pos = {x = ubo_x, y = y}
-                local ubo_ghost, p2, s2 = belt_placer._place_underground_ghost(
-                    surface, force, player, underground_name, ubo_pos, ubo_dir, quality, "output", polite)
+                -- 2. Center position
+                if has_pole then
+                    local _, p, s = belt_placer._place_underground_ghost(
+                        surface, force, player, underground_name,
+                        {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                    last_had_ubi = true
+                else
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = ubi_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
 
-                placed = placed + p2
-                skipped = skipped + s2
+                -- 3. Gap position (downstream of drill center)
+                if has_pole then
+                    -- Skip: pole_placer handles this position
+                else
+                    local p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = gap_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
             end
         end
     end

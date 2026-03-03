@@ -535,7 +535,7 @@ function placer.place(player, scan_results, settings)
     -- Pre-calculate pole positions for smart spacing
     -- For 1x1 poles: compute which drill indices get a pole based on supply area and wire distance
     -- For substations: handled by their own placement functions
-    -- For no pole: nil (belt_placer will use this in future optimization)
+    -- For no pole: nil (belt_placer treats nil as all transport belts)
     local pole_position_sets = nil
     if settings.pole_name and settings.pole_name ~= "" and not substation_active then
         local pole_quality = settings.pole_quality or settings.quality or "normal"
@@ -549,6 +549,15 @@ function placer.place(player, scan_results, settings)
                 pole_position_sets[i] = pole_placer.calculate_positions(
                     pole_info_for_calc, #drill_positions, drill_spacing, belt_direction)
             end
+        end
+    end
+
+    -- For substation modes NOT in belt gap (productive_3x3, efficient),
+    -- use empty position sets so belt_placer uses all transport belts
+    if substation_active and (substation_mode == "productive_3x3" or substation_mode == "efficient") then
+        pole_position_sets = {}
+        for i = 1, #result.belt_lines do
+            pole_position_sets[i] = {}
         end
     end
 
@@ -584,7 +593,8 @@ function placer.place(player, scan_results, settings)
                 settings.belt_quality or settings.quality or "normal",
                 gap,
                 belt_direction,
-                polite
+                polite,
+                pole_position_sets
             )
         end
     end
