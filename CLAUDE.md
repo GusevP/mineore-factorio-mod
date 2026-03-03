@@ -21,23 +21,68 @@
 - Scans `prototypes.entity` for all `electric-pole` type entities with collision box exactly 2x2
 - Technology-based filtering still applies (pole must be researched to appear)
 - Sorted by supply area distance
-- 1x1 poles use fixed spacing pattern; 2x2 poles use specialized substation placement modes
+- 1x1 poles use smart supply-area-aware spacing; 2x2 poles use specialized substation placement modes
 
-**Rationale:** The 1x1 pole types work well with the mod's fixed spacing pattern. 2x2 poles (substations) require specialized placement logic because they don't fit in the standard 1-tile gap. Auto-discovery by type ensures compatibility with any mod that adds 2x2 substation-type entities. 3x3+ poles are excluded as they don't fit the substation placement logic.
+**Rationale:** The 1x1 pole types work well with the mod's smart spacing pattern. 2x2 poles (substations) require specialized placement logic because they don't fit in the standard 1-tile gap. Auto-discovery by type ensures compatibility with any mod that adds 2x2 substation-type entities. 3x3+ poles are excluded as they don't fit the substation placement logic.
 
-### Fixed Pole Spacing Pattern
+### Smart Pole Spacing Pattern
 
-**Pattern:** Poles are placed at fixed intervals aligned with underground belt pairs, not calculated from pole supply/wire distance.
+**Pattern:** Poles and substations are placed at supply-area-aware intervals using a unified position calculator. One function `pole_placer.calculate_positions()` determines placement indices for ALL modes (1x1 poles, substations productive_3x3, efficient, productive_5x5). Quality-aware via `get_pole_info(pole_name, quality)`.
 
 **Implementation:**
-- Function `pole_placer.place()` in `scripts/pole_placer.lua`
-- For 3x3+ drills: pole placed after each UBO-UBI underground belt pair
-- Pole position: drill center + 1 tile in belt flow direction (after UBI)
-- For NS orientation: pattern repeats every (drill height) tiles along belt line
-- For EW orientation: pattern repeats every (drill width) tiles along belt line
-- For 2x2 drills (plain belts): poles placed at regular drill spacing intervals
+- Function `pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)` in `scripts/pole_placer.lua`
+- Computes `effective_reach = math.min(supply_area_distance * 2, max_wire_distance)`
+- Computes `interval = math.max(1, math.floor(effective_reach / drill_spacing))`
+- Respects First-In-Flow Direction Pattern: south/east start from index 1, north/west start from last index
+- Always includes both endpoints (first and last drill) for full supply area coverage
+- Returns `positions_set` (table mapping drill index -> true) and `interval`
+- `get_pole_info(pole_name, quality)` passes quality to `proto.get_supply_area_distance(quality)` and `proto.get_max_wire_distance(quality)`
 
-**Rationale:** Fixed spacing ensures poles align with the underground belt pattern regardless of pole type. The 1x1 whitelisted pole types all provide sufficient coverage at this spacing. Removed the old `calculate_spacing()` function that used supply_area_distance and max_wire_distance.
+**Used by all placement modes:**
+- `pole_placer.place()` for 1x1 poles: pre-calculated `pole_position_sets` passed from `placer.lua`, only places at indices in set
+- `place_substations_productive_3x3()`: replaces inline calculation with `calculate_positions()`
+- `place_substations_efficient()`: replaces inline calculation with `calculate_positions()`
+- `place_substations_productive_5x5()`: replaces inline calculation with `calculate_positions()`
+- `placer.lua` passes position sets to `belt_placer` for belt optimization
+
+**For 3x3+ drills with 1x1 poles:**
+- Pole position: drill center + 1 tile in belt flow direction (after UBI)
+- Spacing computed from supply area and wire distance, not fixed per-drill
+- Wider supply area or higher quality -> fewer poles, more surface belt runs
+
+**For 2x2 drills (plain belts):**
+- Poles placed at regular drill spacing intervals along belt columns (unchanged)
+
+### Belt Optimization Pattern
+
+**Pattern:** Underground belts (UBI/UBO) are only placed where a pole/substation occupies the belt gap. All other positions use transport belts for surface transport. When a pole's supply area covers multiple drills, intermediate positions are filled with transport belts instead of unnecessary underground belt pairs.
+
+**Implementation:**
+- `belt_placer._place_underground_belts()` accepts `pole_positions` parameter (set of drill indices with poles)
+- `belt_placer._place_substation_5x5_belts()` accepts `substation_gap_sets` parameter (set of inter-drill gap indices with substations)
+- State machine tracks `last_had_ubi` (whether previous drill created an underground entrance)
+- `placer.lua` pre-calculates pole position sets and passes them to belt_placer
+
+**State machine logic (single-column, iterates in flow direction):**
+- First drill: if has pole -> UBI at center; if no pole -> belt at center + belt at gap
+- Subsequent drills:
+  - UBO position: if `last_had_ubi` -> UBO (exit); else -> transport belt
+  - Center: if has pole -> UBI (entrance); else -> transport belt
+  - Gap: if has pole -> skip (pole_placer handles); else -> transport belt
+- Inter-drill gap tiles: if `last_had_ubi` is false -> fill with transport belts for surface transport
+
+**Dual-column layout (5x5+ with substations):**
+- Same state machine per column, but keyed on inter-drill gap substations instead of drill indices
+- Splitters always placed at drill centers (unaffected by optimization)
+- UBI/UBO only where substations occupy the downstream gap
+- Gap tiles between drills filled with transport belts when no underground active
+
+**Special cases:**
+- No pole selected: `pole_position_sets` is nil, `has_any_poles` is false -> all transport belts
+- Substation modes NOT in belt gap (productive_3x3, efficient): empty position sets -> all transport belts in belt gap
+- Substation productive_5x5: `substation_gap_sets` maps gap indices to substation presence
+
+**Rationale:** Reduces underground belt usage by only going underground where necessary (to pass under a pole/substation). Surface transport belts are cheaper and provide visual feedback of item flow. The state machine ensures belt continuity: UBO always pairs with a preceding UBI, and surface belts fill all positions between underground exits and next underground entrances.
 
 ### Substation Placement Modes
 
@@ -399,7 +444,7 @@ Test files located in `docs/tests/`:
 - `cursor-clearing-tests.md` - Cursor management validation
 - `burner-drill-filtering-tests.md` - Burner drill exclusion validation
 - `pole-whitelist-tests.md` - Pole selector whitelist validation
-- `pole-spacing-tests.md` - Fixed pole spacing pattern validation
+- `pole-spacing-tests.md` - Smart pole spacing pattern validation
 - `underground-belt-direction-tests.md` - Underground belt direction validation
 - `selection-tool-inventory-tests.md` - Selection tool cursor-only validation
 - `productive-mode-default-tests.md` - Productivity mode default validation

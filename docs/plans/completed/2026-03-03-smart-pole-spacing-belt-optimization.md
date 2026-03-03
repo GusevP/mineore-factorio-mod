@@ -218,10 +218,10 @@ For substation modes where substations are NOT in the belt gap (productive_3x3, 
 - [x] Manual test: 3x3 drills + substation (efficient) -> all transport belts in belt gap
 - [x] Manual test: 5x5 drills + substation (productive 5x5) -> transport belts in BOTH columns AND all gap tiles at positions without substations, splitters always at drill centers
 - [x] Manual test: 5x5 drills + substation + quality -> fewer substations, more transport belt pairs filling columns and gaps
-- [ ] Manual test: 5x5 drills + medium pole -> verify correct spacing with belt fill
-- [ ] Manual test: no pole selected -> all transport belts (no underground)
+- [x] Manual test: 5x5 drills + medium pole -> verify correct spacing with belt fill
+- [x] Manual test: no pole selected -> all transport belts (no underground)
 - [x] Manual test: north/west flow directions -> verify first-in-flow correctness
 - [x] Manual test: quality pole (if Space Age DLC available) -> wider spacing
-- [ ] Update CLAUDE.md: replace "Fixed Pole Spacing Pattern" with "Smart Pole Spacing Pattern" describing supply-area-aware placement with unified calculator
-- [ ] Update CLAUDE.md: add "Belt Optimization Pattern" describing transport belt substitution for UBO/UBI in both single-column and dual-column layouts, including gap filling across multiple drills for large supply areas
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update CLAUDE.md: replace "Fixed Pole Spacing Pattern" with "Smart Pole Spacing Pattern" describing supply-area-aware placement with unified calculator
+- [x] Update CLAUDE.md: add "Belt Optimization Pattern" describing transport belt substitution for UBO/UBI in both single-column and dual-column layouts, including gap filling across multiple drills for large supply areas
+- [x] Move this plan to `docs/plans/completed/`
