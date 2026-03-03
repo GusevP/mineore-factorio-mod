@@ -117,12 +117,12 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
         return 0, 0
     end
 
-    local pole_info = pole_placer.get_pole_info(pole_name)
+    local quality = pole_quality or "normal"
+
+    local pole_info = pole_placer.get_pole_info(pole_name, quality)
     if not pole_info then
         return 0, 0
     end
-
-    local quality = pole_quality or "normal"
 
     local half_w = drill_info.width / 2
     local half_h = drill_info.height / 2

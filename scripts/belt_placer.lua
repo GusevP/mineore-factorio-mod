@@ -55,17 +55,6 @@ local function direction_to_define(belt_direction)
     return defines.direction.south
 end
 
---- Calculate the opposite direction (180 degree rotation).
---- @param direction defines.direction
---- @return defines.direction
-local function opposite_direction(direction)
-    if direction == defines.direction.north then return defines.direction.south end
-    if direction == defines.direction.south then return defines.direction.north end
-    if direction == defines.direction.east then return defines.direction.west end
-    if direction == defines.direction.west then return defines.direction.east end
-    return defines.direction.north
-end
-
 --- Place ghost transport belts along the gap between paired drill rows.
 --- For 2x2 drills: plain belts fill the belt column.
 --- For 3x3+ drills: underground belts (UBI/UBO) at drill output positions.
@@ -265,7 +254,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
 
             if is_first then
                 -- First drill in flow: no UBO position
-                if has_pole then
+                if has_pole and not is_last then
                     -- UBI at drill center (entrance to underground to pass under pole)
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -281,12 +270,14 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                         {x = x, y = ubi_y}, belt_dir_define, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
-                    -- Transport belt at gap position
-                    p, s = belt_placer._place_ghost(
-                        surface, force, player, belt_name,
-                        {x = x, y = gap_y}, belt_dir_define, quality, polite)
-                    placed = placed + p
-                    skipped = skipped + s
+                    if not has_pole then
+                        -- Transport belt at gap position
+                        p, s = belt_placer._place_ghost(
+                            surface, force, player, belt_name,
+                            {x = x, y = gap_y}, belt_dir_define, quality, polite)
+                        placed = placed + p
+                        skipped = skipped + s
+                    end
                     last_had_ubi = false
                 end
             else
@@ -311,7 +302,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 end
 
                 -- 2. Drill center position
-                if has_pole then
+                if has_pole and not is_last then
                     -- UBI at drill center (entrance to underground to pass under pole)
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -398,7 +389,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             end
 
             if is_first then
-                if has_pole then
+                if has_pole and not is_last then
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
@@ -411,11 +402,13 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                         {x = ubi_x, y = y}, belt_dir_define, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
-                    p, s = belt_placer._place_ghost(
-                        surface, force, player, belt_name,
-                        {x = gap_x, y = y}, belt_dir_define, quality, polite)
-                    placed = placed + p
-                    skipped = skipped + s
+                    if not has_pole then
+                        p, s = belt_placer._place_ghost(
+                            surface, force, player, belt_name,
+                            {x = gap_x, y = y}, belt_dir_define, quality, polite)
+                        placed = placed + p
+                        skipped = skipped + s
+                    end
                     last_had_ubi = false
                 end
             else
@@ -436,7 +429,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 end
 
                 -- 2. Center position
-                if has_pole then
+                if has_pole and not is_last then
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
@@ -524,25 +517,6 @@ function belt_placer._get_splitter_name(belt_name)
     return nil
 end
 
---- Place a single splitter ghost entity.
---- @param surface LuaSurface
---- @param force string
---- @param player LuaPlayer
---- @param splitter_name string Splitter prototype name
---- @param position table {x, y}
---- @param direction defines.direction
---- @param quality string Quality name
---- @param polite boolean|nil Polite mode flag
---- @return number placed 1 if placed, 0 if not
---- @return number skipped 1 if skipped, 0 if not
-function belt_placer._place_splitter_ghost(surface, force, player, splitter_name, position, direction, quality, polite)
-    local _, was_placed = ghost_util.place_ghost(
-        surface, force, player, splitter_name, position, direction, quality, nil, polite)
-    if was_placed then
-        return 1, 0
-    end
-    return 0, 1
-end
 
 --- Place the 2-column belt layout for 5x5+ drills in productive substation mode.
 --- Uses a 2-tile gap between paired drill columns. Layout per drill (NS south flow):
@@ -662,7 +636,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
 
                 -- 2. Splitter at drill center (always placed)
                 if splitter_name then
-                    p, s = belt_placer._place_splitter_ghost(
+                    p, s = belt_placer._place_ghost(
                         surface, force, player, splitter_name,
                         {x = belt_line.x, y = splitter_y}, belt_dir_define, quality, polite)
                     placed = placed + p
@@ -670,7 +644,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 end
 
                 -- 3. UBI/belt position (downstream of splitter)
-                if downstream_has_sub then
+                if downstream_has_sub and not is_last then
                     -- UBI in both columns (entrance to underground to pass under substation)
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -802,7 +776,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
 
                 -- 2. Splitter at drill center (always placed)
                 if splitter_name then
-                    p, s = belt_placer._place_splitter_ghost(
+                    p, s = belt_placer._place_ghost(
                         surface, force, player, splitter_name,
                         {x = splitter_x, y = belt_line.y}, belt_dir_define, quality, polite)
                     placed = placed + p
@@ -810,7 +784,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 end
 
                 -- 3. UBI/belt position (downstream of splitter)
-                if downstream_has_sub then
+                if downstream_has_sub and not is_last then
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = col1_y}, belt_dir_define, quality, "input", polite)

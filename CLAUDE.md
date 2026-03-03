@@ -101,42 +101,57 @@
 **Implementation:**
 - `placer.lua`: `is_substation()` detects exactly 2x2 poles, `determine_substation_mode()` routes to correct mode
 - `calculator.lua`: accepts `gap_override` param (2 for productive_5x5), returns `inter_pair_centers`
-- `belt_placer._place_substation_5x5_belts()`: 5-entity-per-drill layout (Splitter + dual UBO + dual UBI)
+- `belt_placer._place_substation_5x5_belts()`: state-machine belt layout with splitters, adaptive UBI/UBO placement based on `substation_gap_sets`
 - `pole_placer.place_substations_productive_5x5()`: substations in empty gaps between belt sections
 - `pole_placer.place_substations_productive_3x3()`: replaces side2 drills with substations at wire-reach intervals
 - `pole_placer.place_substations_efficient()`: substations in inter-pair gaps at wire-reach intervals
 
 **5x5+ Productive Mode Layout (NS south flow):**
 
-Gap between paired drill columns is expanded to 2 tiles. Per drill, 5 belt entities are placed:
-1. **Splitter** at drill center — catches ore from both left+right drills
-2. **UBO col1 + UBO col2** 1 tile upstream of splitter — exits from previous underground (skip for first drill)
-3. **UBI col1 + UBI col2** 1 tile downstream of splitter — entrances to next underground
+Gap between paired drill columns is expanded to 2 tiles. Per drill, belt entities are placed using a state machine:
+1. **Splitter** at drill center (always) — catches ore from both left+right drills
+2. **UBO or belt** 1 tile upstream of splitter — UBO if previous drill had UBI, else transport belt
+3. **UBI or belt** 1 tile downstream of splitter — UBI only if a substation exists in the downstream gap AND this is not the last drill, else transport belt
 
-The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. Substations are placed by `pole_placer` at both ends of the belt line (outside drill bodies) and at intermediate positions where they don't collide with belt entities.
+The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. Underground belts are only placed where substations occupy the inter-drill gap. All other positions use transport belts for surface transport. Substations are placed by `pole_placer` at both ends of the belt line (outside drill bodies) and at intermediate positions where they don't collide with belt entities.
 
 **Substation collision safety:** Before placing each substation, `pole_placer` checks for existing belt/splitter ghosts in the substation footprint via `surface.find_entities_filtered`. For 5x5 drills, the 2-tile gap between belt sections is too narrow for a 2x2 substation (collision boxes overlap by ~0.14 tiles), so intermediate substations are skipped. Start/end substations are positioned 1 tile outside the drill body to avoid overlap.
 
 ```
-For south flow, drill centers at y, y+5, y+10 (5x5 drills):
+For south flow, drill centers at y, y+5, y+10 (5x5 drills, substation at every gap):
   Col1  Col2
-  [Substation]   <- before first drill (y = center - half - 1)
+  [Substation]   <- before first drill (endpoint substation)
   [Splitter  ]   <- at drill center, spans both columns
-  [UBI] [UBI]    <- entrances to next underground (two output lines)
+  [UBI] [UBI]    <- UBI (downstream has substation, not last drill)
   [empty]        <- too narrow for substation (skipped for 5x5)
   [empty]
-  [UBO] [UBO]    <- exits from previous underground
+  [UBO] [UBO]    <- UBO (previous had UBI)
   [Splitter  ]   <- next drill...
-  [UBI] [UBI]
+  [belt][belt]   <- transport belt (last drill: no UBI even if downstream has sub)
   [empty]
-  [Substation]   <- after last drill (y = center + half + 1)
+  [Substation]   <- after last drill (endpoint substation)
+
+When substations are spaced wider, intermediate positions use transport belts:
+  [Substation]
+  [Splitter  ]
+  [UBI] [UBI]    <- has downstream substation
+  [empty][empty]
+  [UBO] [UBO]    <- previous had UBI
+  [Splitter  ]
+  [belt][belt]   <- no downstream substation: surface transport
+  [belt][belt]   <- gap fill: transport belts
+  [belt][belt]
+  [belt][belt]   <- no previous UBI: surface transport
+  [Splitter  ]
+  [UBI] [UBI]    <- has downstream substation
+  ...
 ```
 
 **Splitter name derivation:** `belt_name:gsub("transport%-belt", "splitter")` + prototype validation
 
 ### Underground Belt Type Setting Pattern
 
-**Pattern:** Underground belt ghosts must have their input/output type specified during creation using the `type` parameter. Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. The first drill in a sequence gets only UBI, while subsequent drills get both UBI and UBO.
+**Pattern:** Underground belt ghosts must have their input/output type specified during creation using the `type` parameter. Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. UBI/UBO placement is conditional: UBI is placed only at drills with a pole/substation in the downstream gap AND that are not the last drill. UBO is placed only when the previous drill had a UBI. The first drill has no UBO (no previous section), and the last drill has no UBI (no subsequent section to exit from).
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
@@ -148,7 +163,8 @@ For south flow, drill centers at y, y+5, y+10 (5x5 drills):
 - For east flow: both UBI and UBO face east
 - For west flow: both UBI and UBO face west
 - Placement for each drill: UBI created with `type="input"`, UBO created with `type="output"`
-- First drill gets only UBI (no UBO placement)
+- First drill gets no UBO (no previous underground section)
+- Last drill gets no UBI (no subsequent drill to place matching UBO)
 
 **Critical Implementation Detail:**
 ```lua
@@ -179,15 +195,17 @@ local ghost = surface.create_entity{
 **Pattern:** `drill_along_positions` is always sorted ascending (by x for EW, by y for NS). The "first drill in flow" is NOT always index 1 — for north/west flow, the first drill in flow is the LAST element in the sorted array.
 
 **Implementation:**
-- In `belt_placer.lua`, both `_place_underground_belts()` and `_place_substation_5x5_belts()` compute `first_in_flow`:
+- In `belt_placer.lua`, both `_place_underground_belts()` and `_place_substation_5x5_belts()` build an `order` array listing drill indices in flow direction:
   ```lua
   -- NS block:
-  local first_in_flow = (belt_direction == "south") and 1 or #drill_positions
-  -- EW block:
-  local first_in_flow = (belt_direction == "east") and 1 or #drill_positions
+  if belt_direction == "south" then
+      for i = 1, #drill_positions do order[#order + 1] = i end
+  else
+      for i = #drill_positions, 1, -1 do order[#order + 1] = i end
+  end
   ```
-- The first drill in flow gets only UBI (no UBO), subsequent drills get both UBI and UBO
-- Uses `drill_index ~= first_in_flow` instead of `drill_index > 1`
+- Iteration uses `is_first = (iter_idx == 1)` and `is_last = (iter_idx == #order)` to detect endpoints
+- The first drill in flow gets no UBO, the last drill in flow gets no UBI
 
 **Also applies to `pole_placer.lua`:**
 - `place_substations_productive_5x5()` computes `upstream_drill`/`downstream_drill` based on flow direction
