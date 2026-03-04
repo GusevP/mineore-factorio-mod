@@ -1,3 +1,19 @@
+Version: 1.2.0
+Date: 2026-03-04
+  Features:
+    - Smart pole spacing — poles placed at supply-area-aware intervals using wire distance and supply area, reducing pole count for higher-tier poles
+    - Adaptive belt optimization — underground belts only placed where a pole or substation occupies the belt gap; all other positions use transport belts for cheaper, visible item flow
+    - Drill quality selector — choose drill entity quality independently from module quality (Space Age)
+    - Last-drill underground belt entrance — UBI placed at the last drill when a pole/substation is present, allowing manual UBO connection for output
+  Changes:
+    - Removed efficient placement mode — only productive layout remains, simplifying the GUI and codebase
+    - Module slots auto-filled — removed module count selector; all available slots in drills and beacons are filled automatically
+    - Quality-aware pole placement — pole supply area and wire distance now account for quality level
+  Bugfixes:
+    - Fixed orphaned underground belt entrances at last drill position
+    - Fixed belt gap filling for 4x4+ drills with smart pole spacing
+    - Fixed endpoint pole and substation coverage for full supply area
+---------------------------------------------------------------------------------------------------
 Version: 1.1.0
 Date: 2026-02-28
   Features:

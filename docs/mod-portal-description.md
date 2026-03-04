@@ -16,13 +16,15 @@ Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 - **Full entity selection** — choose drill type, transport belt tier, electric pole type, beacon type, and quality for each
 - **Substation support** — 2x2 electric poles (substations) have specialized placement logic with splitters and dual belt output lines for 5x5+ drills in productivity mode
 - **Beacon support** — beacons fill alongside drill rows with configurable max and preferred counts per drill; includes beacon module selection
+- **Smart pole spacing** — poles placed at optimal intervals based on supply area and wire distance; higher-tier or quality poles mean fewer poles needed
+- **Adaptive belt optimization** — underground belts only where poles or substations occupy the gap; transport belts everywhere else for cheaper, visible item flow
 - **Underground belts** — automatically placed for 3x3+ drills to keep belt runs clean
 - **4-direction belt flow** — north, south, east, or west
 - **Pipe placement** — automatic pipes for fluid-requiring resources (e.g. uranium ore with sulfuric acid), with pipe type and quality selection
-- **Foundation auto-placement** — landfill, ice-platform, or other foundation tiles are automatically placed under entities on water or frozen ocean; foundation type is detected per planet
+- **Foundation placement** — select landfill, ice-platform, or other foundation tiles to place under entities on water or frozen ocean
 - **Polite placement mode** — only clears trees and rocks, preserving existing buildings; respects rail ramps and supports
 - **Technology-based filtering** — GUI selectors only show entities whose recipes have been researched
-- **Drill modules** — select modules to insert into placed drill ghosts
+- **Drill modules and quality** — select modules and quality level for drills independently from other entities (Space Age)
 - **Ore-type filtering** — drills skip positions where the mining area overlaps a different ore type
 - **Obstacle clearing** — trees, rocks, and cliffs in the placement zone are marked for deconstruction
 - **Ghost cleanup** — shift-drag to remove placed ghost miners, belts, poles, pipes, beacons, and foundation tiles
