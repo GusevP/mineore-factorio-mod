@@ -71,10 +71,10 @@ Five changes: (1) remove efficient placement mode entirely, (2) remove module co
 
 The bug is at lines 511-513 where `should_place_set[1] = true` and `should_place_set[#candidates] = true` unconditionally force substations at both endpoints. The `positions_set` from `calculate_positions()` already includes endpoints when needed (it always includes first and last drill indices). The endpoint candidates should only be placed if the corresponding drill index is in `positions_set`.
 
-- [ ] Remove the two unconditional `should_place_set[1] = true` and `should_place_set[#candidates] = true` lines
-- [ ] Ensure the mapping from `positions_set` drill indices to candidate indices correctly covers endpoints: for south/east flow, drill 1's upstream candidate (index 1) should be placed if drill 1 is in positions_set; for north/west flow, the last drill's upstream candidate should be placed if last drill is in positions_set
-- [ ] Add endpoint candidate placement based on positions_set: if first drill in flow is in positions_set, place its upstream candidate; if last drill in flow is in positions_set, place its downstream candidate
-- [ ] Manual test: verify substations are only placed where supply area requires them, not always at start
+- [x] Remove the two unconditional `should_place_set[1] = true` and `should_place_set[#candidates] = true` lines
+- [x] Ensure the mapping from `positions_set` drill indices to candidate indices correctly covers endpoints: for south/east flow, drill 1's upstream candidate (index 1) should be placed if drill 1 is in positions_set; for north/west flow, the last drill's upstream candidate should be placed if last drill is in positions_set
+- [x] Add endpoint candidate placement based on positions_set: if first drill in flow is in positions_set, place its upstream candidate; if last drill in flow is in positions_set, place its downstream candidate
+- [x] Manual test: verify substations are only placed where supply area requires them, not always at start
 
 ### Task 5: Place UBI at last drill when pole/substation is present
 

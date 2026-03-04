@@ -394,7 +394,7 @@ end
 ---   - Before first drill's UBO (upstream of first belt section)
 ---   - Between UBI of drill N and UBO of drill N+1 (gap tiles)
 ---   - After last drill's UBI (downstream of last belt section)
---- Always placed at first and last positions. Intermediate ones spaced by wire distance.
+--- Placed at positions determined by supply area spacing (via calculate_positions).
 ---
 --- For south flow with 5x5 drills (spacing=5, drill centers at y, y+5, y+10):
 ---   UBI(y+1) ... gap(y+2,y+3) ... UBO(y+4) — substation at midpoint of gap
@@ -507,12 +507,14 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
 
         -- Map drill indices to candidate indices
         -- Candidates: 1=before first drill, 2..N=between drills, N+1=after last drill
-        -- Always place at endpoints (first and last candidates)
+        -- Endpoint candidates placed only when corresponding drill is in positions_set
         local should_place_set = {}
-        should_place_set[1] = true
-        should_place_set[#candidates] = true
         if belt_direction == "south" or belt_direction == "east" then
             -- South/east flow: drill d's downstream gap = candidate d+1
+            -- Upstream of first-in-flow drill (candidate 1) placed if drill 1 in positions_set
+            if positions_set[1] then
+                should_place_set[1] = true
+            end
             for d, _ in pairs(positions_set) do
                 if d + 1 <= #candidates then
                     should_place_set[d + 1] = true
@@ -520,6 +522,10 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             end
         else
             -- North/west flow: drill d's downstream gap = candidate d
+            -- Upstream of first-in-flow drill (candidate #candidates) placed if last drill in positions_set
+            if positions_set[#drill_positions] then
+                should_place_set[#candidates] = true
+            end
             for d, _ in pairs(positions_set) do
                 if d >= 1 then
                     should_place_set[d] = true
