@@ -4,25 +4,16 @@ A Factorio 2.0 mod that automates mining drill placement on ore patches with tra
 
 Inspired by the [P.U.M.P. mod](https://mods.factorio.com/mod/pump) which does the same for pumpjacks on oil fields.
 
-## Placement Modes
+## Layout
 
-### Productivity Mode
-Maximum drills, edge-to-edge, highest ore throughput.
+Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 
 ![Productivity mode](docs/images/base_prod.gif)
-
-### Efficient Mode
-Fewest drills, staggered rows for maximum coverage per drill.
-
-![Efficient mode](docs/images/base_efficient.gif)
 
 ## Features
 
 - **Selection tool** — drag-select any ore patch to start planning miners
 - **Paired-row drill layout** — drills face each other with a belt gap between them for efficient output collection
-- **Two placement modes:**
-  - **Productivity** — maximum drills, edge-to-edge, highest ore throughput
-  - **Efficient** — fewest drills, staggered rows for maximum coverage per drill
 - **Transport belt placement** — belts placed in the gap between paired drill rows; underground belts used for 3x3+ drills
 - **Electric pole placement** — 1x1 poles placed at optimal intervals for full power coverage
 - **Beacon placement** — beacons placed between drill pair columns/rows, shared across adjacent pairs, with configurable limits per drill
@@ -62,7 +53,6 @@ Fewest drills, staggered rows for maximum coverage per drill.
    - Choose an electric pole type (or "none" to skip poles; defaults to medium electric pole when researched)
    - Choose a beacon type (or "none" to skip beacons) and select a module for beacons
    - Choose a pipe type when mining fluid-requiring resources like uranium ore (or "none" to skip pipes; defaults to iron pipe)
-   - Pick a placement mode (defaults to Productivity)
    - Set belt direction (North / South / East / West)
    - Optionally enable "Polite placement" to preserve existing buildings
    - Optionally select drill modules and quality levels per entity type
@@ -76,7 +66,6 @@ To remove placed ghost entities, hold Shift and drag-select over the area.
 
 ## Mod Settings
 
-- **Default placement mode** — choose which mode is selected by default (Productivity or Efficient)
 - **Always show configuration GUI** — when disabled, uses remembered settings if available
 - **Max beacons per drill** — maximum number of beacons that can affect any single drill (1-12, default 4)
 - **Preferred beacons per drill** — target number of beacons per drill; placement stops once each drill reaches this count (0-12, default 1; 0 = no limit)

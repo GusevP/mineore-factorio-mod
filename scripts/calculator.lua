@@ -7,9 +7,8 @@ local calculator = {}
 --- @param drill table Drill info from resource_scanner (width, height, mining_drill_radius)
 --- @return number spacing_along Spacing along the belt line between drill centers
 --- @return number spacing_across Spacing across the belt line (between pairs)
---- @return number offset Row offset for staggered placement (0 for non-staggered)
 function calculator.get_spacing(drill)
-    return drill.width, drill.height, 0
+    return drill.width, drill.height
 end
 
 --- Derive the axis orientation ("NS" or "EW") from a belt direction.
@@ -128,7 +127,7 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
     belt_direction = belt_direction or "south"
 
     local belt_orientation = calculator.direction_to_orientation(belt_direction)
-    local spacing_along, spacing_across, row_offset = calculator.get_spacing(drill)
+    local spacing_along, spacing_across = calculator.get_spacing(drill)
     local resource_set = build_resource_set(resource_groups)
 
     -- Build foreign ore set for filtering when a specific ore is selected
@@ -206,18 +205,10 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
                 drill_side2_positions = {},  -- x-positions of drills in bottom row only
             }
 
-            local row_for_offset = pair_index
-
-            -- Place top row (faces south)
-            local x_offset = 0
-            if row_offset > 0 and row_for_offset % 2 == 1 then
-                x_offset = row_offset
-            end
-
             local drill_x_set = {}
             local top_x_set = {}
             local bottom_x_set = {}
-            local x = start_x + x_offset
+            local x = start_x
             while x <= end_x do
                 if has_resources_in_mining_area(x, y_top, radius, resource_set)
                     and not (foreign_set and has_foreign_ore_overlap(x, y_top, radius, foreign_set)) then
@@ -235,7 +226,7 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
             end
 
             -- Place bottom row (faces north)
-            x = start_x + x_offset
+            x = start_x
             while x <= end_x do
                 if has_resources_in_mining_area(x, y_bottom, radius, resource_set)
                     and not (foreign_set and has_foreign_ore_overlap(x, y_bottom, radius, foreign_set)) then
@@ -268,7 +259,7 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
             -- Only add belt line if at least one drill was placed in this pair
             if belt_line.x_min then
                 -- Add gap center positions along the belt line for pole/beacon placement
-                x = start_x + x_offset
+                x = start_x
                 while x <= end_x do
                     if x >= belt_line.x_min and x <= belt_line.x_max then
                         belt_line.gap_positions[#belt_line.gap_positions + 1] = {x = x, y = y_belt}
@@ -326,18 +317,11 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
                 drill_side2_positions = {},  -- y-positions of drills in right column only
             }
 
-            local row_for_offset = pair_index
-
-            local y_offset = 0
-            if row_offset > 0 and row_for_offset % 2 == 1 then
-                y_offset = row_offset
-            end
-
             -- Place left column (faces east)
             local drill_y_set = {}
             local left_y_set = {}
             local right_y_set = {}
-            local y = start_y + y_offset
+            local y = start_y
             while y <= end_y do
                 if has_resources_in_mining_area(x_left, y, radius, resource_set)
                     and not (foreign_set and has_foreign_ore_overlap(x_left, y, radius, foreign_set)) then
@@ -354,7 +338,7 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
             end
 
             -- Place right column (faces west)
-            y = start_y + y_offset
+            y = start_y
             while y <= end_y do
                 if has_resources_in_mining_area(x_right, y, radius, resource_set)
                     and not (foreign_set and has_foreign_ore_overlap(x_right, y, radius, foreign_set)) then
@@ -386,7 +370,7 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
 
             -- Only add belt line if at least one drill was placed
             if belt_line.y_min then
-                y = start_y + y_offset
+                y = start_y
                 while y <= end_y do
                     if y >= belt_line.y_min and y <= belt_line.y_max then
                         belt_line.gap_positions[#belt_line.gap_positions + 1] = {x = x_belt, y = y}
@@ -420,15 +404,6 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
         end
     end
 
-    -- Compute inter-pair center positions (midpoints between adjacent pairs)
-    local inter_pair_centers = {}
-    if #pair_edge_min > 1 then
-        for i = 1, #pair_edge_max - 1 do
-            local center = (pair_edge_max[i] + pair_edge_min[i + 1]) / 2
-            inter_pair_centers[#inter_pair_centers + 1] = center
-        end
-    end
-
     return {
         positions = positions,
         belt_lines = belt_lines,
@@ -437,7 +412,6 @@ function calculator.calculate_positions(drill, bounds, belt_direction, resource_
         pole_gap_positions = pole_gap_positions,
         outer_edge_positions = outer_edge_positions,
         is_small_drill = is_small_drill,
-        inter_pair_centers = inter_pair_centers,
         pair_edge_min = pair_edge_min,
         pair_edge_max = pair_edge_max,
     }

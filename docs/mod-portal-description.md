@@ -2,26 +2,17 @@ Miner Planner automates mining drill placement on ore patches. Drag-select an ar
 
 ---
 
-## Placement Modes
+## Layout
 
-### Productivity
+Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 
-Maximum drills, edge-to-edge, highest ore throughput.
-
-![Productivity mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_prod.gif?raw=true)
-
-### Efficient
-
-Fewest drills, staggered rows for maximum coverage per drill.
-
-![Efficient mode](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_efficient.gif?raw=true)
+![Layout](https://github.com/GusevP/mineore-factorio-mod/blob/main/docs/images/base_prod.gif?raw=true)
 
 ---
 
 ## Features
 
 - **Drag-select placement** — select any ore patch and ghost miners appear in an optimal grid
-- **Two placement modes** — _Productivity_ (maximum drills, edge-to-edge) or _Efficient_ (fewest drills, staggered rows)
 - **Full entity selection** — choose drill type, transport belt tier, electric pole type, beacon type, and quality for each
 - **Substation support** — 2x2 electric poles (substations) have specialized placement logic with splitters and dual belt output lines for 5x5+ drills in productivity mode
 - **Beacon support** — beacons fill alongside drill rows with configurable max and preferred counts per drill; includes beacon module selection
@@ -45,7 +36,7 @@ Fewest drills, staggered rows for maximum coverage per drill.
 
 1. Click the Miner Planner shortcut button in the toolbar (or press ALT+M)
 2. Drag-select an ore patch
-3. In the configuration GUI, choose your drill, belt, pole, beacon, and placement mode
+3. In the configuration GUI, choose your drill, belt, pole, and beacon
 4. Click "Place Miners" — ghost entities are placed for bots to build
 5. Shift-drag over an area to remove previously placed ghosts
 
@@ -55,7 +46,6 @@ Fewest drills, staggered rows for maximum coverage per drill.
 
 All settings are per-player:
 
-- **Default placement mode** — choose Productivity or Efficient as the default when opening the GUI
 - **Always show configuration GUI** — when disabled, uses remembered settings to skip the GUI
 - **Max beacons per drill** — upper limit on how many beacons can affect a single drill (1–12, default 4)
 - **Preferred beacons per drill** — target beacon count; placement stops once each drill reaches this number (0 = no limit, default 1)

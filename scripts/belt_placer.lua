@@ -270,14 +270,12 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                         {x = x, y = ubi_y}, belt_dir_define, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
-                    if not has_pole then
-                        -- Transport belt at gap position
-                        p, s = belt_placer._place_ghost(
-                            surface, force, player, belt_name,
-                            {x = x, y = gap_y}, belt_dir_define, quality, polite)
-                        placed = placed + p
-                        skipped = skipped + s
-                    end
+                    -- Transport belt at gap position
+                    p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = x, y = gap_y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
                     last_had_ubi = false
                 end
             else
@@ -402,13 +400,12 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                         {x = ubi_x, y = y}, belt_dir_define, quality, polite)
                     placed = placed + p
                     skipped = skipped + s
-                    if not has_pole then
-                        p, s = belt_placer._place_ghost(
-                            surface, force, player, belt_name,
-                            {x = gap_x, y = y}, belt_dir_define, quality, polite)
-                        placed = placed + p
-                        skipped = skipped + s
-                    end
+                    -- Transport belt at gap position
+                    p, s = belt_placer._place_ghost(
+                        surface, force, player, belt_name,
+                        {x = gap_x, y = y}, belt_dir_define, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
                     last_had_ubi = false
                 end
             else

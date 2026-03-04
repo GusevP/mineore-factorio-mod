@@ -343,7 +343,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     end
 end)
 
--- Handle radiobutton changes (placement mode and belt orientation)
+-- Handle radiobutton changes (belt orientation)
 script.on_event(defines.events.on_gui_checked_state_changed, function(event)
     local element = event.element
     if not element or not element.valid then return end

@@ -1,20 +1,18 @@
 -- Pipe Placer - Places ghost pipes between drills that require fluid input
 --
 -- When mining resources that need fluid (e.g., uranium ore requiring sulfuric acid),
--- drills need pipe connections. In efficient mode, drills are spaced apart and
--- pipes must bridge the gaps between adjacent drills along each column/row.
--- In productivity mode, drills are touching and share fluid automatically.
+-- drills need pipe connections. In the current productivity layout, drills are
+-- touching and share fluid automatically, so no pipes are placed.
 --
 -- Pipes run along each drill column/row (parallel to belt flow direction),
--- connecting the fluid inputs of adjacent drills.
+-- connecting the fluid inputs of adjacent drills when gaps exist.
 
 local ghost_util = require("scripts.ghost_util")
 
 local pipe_placer = {}
 
 --- Place ghost pipes connecting adjacent drills along belt lines.
---- For efficient mode: pipes fill the gap between drill bodies in each column.
---- For productivity mode: drills are touching, no pipes needed.
+--- In productivity layout, drills are touching and share fluid automatically.
 ---
 --- @param surface LuaSurface The game surface
 --- @param force string Force name for ghost placement
