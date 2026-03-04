@@ -58,11 +58,11 @@ Five changes: (1) remove efficient placement mode entirely, (2) remove module co
 - Modify: `scripts/gui.lua` - add quality dropdown to drill selector row, read it in `read_settings()`
 - Modify: `scripts/placer.lua` - use `settings.drill_quality` for drill ghost placement
 
-- [ ] Wrap drill selector in a row flow (like belt_selector_row pattern) to support inline quality dropdown
-- [ ] Add quality dropdown via `_add_inline_quality_dropdown(row, "drill", ...)` after drill buttons (only when Space Age quality flag is true)
-- [ ] In `read_settings()`: read drill quality from the new row element via `gui._read_quality_dropdown(drill_row, "drill")`; store as `settings.drill_quality`
-- [ ] In `placer.lua`: use `settings.drill_quality or settings.quality or "normal"` for drill ghost placement (line 514) instead of just `settings.quality or "normal"`
-- [ ] Manual test: verify drill quality dropdown appears, drill ghosts are placed with selected quality
+- [x] Wrap drill selector in a row flow (like belt_selector_row pattern) to support inline quality dropdown
+- [x] Add quality dropdown via `_add_inline_quality_dropdown(row, "drill", ...)` after drill buttons (only when Space Age quality flag is true)
+- [x] In `read_settings()`: read drill quality from the new row element via `gui._read_quality_dropdown(drill_row, "drill")`; store as `settings.drill_quality`
+- [x] In `placer.lua`: use `settings.drill_quality or settings.quality or "normal"` for drill ghost placement (line 514) instead of just `settings.quality or "normal"`
+- [x] Manual test: verify drill quality dropdown appears, drill ghosts are placed with selected quality
 
 ### Task 4: Fix substation always placed at start endpoint
 

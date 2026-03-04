@@ -485,7 +485,15 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
         style = "caption_label",
     }
 
-    local flow = parent.add{
+    local row = parent.add{
+        type = "flow",
+        name = "drill_selector_row",
+        direction = "horizontal",
+    }
+    row.style.vertical_align = "center"
+    row.style.horizontal_spacing = 4
+
+    local flow = row.add{
         type = "flow",
         name = "drill_selector_flow",
         direction = "horizontal",
@@ -558,6 +566,12 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
         if drill.name == selected_name then
             btn.style = "slot_sized_button_pressed"
         end
+    end
+
+    -- Quality dropdown for drills
+    if script.feature_flags.quality then
+        row.add{type = "empty-widget"}.style.width = 8
+        gui._add_inline_quality_dropdown(row, "drill", settings.drill_quality or settings.quality)
     end
 
     return selected_name
@@ -1306,8 +1320,12 @@ function gui.read_settings(player)
         settings.resource_name = resource_names[res_dropdown.selected_index]
     end
 
-    -- Read drill selection (from icon buttons)
-    settings.drill_name = gui._read_selector_group(inner, "drill_selector_flow", "drill")
+    -- Read drill selection (from icon buttons inside drill_selector_row)
+    local drill_row = inner.drill_selector_row
+    if drill_row then
+        local drill_flow = drill_row.drill_selector_flow
+        settings.drill_name = gui._read_selector_from_flow(drill_flow, "drill")
+    end
 
     -- Read belt selection (belt_selector_flow is nested inside belt_selector_row)
     local belt_row = inner.belt_selector_row
@@ -1377,6 +1395,7 @@ function gui.read_settings(player)
 
     -- Read per-entity quality selections (Space Age only)
     if script.feature_flags.quality then
+        settings.drill_quality = gui._read_quality_dropdown(drill_row, "drill")
         settings.belt_quality = gui._read_quality_dropdown(belt_row, "belt")
         settings.pipe_quality = gui._read_quality_dropdown(pipe_row, "pipe")
         settings.pole_quality = gui._read_quality_dropdown(pole_row, "pole")

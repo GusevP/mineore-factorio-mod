@@ -455,7 +455,7 @@ function placer.place(player, scan_results, settings)
 
         local ghost, was_placed = ghost_util.place_ghost(
             surface, force, player, drill.name, pos, dir,
-            settings.quality or "normal", nil, polite)
+            settings.drill_quality or settings.quality or "normal", nil, polite)
 
         if was_placed then
             -- Set module requests on the ghost if configured
