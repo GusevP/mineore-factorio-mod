@@ -968,28 +968,6 @@ function gui._add_module_selector(parent, scan_results, settings, effective_dril
     }
     module_btn.elem_filters = {{filter = "type", type = "module"}}
 
-    mod_flow.add{
-        type = "label",
-        caption = "x",
-    }
-
-    -- Module count dropdown
-    local current_count = settings.module_count or max_slots
-    if current_count > max_slots then current_count = max_slots end
-
-    local count_items = {}
-    for i = 1, max_slots do
-        count_items[i] = tostring(i)
-    end
-
-    mod_flow.add{
-        type = "drop-down",
-        name = "mineore_module_count",
-        items = count_items,
-        selected_index = current_count,
-        tags = {max_slots = max_slots},
-    }
-
     if script.feature_flags.quality then
         mod_flow.add{type = "empty-widget"}.style.width = 8
         gui._add_inline_quality_dropdown(mod_flow, "drill_module", settings.module_quality)
@@ -1394,11 +1372,6 @@ function gui.read_settings(player)
         local mod_btn = mod_flow.mineore_drill_module_btn
         if mod_btn and mod_btn.elem_value then
             settings.module_name = mod_btn.elem_value
-        end
-
-        local count_dropdown = mod_flow.mineore_module_count
-        if count_dropdown then
-            settings.module_count = count_dropdown.selected_index
         end
     end
 

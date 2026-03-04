@@ -462,7 +462,7 @@ function placer.place(player, scan_results, settings)
             if ghost and ghost.valid and settings.module_name then
                 local drill_proto = prototypes.entity[drill.name]
                 local max_modules = drill_proto and drill_proto.module_inventory_size or 0
-                local count = math.min(settings.module_count or 1, max_modules)
+                local count = max_modules
                 if count > 0 then
                     local insert_plan = {}
                     local mod_quality = settings.module_quality or settings.quality or "normal"

@@ -47,10 +47,10 @@ Five changes: (1) remove efficient placement mode entirely, (2) remove module co
 - Modify: `scripts/gui.lua` - remove count dropdown from `_add_module_selector()`, remove count reading from `read_settings()`
 - Modify: `scripts/placer.lua` - always use `max_modules` instead of `settings.module_count`
 
-- [ ] In `gui._add_module_selector()`: remove the "x" label and `mineore_module_count` dropdown, keep only the module type choose-elem-button and quality dropdown
-- [ ] In `gui.read_settings()`: remove reading of `module_count` from `mod_flow.mineore_module_count`
-- [ ] In `placer.lua`: change module insert_plan to always use `max_modules` (remove `settings.module_count` usage)
-- [ ] Manual test: verify selecting a module fills all available drill slots
+- [x] In `gui._add_module_selector()`: remove the "x" label and `mineore_module_count` dropdown, keep only the module type choose-elem-button and quality dropdown
+- [x] In `gui.read_settings()`: remove reading of `module_count` from `mod_flow.mineore_module_count`
+- [x] In `placer.lua`: change module insert_plan to always use `max_modules` (remove `settings.module_count` usage)
+- [x] Manual test: verify selecting a module fills all available drill slots
 
 ### Task 3: Add drill quality dropdown to GUI
 
