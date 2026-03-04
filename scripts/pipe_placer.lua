@@ -25,7 +25,7 @@ local pipe_placer = {}
 --- @param quality string Quality name for pipe ghosts
 --- @param gap number Gap size between paired rows (belt gap)
 --- @param belt_direction string "north", "south", "east", or "west"
---- @param mode string "productivity" or "efficient"
+--- @param mode string Placement mode (currently always "productivity")
 --- @param polite boolean|nil When true, respect polite placement
 --- @return number placed Count of pipe ghosts placed
 --- @return number skipped Count of positions where placement failed

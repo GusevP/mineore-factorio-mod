@@ -24,18 +24,9 @@ script.on_configuration_changed(function()
             player_data.last_scan = nil
             player_data.gui_draft = nil
 
-            -- Migrate legacy placement modes
+            -- Migrate legacy placement modes to productivity (efficient mode removed)
             if player_data.settings and player_data.settings.placement_mode then
-                local mode = player_data.settings.placement_mode
-                if mode == "loose" or mode == "normal" then
-                    player_data.settings.placement_mode = "efficient"
-                elseif mode == "efficient" then
-                    -- Migrate stale "efficient" default to "productivity" (default changed in v0.6.0)
-                    local default_mode = player.mod_settings["mineore-default-mode"].value
-                    if default_mode == "productivity" then
-                        player_data.settings.placement_mode = "productivity"
-                    end
-                end
+                player_data.settings.placement_mode = nil
             end
         else
             -- Remove data for players that no longer exist

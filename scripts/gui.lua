@@ -4,8 +4,6 @@ local gui = {}
 
 local ghost_util = require("scripts.ghost_util")
 local FRAME_NAME = "mineore_config_frame"
-local PLACEMENT_MODES = {"productivity", "efficient"}
-
 -- Whitelist of 1x1 electric pole types compatible with the mod's fixed spacing pattern
 gui.POLE_WHITELIST = {
     "small-electric-pole",
@@ -184,25 +182,6 @@ function gui.create(player, scan_results, player_data)
 
     local settings = player_data.gui_draft or player_data.settings or {}
 
-    -- Apply default placement mode from mod settings if no previous choice
-    if not settings.placement_mode then
-        local default_mode = player.mod_settings["mineore-default-mode"].value
-        settings.placement_mode = default_mode
-        -- Store the settings with default mode back to gui_draft so it persists during GUI rebuilds
-        player_data.gui_draft = settings
-    end
-    -- Migrate legacy modes to "efficient"
-    if settings.placement_mode == "normal" or settings.placement_mode == "loose" then
-        settings.placement_mode = "efficient"
-    end
-    -- Migrate stale "efficient" default to "productivity".
-    -- Existing saves may have "efficient" stored from when it was the old default.
-    -- The mod setting value also persists from old saves, so we can't rely on it.
-    if settings.placement_mode == "efficient" then
-        settings.placement_mode = "productivity"
-        player_data.gui_draft = settings
-    end
-
     -- Main frame
     local main_frame = player.gui.screen.add{
         type = "frame",
@@ -368,12 +347,6 @@ function gui.create(player, scan_results, player_data)
 
     -- Beacon selector (icon buttons)
     gui._add_beacon_selector(inner, settings, player)
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Placement mode selector
-    gui._add_mode_selector(inner, settings)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -899,37 +872,6 @@ function gui._add_beacon_selector(parent, settings, player)
         settings.beacon_module_name, settings.beacon_module_quality)
 end
 
---- Add placement mode radio buttons to the GUI (horizontal layout).
---- @param parent LuaGuiElement
---- @param settings table Player settings
-function gui._add_mode_selector(parent, settings)
-    local flow = parent.add{
-        type = "flow",
-        name = "mode_flow",
-        direction = "horizontal",
-    }
-    flow.style.vertical_align = "center"
-    flow.style.horizontal_spacing = 12
-
-    flow.add{
-        type = "label",
-        caption = {"mineore.gui-mode-header"},
-        style = "caption_label",
-    }
-
-    local current_mode = settings.placement_mode or "productivity"
-
-    for _, mode in ipairs(PLACEMENT_MODES) do
-        flow.add{
-            type = "radiobutton",
-            name = "mineore_mode_" .. mode,
-            caption = {"mineore.gui-mode-" .. mode},
-            tooltip = {"mineore.gui-mode-" .. mode .. "-tooltip"},
-            state = (mode == current_mode),
-        }
-    end
-end
-
 --- Add belt direction selector (4 arrow buttons for N/S/E/W).
 --- @param parent LuaGuiElement
 --- @param settings table Player settings
@@ -1426,18 +1368,6 @@ function gui.read_settings(player)
         end
     end
 
-    -- Read placement mode (radio buttons are inside mode_flow)
-    local mode_flow = inner.mode_flow
-    if mode_flow then
-        for _, mode in ipairs(PLACEMENT_MODES) do
-            local radio = mode_flow["mineore_mode_" .. mode]
-            if radio and radio.state then
-                settings.placement_mode = mode
-                break
-            end
-        end
-    end
-
     -- Read belt direction (N/S/E/W icon buttons)
     local dir_flow = inner.belt_direction_flow
     if dir_flow then
@@ -1586,19 +1516,6 @@ end
 function gui.handle_radio_change(element)
     if not element or not element.valid then return end
     local name = element.name
-
-    -- Placement mode radios
-    if name:find("^mineore_mode_") then
-        local parent = element.parent
-        for _, mode in ipairs(PLACEMENT_MODES) do
-            local sibling = parent["mineore_mode_" .. mode]
-            if sibling and sibling ~= element then
-                sibling.state = false
-            end
-        end
-        element.state = true
-        return
-    end
 
     -- Belt direction buttons are handled by handle_selector_click, not here
 end

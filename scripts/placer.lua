@@ -36,12 +36,10 @@ local function is_substation(pole_name)
     return pole_info.width == 2 and pole_info.height == 2
 end
 
---- Determine the substation placement mode based on drill size, placement mode, and inter-pair gap.
+--- Determine the substation placement mode based on drill size.
 --- @param drill table Drill info (width, height)
---- @param mode string "productivity" or "efficient"
---- @param beacon_width number Beacon width (0 if no beacons)
---- @return string|nil substation_mode "productive_5x5", "productive_3x3", "efficient", or nil
-local function determine_substation_mode(drill, mode, beacon_width)
+--- @return string|nil substation_mode "productive_5x5", "productive_3x3", or nil
+local function determine_substation_mode(drill)
     local body_max = math.max(drill.width, drill.height)
 
     -- 2x2 drills: substation not supported (can't fit in 1-tile gap)
@@ -49,27 +47,11 @@ local function determine_substation_mode(drill, mode, beacon_width)
         return nil
     end
 
-    if mode == "productivity" then
-        if body_max >= 5 then
-            return "productive_5x5"
-        else
-            return "productive_3x3"
-        end
-    elseif mode == "efficient" then
-        -- Efficient mode: inter-pair gap must be >= 2 tiles
-        -- The inter-pair gap is: spacing_across - body_dim (when no beacons)
-        -- or beacon_width (when beacons selected)
-        local radius = drill.mining_drill_radius
-        local mining_diameter = math.floor(radius) * 2 + 1
-        local body_dim = math.max(drill.width, drill.height)
-        local inter_pair = beacon_width > 0 and beacon_width or math.max(mining_diameter - body_dim, 0)
-        if inter_pair >= 2 then
-            return "efficient"
-        end
-        return nil
+    if body_max >= 5 then
+        return "productive_5x5"
+    else
+        return "productive_3x3"
     end
-
-    return nil
 end
 
 -- Entity types that should NOT be demolished
@@ -212,43 +194,6 @@ function placer._recompute_pole_positions(belt_lines, drill, gap)
     return pole_gap_positions, outer_edge_positions
 end
 
---- Recompute inter_pair_centers from surviving belt lines.
---- Called after belt-line filtering so that efficient-mode substation placement
---- uses gap midpoints that match the filtered layout.
---- @param belt_lines table Filtered belt lines
---- @param drill table Drill info with width, height
---- @param gap number Gap size between paired rows
---- @return table inter_pair_centers
-function placer._recompute_inter_pair_centers(belt_lines, drill, gap)
-    if #belt_lines < 2 then
-        return {}
-    end
-
-    local half_w = drill.width / 2
-    local half_h = drill.height / 2
-    local gap_half = gap / 2
-    local orientation = belt_lines[1].orientation or "NS"
-
-    local pair_edge_min = {}
-    local pair_edge_max = {}
-    for _, bl in ipairs(belt_lines) do
-        if orientation == "NS" then
-            local pair_start = bl.x - half_w - gap_half
-            pair_edge_min[#pair_edge_min + 1] = pair_start - half_w
-            pair_edge_max[#pair_edge_max + 1] = pair_start + drill.width + gap + half_w
-        else
-            local pair_start = bl.y - half_h - gap_half
-            pair_edge_min[#pair_edge_min + 1] = pair_start - half_h
-            pair_edge_max[#pair_edge_max + 1] = pair_start + drill.height + gap + half_h
-        end
-    end
-
-    local centers = {}
-    for i = 1, #pair_edge_max - 1 do
-        centers[#centers + 1] = (pair_edge_max[i] + pair_edge_min[i + 1]) / 2
-    end
-    return centers
-end
 
 --- Filter belt lines to only include positions where drills were actually placed.
 --- This prevents orphaned infrastructure when drills are skipped (e.g., polite mode).
@@ -392,7 +337,7 @@ end
 --- Place ghost mining drills according to the player's settings and scan results.
 --- @param player LuaPlayer The player requesting placement
 --- @param scan_results table Results from resource_scanner.scan()
---- @param settings table Player settings {drill_name, placement_mode, direction, remember}
+--- @param settings table Player settings {drill_name, direction, remember}
 --- @return number placed Count of successfully placed ghosts
 --- @return number skipped Count of positions that failed placement checks
 function placer.place(player, scan_results, settings)
@@ -453,7 +398,7 @@ function placer.place(player, scan_results, settings)
     local gap_override = nil
 
     if substation_active then
-        substation_mode = determine_substation_mode(drill, settings.placement_mode, beacon_width)
+        substation_mode = determine_substation_mode(drill)
         if substation_mode == "productive_5x5" then
             gap_override = 2
         end
@@ -462,7 +407,6 @@ function placer.place(player, scan_results, settings)
     local result = calculator.calculate_positions(
         drill,
         scan_results.bounds,
-        settings.placement_mode,
         belt_direction,
         resource_groups,
         all_resource_groups,
@@ -563,10 +507,6 @@ function placer.place(player, scan_results, settings)
                 placer._recompute_pole_positions(result.belt_lines, drill, gap)
         end
 
-        -- Recompute inter-pair centers so efficient-mode substation placement
-        -- indices stay aligned with the filtered belt_lines array.
-        result.inter_pair_centers =
-            placer._recompute_inter_pair_centers(result.belt_lines, drill, gap)
     end
 
     -- Placement pipeline: drills -> belts -> poles -> beacons
@@ -579,7 +519,7 @@ function placer.place(player, scan_results, settings)
     -- For 1x1 poles: compute which drill indices get a pole based on supply area and wire distance
     -- For substations: handled by their own placement functions
     -- For no pole: nil (belt_placer treats nil as all transport belts)
-    local spacing_along = calculator.get_spacing(drill, settings.placement_mode)
+    local spacing_along = calculator.get_spacing(drill)
     local pole_position_sets = nil
     if settings.pole_name and settings.pole_name ~= "" and not substation_active then
         local pole_quality = settings.pole_quality or settings.quality or "normal"
@@ -594,9 +534,9 @@ function placer.place(player, scan_results, settings)
         end
     end
 
-    -- For substation modes NOT in belt gap (productive_3x3, efficient),
+    -- For substation modes NOT in belt gap (productive_3x3),
     -- use empty position sets so belt_placer uses all transport belts
-    if substation_active and (substation_mode == "productive_3x3" or substation_mode == "efficient") then
+    if substation_active and substation_mode == "productive_3x3" then
         pole_position_sets = {}
         for i = 1, #result.belt_lines do
             pole_position_sets[i] = {}
@@ -690,7 +630,7 @@ function placer.place(player, scan_results, settings)
             settings.pipe_quality or settings.quality or "normal",
             gap,
             belt_direction,
-            settings.placement_mode,
+            "productivity",
             polite
         )
     end
@@ -722,13 +662,6 @@ function placer.place(player, scan_results, settings)
                     if removed and #removed > 0 then
                         placed = placed - #removed
                     end
-                elseif substation_mode == "efficient" then
-                    poles_placed, poles_skipped = pole_placer.place_substations_efficient(
-                        surface, force, player,
-                        result.belt_lines, drill, pole_info, pole_quality,
-                        belt_direction, result.inter_pair_centers or {}, polite,
-                        spacing_along
-                    )
                 end
             end
         else

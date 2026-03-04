@@ -2,27 +2,14 @@
 
 local calculator = {}
 
---- Calculate the grid spacing for a given drill and placement mode.
+--- Calculate the grid spacing for a given drill.
+--- Uses productivity spacing: drills placed edge-to-edge for maximum throughput.
 --- @param drill table Drill info from resource_scanner (width, height, mining_drill_radius)
---- @param mode string "productivity" or "efficient"
 --- @return number spacing_along Spacing along the belt line between drill centers
 --- @return number spacing_across Spacing across the belt line (between pairs)
 --- @return number offset Row offset for staggered placement (0 for non-staggered)
-function calculator.get_spacing(drill, mode)
-    local body_w = drill.width
-    local body_h = drill.height
-    local radius = drill.mining_drill_radius
-
-    local mining_diameter = math.floor(radius) * 2 + 1
-
-    if mode == "productivity" then
-        return body_w, body_h, 0
-
-    elseif mode == "efficient" then
-        return mining_diameter, mining_diameter, math.floor(mining_diameter / 2)
-    end
-
-    return mining_diameter, mining_diameter, 0
+function calculator.get_spacing(drill)
+    return drill.width, drill.height, 0
 end
 
 --- Derive the axis orientation ("NS" or "EW") from a belt direction.
@@ -127,7 +114,6 @@ local has_foreign_ore_overlap = has_resources_in_mining_area
 ---
 --- @param drill table Drill info from resource_scanner
 --- @param bounds table {left_top={x,y}, right_bottom={x,y}} selection bounds
---- @param mode string Placement mode: "productivity" or "efficient"
 --- @param belt_direction string "north", "south", "east", or "west" (belt flow direction)
 --- @param resource_groups table Resource groups from scan results (already filtered to selected resource for the "has ore" check)
 --- @param all_resource_groups table|nil Full unfiltered resource groups (for foreign ore filtering). If nil, no foreign ore filtering is applied.
@@ -135,14 +121,14 @@ local has_foreign_ore_overlap = has_resources_in_mining_area
 --- @param beacon_width number|nil Width of beacon entity (0 or nil when no beacons selected)
 --- @param gap_override number|nil Override gap between paired rows (e.g., 2 for substation 5x5 mode)
 --- @return table {positions=array, belt_lines=array, gap=number, belt_direction=string}
-function calculator.calculate_positions(drill, bounds, mode, belt_direction, resource_groups, all_resource_groups, selected_resource, beacon_width, gap_override)
+function calculator.calculate_positions(drill, bounds, belt_direction, resource_groups, all_resource_groups, selected_resource, beacon_width, gap_override)
     -- Support legacy "NS"/"EW" values
     if belt_direction == "NS" then belt_direction = "south" end
     if belt_direction == "EW" then belt_direction = "east" end
     belt_direction = belt_direction or "south"
 
     local belt_orientation = calculator.direction_to_orientation(belt_direction)
-    local spacing_along, spacing_across, row_offset = calculator.get_spacing(drill, mode)
+    local spacing_along, spacing_across, row_offset = calculator.get_spacing(drill)
     local resource_set = build_resource_set(resource_groups)
 
     -- Build foreign ore set for filtering when a specific ore is selected
@@ -435,7 +421,6 @@ function calculator.calculate_positions(drill, bounds, mode, belt_direction, res
     end
 
     -- Compute inter-pair center positions (midpoints between adjacent pairs)
-    -- Used for efficient mode substation placement in the gap between pairs
     local inter_pair_centers = {}
     if #pair_edge_min > 1 then
         for i = 1, #pair_edge_max - 1 do

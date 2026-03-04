@@ -28,18 +28,18 @@ Five changes: (1) remove efficient placement mode entirely, (2) remove module co
 - Modify: `control.lua` - remove/simplify legacy mode migration code
 - Modify: `locale/*/locale.cfg` - remove mode-related locale strings (gui-mode-header, gui-mode-productivity, gui-mode-efficient, tooltips)
 
-- [ ] Remove `"efficient"` from `settings.lua` allowed_values (keep setting for migration compatibility or remove if safe)
-- [ ] Remove `PLACEMENT_MODES` array and `_add_mode_selector()` from `gui.lua`
-- [ ] Remove mode radio button reading from `read_settings()`
-- [ ] Remove mode_flow separator and `_add_mode_selector()` call from GUI build section
-- [ ] Simplify `calculator.get_spacing()` to remove mode parameter, return only productivity spacing
-- [ ] Update all callers of `calculator.get_spacing()` to not pass mode
-- [ ] Simplify `determine_substation_mode()` in `placer.lua` to remove efficient branch
-- [ ] Remove the call to `pole_placer.place_substations_efficient()` from `placer.lua`
-- [ ] Remove `place_substations_efficient()` function from `pole_placer.lua`
-- [ ] Simplify migration in `control.lua` - migrate all legacy modes to "productivity"
-- [ ] Remove mode-related locale strings from all `locale/*/locale.cfg` files
-- [ ] Manual test: verify GUI no longer shows mode selector, only productivity layout is used
+- [x] Remove `"efficient"` from `settings.lua` allowed_values (keep setting for migration compatibility or remove if safe)
+- [x] Remove `PLACEMENT_MODES` array and `_add_mode_selector()` from `gui.lua`
+- [x] Remove mode radio button reading from `read_settings()`
+- [x] Remove mode_flow separator and `_add_mode_selector()` call from GUI build section
+- [x] Simplify `calculator.get_spacing()` to remove mode parameter, return only productivity spacing
+- [x] Update all callers of `calculator.get_spacing()` to not pass mode
+- [x] Simplify `determine_substation_mode()` in `placer.lua` to remove efficient branch
+- [x] Remove the call to `pole_placer.place_substations_efficient()` from `placer.lua`
+- [x] Remove `place_substations_efficient()` function from `pole_placer.lua`
+- [x] Simplify migration in `control.lua` - migrate all legacy modes to "productivity"
+- [x] Remove mode-related locale strings from all `locale/*/locale.cfg` files
+- [x] Manual test: verify GUI no longer shows mode selector, only productivity layout is used
 
 ### Task 2: Remove module count selector, auto-fill all slots
 
