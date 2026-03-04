@@ -83,11 +83,11 @@ The bug is at lines 511-513 where `should_place_set[1] = true` and `should_place
 
 Currently, the `not is_last` check prevents UBI at the last drill. The user wants: if the last drill has a pole/substation, place UBI there so the user can manually place UBO as the output exit.
 
-- [ ] In `_place_underground_belts()` NS block: change `has_pole and not is_last` to `has_pole` for UBI placement at drill center (both first-drill and subsequent-drill branches)
-- [ ] In `_place_underground_belts()` EW block: same change for EW orientation
-- [ ] In `_place_substation_5x5_belts()` NS block: change `downstream_has_sub and not is_last` to `downstream_has_sub` for UBI placement
-- [ ] In `_place_substation_5x5_belts()` EW block: same change for EW orientation
-- [ ] Manual test: verify last drill with pole/substation gets UBI; last drill without pole still gets surface belt
+- [x] In `_place_underground_belts()` NS block: change `has_pole and not is_last` to `has_pole` for UBI placement at drill center (both first-drill and subsequent-drill branches)
+- [x] In `_place_underground_belts()` EW block: same change for EW orientation
+- [x] In `_place_substation_5x5_belts()` NS block: change `downstream_has_sub and not is_last` to `downstream_has_sub` for UBI placement
+- [x] In `_place_substation_5x5_belts()` EW block: same change for EW orientation
+- [x] Manual test: verify last drill with pole/substation gets UBI; last drill without pole still gets surface belt
 
 ### Task 6: Update documentation
 

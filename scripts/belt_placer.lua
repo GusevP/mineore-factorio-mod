@@ -254,7 +254,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
 
             if is_first then
                 -- First drill in flow: no UBO position
-                if has_pole and not is_last then
+                if has_pole then
                     -- UBI at drill center (entrance to underground to pass under pole)
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -302,7 +302,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 end
 
                 -- 2. Drill center position
-                if has_pole and not is_last then
+                if has_pole then
                     -- UBI at drill center (entrance to underground to pass under pole)
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -389,7 +389,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
             end
 
             if is_first then
-                if has_pole and not is_last then
+                if has_pole then
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
@@ -429,7 +429,7 @@ function belt_placer._place_underground_belts(surface, force, player, belt_line,
                 end
 
                 -- 2. Center position
-                if has_pole and not is_last then
+                if has_pole then
                     local _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = y}, ubi_dir, quality, "input", polite)
@@ -644,7 +644,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 end
 
                 -- 3. UBI/belt position (downstream of splitter)
-                if downstream_has_sub and not is_last then
+                if downstream_has_sub then
                     -- UBI in both columns (entrance to underground to pass under substation)
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
@@ -784,7 +784,7 @@ function belt_placer._place_substation_5x5_belts(surface, force, player, belt_li
                 end
 
                 -- 3. UBI/belt position (downstream of splitter)
-                if downstream_has_sub and not is_last then
+                if downstream_has_sub then
                     _, p, s = belt_placer._place_underground_ghost(
                         surface, force, player, underground_name,
                         {x = ubi_x, y = col1_y}, belt_dir_define, quality, "input", polite)
