@@ -27,7 +27,7 @@
 
 ### Smart Pole Spacing Pattern
 
-**Pattern:** Poles and substations are placed at supply-area-aware intervals using a unified position calculator. One function `pole_placer.calculate_positions()` determines placement indices for ALL modes (1x1 poles, substations productive_3x3, efficient, productive_5x5). Quality-aware via `get_pole_info(pole_name, quality)`.
+**Pattern:** Poles and substations are placed at supply-area-aware intervals using a unified position calculator. One function `pole_placer.calculate_positions()` determines placement indices for ALL modes (1x1 poles, substations productive_3x3, productive_5x5). Quality-aware via `get_pole_info(pole_name, quality)`.
 
 **Implementation:**
 - Function `pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, belt_direction)` in `scripts/pole_placer.lua`
@@ -41,7 +41,6 @@
 **Used by all placement modes:**
 - `pole_placer.place()` for 1x1 poles: pre-calculated `pole_position_sets` passed from `placer.lua`, only places at indices in set
 - `place_substations_productive_3x3()`: replaces inline calculation with `calculate_positions()`
-- `place_substations_efficient()`: replaces inline calculation with `calculate_positions()`
 - `place_substations_productive_5x5()`: replaces inline calculation with `calculate_positions()`
 - `placer.lua` passes position sets to `belt_placer` for belt optimization
 
@@ -79,24 +78,22 @@
 
 **Special cases:**
 - No pole selected: `pole_position_sets` is nil, `has_any_poles` is false -> all transport belts
-- Substation modes NOT in belt gap (productive_3x3, efficient): empty position sets -> all transport belts in belt gap
+- Substation modes NOT in belt gap (productive_3x3): empty position sets -> all transport belts in belt gap
 - Substation productive_5x5: `substation_gap_sets` maps gap indices to substation presence
 
 **Rationale:** Reduces underground belt usage by only going underground where necessary (to pass under a pole/substation). Surface transport belts are cheaper and provide visual feedback of item flow. The state machine ensures belt continuity: UBO always pairs with a preceding UBI, and surface belts fill all positions between underground exits and next underground entrances.
 
 ### Substation Placement Modes
 
-**Pattern:** When a 2x2 pole (substation) is selected, specialized placement logic replaces the standard fixed pole spacing. The mode depends on drill size and placement mode.
+**Pattern:** When a 2x2 pole (substation) is selected, specialized placement logic replaces the standard fixed pole spacing. The mode depends on drill size.
 
 **Behavioral Matrix:**
 
-| Drill Size | Mode | Substation Behavior |
-|---|---|---|
-| 2x2 | Any | Not supported (substation won't fit in 1-tile gap) |
-| 3x3-4x4 | Productive | Replace side2 drills with substations at intervals |
-| 3x3-4x4 | Efficient | Place in inter-pair gap (needs >= 2 tiles) |
-| 5x5+ | Productive | 2-tile gap with 2-column belt layout + splitters |
-| 5x5+ | Efficient | Place in inter-pair gap (needs >= 2 tiles) |
+| Drill Size | Substation Behavior |
+|---|---|
+| 2x2 | Not supported (substation won't fit in 1-tile gap) |
+| 3x3-4x4 | Replace side2 drills with substations at intervals |
+| 5x5+ | 2-tile gap with 2-column belt layout + splitters |
 
 **Implementation:**
 - `placer.lua`: `is_substation()` detects exactly 2x2 poles, `determine_substation_mode()` routes to correct mode
@@ -104,14 +101,13 @@
 - `belt_placer._place_substation_5x5_belts()`: state-machine belt layout with splitters, adaptive UBI/UBO placement based on `substation_gap_sets`
 - `pole_placer.place_substations_productive_5x5()`: substations in empty gaps between belt sections
 - `pole_placer.place_substations_productive_3x3()`: replaces side2 drills with substations at wire-reach intervals
-- `pole_placer.place_substations_efficient()`: substations in inter-pair gaps at wire-reach intervals
 
 **5x5+ Productive Mode Layout (NS south flow):**
 
 Gap between paired drill columns is expanded to 2 tiles. Per drill, belt entities are placed using a state machine:
 1. **Splitter** at drill center (always) — catches ore from both left+right drills
 2. **UBO or belt** 1 tile upstream of splitter — UBO if previous drill had UBI, else transport belt
-3. **UBI or belt** 1 tile downstream of splitter — UBI only if a substation exists in the downstream gap AND this is not the last drill, else transport belt
+3. **UBI or belt** 1 tile downstream of splitter — UBI if a substation exists in the downstream gap, else transport belt
 
 The splitter spans both gap columns and splits output evenly to col1 and col2, giving two parallel belt lines for doubled throughput. Underground belts are only placed where substations occupy the inter-drill gap. All other positions use transport belts for surface transport. Substations are placed by `pole_placer` at both ends of the belt line (outside drill bodies) and at intermediate positions where they don't collide with belt entities.
 
@@ -127,7 +123,7 @@ For south flow, drill centers at y, y+5, y+10 (5x5 drills, substation at every g
   [empty]
   [UBO] [UBO]    <- UBO (previous had UBI)
   [Splitter  ]   <- next drill...
-  [belt][belt]   <- transport belt (last drill: no UBI even if downstream has sub)
+  [UBI] [UBI]   <- UBI (last drill with downstream substation: placed for manual UBO)
   [empty]
   [Substation]   <- after last drill (endpoint substation)
 
@@ -151,7 +147,7 @@ When substations are spaced wider, intermediate positions use transport belts:
 
 ### Underground Belt Type Setting Pattern
 
-**Pattern:** Underground belt ghosts must have their input/output type specified during creation using the `type` parameter. Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. UBI/UBO placement is conditional: UBI is placed only at drills with a pole/substation in the downstream gap AND that are not the last drill. UBO is placed only when the previous drill had a UBI. The first drill has no UBO (no previous section), and the last drill has no UBI (no subsequent section to exit from).
+**Pattern:** Underground belt ghosts must have their input/output type specified during creation using the `type` parameter. Both UBI (input/entrance) and UBO (output/exit) face the same direction (belt flow direction) for proper auto-connection. UBI/UBO placement is conditional: UBI is placed at drills with a pole/substation in the downstream gap (including the last drill, so the user can manually place UBO as output exit). UBO is placed only when the previous drill had a UBI. The first drill has no UBO (no previous section).
 
 **Implementation:**
 - Function `belt_placer._place_underground_belts()` in `scripts/belt_placer.lua`
@@ -164,7 +160,7 @@ When substations are spaced wider, intermediate positions use transport belts:
 - For west flow: both UBI and UBO face west
 - Placement for each drill: UBI created with `type="input"`, UBO created with `type="output"`
 - First drill gets no UBO (no previous underground section)
-- Last drill gets no UBI (no subsequent drill to place matching UBO)
+- Last drill gets UBI if it has a pole/substation (user can manually place UBO as output exit)
 
 **Critical Implementation Detail:**
 ```lua
@@ -230,21 +226,23 @@ local ghost = surface.create_entity{
 
 ### Module Quality Pattern
 
-**Pattern:** Module quality is selected independently from entity quality, allowing different quality levels for the entity and its modules.
+**Pattern:** Module quality and drill quality are selected independently from the global entity quality, allowing different quality levels for the drill, its modules, and beacon modules.
 
 **Implementation:**
 - `gui._add_inline_quality_dropdown()` with prefix pattern creates named dropdowns:
+  - `"drill"` prefix → `mineore_quality_drill` dropdown (drill entity quality)
   - `"drill_module"` prefix → `mineore_quality_drill_module` dropdown
   - `"beacon_module"` prefix → `mineore_quality_beacon_module` dropdown
 - `gui._read_quality_dropdown()` reads quality from a prefixed dropdown
-- `read_settings()` produces `settings.module_quality` and `settings.beacon_module_quality`
+- `read_settings()` produces `settings.drill_quality`, `settings.module_quality`, and `settings.beacon_module_quality`
+- `placer.lua` uses `settings.drill_quality or settings.quality or "normal"` for drill ghost placement
 - `placer.lua` uses `settings.module_quality or settings.quality or "normal"` for drill module insert_plan
 - `beacon_placer.place()` accepts `beacon_module_quality` parameter, uses it for module insert_plan
 - Quality dropdowns only shown when `script.feature_flags.quality` is true (Space Age DLC)
 
 ### Beacon Inter-Pair Spacing Pattern
 
-**Pattern:** When beacons are selected, the inter-pair gap is sized to exactly match the beacon width, ensuring beacons are flush with drills on both sides. Without beacons, efficient mode spacing is used.
+**Pattern:** When beacons are selected, the inter-pair gap is sized to exactly match the beacon width, ensuring beacons are flush with drills on both sides. Without beacons, the gap is based on drill spacing.
 
 **Implementation:**
 - In `calculator.lua`, the `inter_pair` spacing is computed as:
@@ -254,7 +252,7 @@ local ghost = surface.create_entity{
 - `placer.lua` passes `beacon_width` from `beacon_placer.get_beacon_info()` to the calculator
 - The beacon_placer's `generate_candidates()` places shared beacon columns at the midpoint between adjacent pair edges, which with `inter_pair = beacon_width` means the beacon fills the gap exactly
 
-**Rationale:** Previously, the inter-pair gap was `(spacing_across - body_dim) + beacon_width`, making the efficient mode extra spacing and beacon width additive. This left visible gaps between beacons and drills, and for large drills (5x5) could push beacons out of supply range. By using just `beacon_width` when beacons are selected, the beacon is always flush with drills on both sides and within supply range. The efficient mode mining-area-overlap constraint is relaxed between pairs when beacons are used, since players choosing beacons prioritize beacon coverage over mining efficiency.
+**Rationale:** By using just `beacon_width` when beacons are selected, the beacon is always flush with drills on both sides and within supply range. Players choosing beacons prioritize beacon coverage over mining efficiency.
 
 ### Beacon Fill Pass Pattern
 
@@ -382,19 +380,17 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 ### GUI Layout Structure
 
-**Pattern:** The configuration GUI uses a scroll pane to handle overflow, with compact layout for placement mode (horizontal) and drill modules (inline with drill selector).
+**Pattern:** The configuration GUI uses a scroll pane to handle overflow, with compact layout for drill modules (inline with drill selector) and drill quality dropdown.
 
 **Implementation:**
 - GUI hierarchy: `main_frame > content (frame) > scroll_pane > inner (flow)`
 - `read_settings()` navigates via `frame.content.scroll_pane.inner`
 - Scroll pane has `maximal_height = 500` to handle small screens
-- Placement mode radio buttons are inside `mode_flow` (horizontal flow) with label and radios on one line
-- `read_settings()` reads mode from `inner.mode_flow["mineore_mode_" .. mode]`
 - Drill module selector has no header label — placed directly after drill icon buttons in the drill section
-- `handle_radio_change()` uses `element.parent` which works correctly since radios are inside `mode_flow`
+- Drill quality dropdown appears inline in the drill selector row (Space Age DLC only)
 
 **GUI section order:**
-1. Resource info → Resource selector (conditional) → Drill + Modules (inline) → Belt → Pipe (conditional) → Pole → Beacon → Placement Mode (horizontal) → Belt Direction → Polite checkbox → Foundation → Remember checkbox → Buttons
+1. Resource info → Resource selector (conditional) → Drill + Quality + Modules (inline) → Belt → Pipe (conditional) → Pole → Beacon → Belt Direction → Polite checkbox → Foundation → Remember checkbox → Buttons
 
 ### Foundation Tile Placement Pattern
 
@@ -439,12 +435,6 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 **Also in `placer.lua`:** The `preserve_types` set in `demolish_obstacles()` preserves both elevated rails and rail ramps/supports from the broad area sweep.
 
-## Configuration Defaults
-
-### Placement Mode Default
-- Changed from "efficient" to "productivity" in `settings.lua`
-- Defined in `mineore-default-mode` setting (line 8)
-
 ## Build/Package Commands
 
 ```bash
@@ -458,14 +448,12 @@ Test files located in `docs/tests/`:
 - `drill-default-selection-tests.md` - Electric drill default
 - `pole-default-selection-tests.md` - Medium pole default
 - `pipe-default-selection-tests.md` - Iron pipe default
-- `default-mode-selection-tests.md` - Productivity mode default
 - `cursor-clearing-tests.md` - Cursor management validation
 - `burner-drill-filtering-tests.md` - Burner drill exclusion validation
 - `pole-whitelist-tests.md` - Pole selector whitelist validation
 - `pole-spacing-tests.md` - Smart pole spacing pattern validation
 - `underground-belt-direction-tests.md` - Underground belt direction validation
 - `selection-tool-inventory-tests.md` - Selection tool cursor-only validation
-- `productive-mode-default-tests.md` - Productivity mode default validation
 - `manual-acceptance-tests.md` - Full integration tests
 - `validation-summary.md` - Test results summary
 

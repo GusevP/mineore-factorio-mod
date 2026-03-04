@@ -91,5 +91,5 @@ Currently, the `not is_last` check prevents UBI at the last drill. The user want
 
 ### Task 6: Update documentation
 
-- [ ] Update `CLAUDE.md`: remove Substation Placement Modes efficient references, update Belt Optimization Pattern to reflect last-drill UBI change, remove mode selector from GUI Layout Structure, note drill quality in Module Quality Pattern section
-- [ ] Move this plan to `docs/plans/completed/`
+- [x] Update `CLAUDE.md`: remove Substation Placement Modes efficient references, update Belt Optimization Pattern to reflect last-drill UBI change, remove mode selector from GUI Layout Structure, note drill quality in Module Quality Pattern section
+- [x] Move this plan to `docs/plans/completed/`
