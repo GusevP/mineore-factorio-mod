@@ -2,7 +2,7 @@ Version: 1.3.0
 Date: 2026-03-24
   Features:
     - Compact P.U.M.P.-style GUI layout — no header labels, quality selector on the left, entity and module selectors in a single aligned row
-    - Predefined foundation tile list — landfill, foundation, ice platform, concrete, refined concrete
+    - Predefined foundation tile list — landfill, foundation, ice platform
     - Settings always remembered — removed remember checkbox
   Changes:
     - Quality selector is now a compact icon-only dropdown matching entity icon size
