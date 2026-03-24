@@ -1,4 +1,4 @@
-Miner Planner automates mining drill placement on ore patches. Drag-select an area, pick your drill, belts, poles, and beacons from an icon-based GUI, and ghost entities are placed in optimized paired-row layouts ready for construction bots. Works with all drill types, belt tiers, pole types, and resources across all planets.
+Miner Planner automates mining drill placement on ore patches. Drag-select an area, pick drills, belts, poles, beacons, modules, and foundation from a compact icon-based GUI, then ghost entities are placed in optimized paired-row layouts ready for construction bots. Features smart pole/substation spacing, adaptive underground belts, quality support (Space Age), polite placement mode, and foundation tiles for any planet surface.
 
 ---
 
@@ -21,14 +21,14 @@ Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 - **Underground belts** — automatically placed for 3x3+ drills to keep belt runs clean
 - **4-direction belt flow** — north, south, east, or west
 - **Pipe placement** — automatic pipes for fluid-requiring resources (e.g. uranium ore with sulfuric acid), with pipe type and quality selection
-- **Foundation placement** — select landfill, ice-platform, or other foundation tiles to place under entities on water or frozen ocean
+- **Foundation placement** — select landfill, foundation or ice platform to place under entities on non-buildable terrain
 - **Polite placement mode** — only clears trees and rocks, preserving existing buildings; respects rail ramps and supports
 - **Technology-based filtering** — GUI selectors only show entities whose recipes have been researched
 - **Drill modules and quality** — select modules and quality level for drills independently from other entities (Space Age)
 - **Ore-type filtering** — drills skip positions where the mining area overlaps a different ore type
 - **Obstacle clearing** — trees, rocks, and cliffs in the placement zone are marked for deconstruction
 - **Ghost cleanup** — shift-drag to remove placed ghost miners, belts, poles, pipes, beacons, and foundation tiles
-- **Remember settings** — skip the GUI on repeat placements and reuse your last configuration
+- **Auto-remember settings** — GUI is skipped on repeat placements, reusing your last configuration automatically
 - **Multi-planet support** — works with any resource on any surface (Nauvis, Vulcanus, Fulgora, Gleba, Aquilo)
 - **Mod compatibility** — auto-discovers modded drills, belts, poles, beacons, pipes, and 2x2 substations
 
@@ -38,7 +38,7 @@ Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 
 1. Click the Miner Planner shortcut button in the toolbar (or press ALT+M)
 2. Drag-select an ore patch
-3. In the configuration GUI, choose your drill, belt, pole, and beacon
+3. In the compact GUI, choose your drill, belt, pole, beacon, modules, and foundation
 4. Click "Place Miners" — ghost entities are placed for bots to build
 5. Shift-drag over an area to remove previously placed ghosts
 
