@@ -1103,10 +1103,10 @@ function gui._get_electric_pole_types()
     local pole_list = {}
     local added = {}
 
-    -- Add whitelisted 1x1 poles
+    -- Add whitelisted 1x1 poles (skip non-blueprintable entities)
     for _, name in ipairs(gui.POLE_WHITELIST) do
         local proto = prototypes.entity[name]
-        if proto then
+        if proto and not proto.has_flag("not-blueprintable") then
             pole_list[#pole_list + 1] = {
                 name = name,
                 supply_area = proto.get_supply_area_distance() or 0,
@@ -1116,8 +1116,10 @@ function gui._get_electric_pole_types()
     end
 
     -- Add any exactly 2x2 electric pole (substations from base game or mods)
+    -- Skip non-blueprintable entities (e.g., Factorissimo's factory-power-pole)
     for name, proto in pairs(prototypes.entity) do
-        if not added[name] and proto.type == "electric-pole" then
+        if not added[name] and proto.type == "electric-pole"
+            and not proto.has_flag("not-blueprintable") then
             local cbox = proto.collision_box
             local w = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
             local h = math.ceil(cbox.right_bottom.y - cbox.left_top.y)

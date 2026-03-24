@@ -227,8 +227,8 @@ function ghost_util.place_ghost(surface, force, player, entity_name, position, d
         end
     end
 
-    local ghost = surface.create_entity(create_params)
-    if ghost then
+    local ok, ghost = pcall(surface.create_entity, create_params)
+    if ok and ghost then
         return ghost, true
     end
 
