@@ -104,18 +104,6 @@ end
 -- When nil, no foundation is placed.
 ghost_util.foundation_tile = nil
 
---- Get all foundation tile prototype names.
---- @return string[] Array of foundation tile prototype names
-function ghost_util.get_foundation_tiles()
-    local tiles = {}
-    for name, proto in pairs(prototypes.tile) do
-        if proto.is_foundation then
-            tiles[#tiles + 1] = name
-        end
-    end
-    table.sort(tiles)
-    return tiles
-end
 
 --- Check if any tile in an entity's footprint is non-buildable (water, lava, oil ocean, etc.).
 --- @param surface LuaSurface

@@ -26,7 +26,7 @@ Drills are placed edge-to-edge in paired rows for maximum ore throughput.
 - **Quality support** — per-entity quality selection for drills, belts, poles, and beacons, plus independent quality for drill and beacon modules (Space Age)
 - **Smart beacon modules** — beacon module selector automatically filters to only show compatible modules based on beacon's allowed effects; all module slots filled automatically
 - **Belt direction** — choose North, South, East, or West belt flow direction
-- **Remember settings** — skip the GUI on repeat use by remembering your last configuration
+- **Settings always remembered** — your last configuration is automatically reused; use the "Always show GUI" mod setting to reconfigure
 - **Pipe placement** — automatic pipe connections between drills when mining fluid-requiring resources (e.g., uranium ore with sulfuric acid)
 - **Polite placement mode** — optional mode that only clears trees and rocks, skipping positions blocked by existing buildings or other entities
 - **Ghost removal** — shift-drag to remove ghost miners, belts, poles, and beacons in an area
@@ -56,7 +56,7 @@ Drills are placed edge-to-edge in paired rows for maximum ore throughput.
    - Set belt direction (North / South / East / West)
    - Optionally enable "Polite placement" to preserve existing buildings
    - Optionally select drill modules and quality levels per entity type
-   - Check "Remember settings" to skip this dialog next time
+   - Settings are automatically remembered for next time; use the "Always show GUI" mod setting to reconfigure
 4. Click "Place Miners" — ghost entities appear in the selected area
 5. Your construction bots will build them automatically
 

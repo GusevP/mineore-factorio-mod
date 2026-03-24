@@ -229,11 +229,11 @@ local ghost = surface.create_entity{
 **Pattern:** Module quality and drill quality are selected independently from the global entity quality, allowing different quality levels for the drill, its modules, and beacon modules.
 
 **Implementation:**
-- `gui._add_inline_quality_dropdown()` with prefix pattern creates named dropdowns:
-  - `"drill"` prefix → `mineore_quality_drill` dropdown (drill entity quality)
-  - `"drill_module"` prefix → `mineore_quality_drill_module` dropdown
-  - `"beacon_module"` prefix → `mineore_quality_beacon_module` dropdown
-- `gui._read_quality_dropdown()` reads quality from a prefixed dropdown
+- `gui._add_quality_icon_selector()` with prefix pattern creates icon-based quality selectors:
+  - `"drill"` prefix → `mineore_quality_drill` selector (drill entity quality)
+  - `"drill_module"` prefix → `mineore_quality_drill_module` selector
+  - `"beacon_module"` prefix → `mineore_quality_beacon_module` selector
+- `gui._read_quality_selector()` reads quality from a prefixed selector
 - `read_settings()` produces `settings.drill_quality`, `settings.module_quality`, and `settings.beacon_module_quality`
 - `placer.lua` uses `settings.drill_quality or settings.quality or "normal"` for drill ghost placement
 - `placer.lua` uses `settings.module_quality or settings.quality or "normal"` for drill module insert_plan
@@ -400,8 +400,8 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 **Pattern:** The player selects which foundation tile to use (landfill, foundation, ice-platform, etc.) from the GUI. When a foundation tile is selected, ghosts are placed under entities on non-buildable tiles. When "none" is selected, no foundation is placed.
 
 **Implementation:**
-- GUI selector `gui._add_foundation_selector()` in `scripts/gui.lua` — icon buttons for each `is_foundation` tile + "none" button
-- Foundation tiles discovered via `ghost_util.get_foundation_tiles()` — iterates `prototypes.tile` for `is_foundation = true`
+- GUI selector `gui._add_foundation_selector()` in `scripts/gui.lua` — icon buttons from a predefined whitelist + "none" button
+- Foundation whitelist: `landfill`, `foundation`, `ice-platform` — validated against `prototypes.tile` at runtime
 - `placer.place()` sets `ghost_util.foundation_tile = settings.foundation_name` before placement begins
 - Local function `place_foundation_if_needed()` in `scripts/ghost_util.lua` reads `ghost_util.foundation_tile`
 - Called from `ghost_util.place_ghost()` before entity ghost creation — all entity types get foundation coverage automatically
@@ -411,7 +411,7 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 - Nauvis: player selects `landfill` for water
 - Fulgora/Vulcanus: player selects `foundation` for oil ocean/lava
 - Aquilo: player selects `ice-platform` for frozen ocean
-- Any modded surface: foundation tiles are auto-discovered from tile prototypes
+- Modded surfaces: add modded foundation tile names to the whitelist in `gui._add_foundation_selector()`
 
 **Alt-selection cleanup:** The `on_player_alt_selected_area` handler in `control.lua` also removes `tile-ghost` entities in the selected area via `surface.find_entities_filtered{type="tile-ghost"}`.
 

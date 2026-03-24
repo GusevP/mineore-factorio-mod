@@ -377,34 +377,6 @@ function gui.create(player, scan_results, player_data)
     player.opened = main_frame
 end
 
---- Add resource info labels to the GUI.
---- @param parent LuaGuiElement
---- @param scan_results table
-function gui._add_resource_info(parent, scan_results)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-resources-header"},
-        style = "caption_label",
-    }
-
-    for name, group in pairs(scan_results.resource_groups) do
-        local flow = parent.add{
-            type = "flow",
-            direction = "horizontal",
-        }
-        flow.style.vertical_align = "center"
-
-        flow.add{
-            type = "sprite",
-            sprite = "entity/" .. name,
-        }
-
-        flow.add{
-            type = "label",
-            caption = {"mineore.gui-resource-line", name, group.count},
-        }
-    end
-end
 
 --- Add resource type selector when multiple ore types are in the selection.
 --- @param parent LuaGuiElement
@@ -1198,8 +1170,6 @@ function gui._add_foundation_selector(parent, settings, player)
         "landfill",
         "foundation",
         "ice-platform",
-        "concrete",
-        "refined-concrete",
     }
 
     -- Only show tiles whose prototypes exist and are available
@@ -1383,9 +1353,6 @@ function gui.read_settings(player)
     if foundation_flow then
         settings.foundation_name = gui._read_selector_from_flow(foundation_flow, "foundation")
     end
-
-    -- Always remember settings
-    settings.remember = true
 
     return settings
 end
