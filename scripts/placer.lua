@@ -89,7 +89,8 @@ local polite_obstacle_types = {
 --- @param gap number Gap between paired drill rows
 --- @param belt_orientation string "NS" or "EW"
 --- @param polite boolean|nil When true, only demolish natural obstacles
-local function demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, polite)
+--- @param beacon_width number|nil Width of beacon entity for margin calculation
+local function demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, polite, beacon_width)
     if #positions == 0 then
         return
     end
@@ -117,8 +118,7 @@ local function demolish_obstacles(surface, force, player, positions, drill, gap,
     end
 
     -- Expand bounding box to include the gap area (belts, poles, beacons)
-    -- The gap is between paired rows, and beacons extend beyond the drills
-    local expand = gap + 3  -- extra margin for beacons (3x3)
+    local expand = gap + (beacon_width or 0)
     min_x = min_x - expand
     min_y = min_y - expand
     max_x = max_x + expand
@@ -195,6 +195,72 @@ function placer._recompute_pole_positions(belt_lines, drill, gap)
 end
 
 
+--- Filter one belt line's drill positions, keeping only those that were actually placed.
+--- Axis-agnostic: works for both NS and EW by abstracting coordinate access.
+--- @param belt_line table Belt line metadata
+--- @param placed_set table Set of "x,y" coordinate strings
+--- @param cross1 number Cross-axis coordinate of side1 drills
+--- @param cross2 number Cross-axis coordinate of side2 drills
+--- @param make_key function(along_val, cross_val) -> string Creates lookup key
+--- @param along_min_key string Key for along-axis min extent ("y_min" or "x_min")
+--- @param along_max_key string Key for along-axis max extent ("y_max" or "x_max")
+--- @param gap_coord_key string Key for gap coordinate filtering ("y" or "x")
+--- @return boolean keep True if belt line still has drills after filtering
+local function filter_belt_line(belt_line, placed_set, cross1, cross2, make_key, along_min_key, along_max_key, gap_coord_key)
+    local new_side1 = {}
+    for _, v in ipairs(belt_line.drill_side1_positions or {}) do
+        if placed_set[make_key(v, cross1)] then
+            new_side1[#new_side1 + 1] = v
+        end
+    end
+
+    local new_side2 = {}
+    for _, v in ipairs(belt_line.drill_side2_positions or {}) do
+        if placed_set[make_key(v, cross2)] then
+            new_side2[#new_side2 + 1] = v
+        end
+    end
+
+    -- Rebuild union of along positions
+    local new_along = {}
+    local along_set = {}
+    for _, v in ipairs(new_side1) do
+        if not along_set[v] then
+            along_set[v] = true
+            new_along[#new_along + 1] = v
+        end
+    end
+    for _, v in ipairs(new_side2) do
+        if not along_set[v] then
+            along_set[v] = true
+            new_along[#new_along + 1] = v
+        end
+    end
+    table.sort(new_along)
+
+    if #new_along == 0 then
+        return false
+    end
+
+    belt_line.drill_side1_positions = new_side1
+    belt_line.drill_side2_positions = new_side2
+    belt_line.drill_along_positions = new_along
+    belt_line[along_min_key] = new_along[1]
+    belt_line[along_max_key] = new_along[#new_along]
+
+    local new_gaps = {}
+    local extent_min = new_along[1]
+    local extent_max = new_along[#new_along]
+    for _, gp in ipairs(belt_line.gap_positions or {}) do
+        if gp[gap_coord_key] >= extent_min and gp[gap_coord_key] <= extent_max then
+            new_gaps[#new_gaps + 1] = gp
+        end
+    end
+    belt_line.gap_positions = new_gaps
+
+    return true
+end
+
 --- Filter belt lines to only include positions where drills were actually placed.
 --- This prevents orphaned infrastructure when drills are skipped (e.g., polite mode).
 --- @param belt_lines table Array of belt line metadata from calculator
@@ -216,118 +282,20 @@ function placer._filter_belt_lines(belt_lines, placed_positions, drill, gap)
     local filtered = {}
 
     for _, belt_line in ipairs(belt_lines) do
+        local keep
         if belt_line.orientation == "NS" then
-            -- NS: drills are in left/right columns, positions tracked by y
-            local left_x = belt_line.x - gap_half - half_w
-            local right_x = belt_line.x + gap_half + half_w
-
-            -- Filter side1 (left column) positions
-            local new_side1 = {}
-            for _, y in ipairs(belt_line.drill_side1_positions or {}) do
-                if placed_set[left_x .. "," .. y] then
-                    new_side1[#new_side1 + 1] = y
-                end
-            end
-
-            -- Filter side2 (right column) positions
-            local new_side2 = {}
-            for _, y in ipairs(belt_line.drill_side2_positions or {}) do
-                if placed_set[right_x .. "," .. y] then
-                    new_side2[#new_side2 + 1] = y
-                end
-            end
-
-            -- Rebuild union of along positions
-            local new_along = {}
-            local along_set = {}
-            for _, y in ipairs(new_side1) do
-                if not along_set[y] then
-                    along_set[y] = true
-                    new_along[#new_along + 1] = y
-                end
-            end
-            for _, y in ipairs(new_side2) do
-                if not along_set[y] then
-                    along_set[y] = true
-                    new_along[#new_along + 1] = y
-                end
-            end
-            table.sort(new_along)
-
-            -- Only keep this belt line if any drills remain
-            if #new_along > 0 then
-                belt_line.drill_side1_positions = new_side1
-                belt_line.drill_side2_positions = new_side2
-                belt_line.drill_along_positions = new_along
-                belt_line.y_min = new_along[1]
-                belt_line.y_max = new_along[#new_along]
-
-                -- Filter gap positions to match new extent
-                local new_gaps = {}
-                for _, gp in ipairs(belt_line.gap_positions or {}) do
-                    if gp.y >= belt_line.y_min and gp.y <= belt_line.y_max then
-                        new_gaps[#new_gaps + 1] = gp
-                    end
-                end
-                belt_line.gap_positions = new_gaps
-
-                filtered[#filtered + 1] = belt_line
-            end
+            local cross1 = belt_line.x - gap_half - half_w
+            local cross2 = belt_line.x + gap_half + half_w
+            local function make_key(along, cross) return cross .. "," .. along end
+            keep = filter_belt_line(belt_line, placed_set, cross1, cross2, make_key, "y_min", "y_max", "y")
         else
-            -- EW: drills are in top/bottom rows, positions tracked by x
-            local top_y = belt_line.y - gap_half - half_h
-            local bottom_y = belt_line.y + gap_half + half_h
-
-            -- Filter side1 (top row) positions
-            local new_side1 = {}
-            for _, x in ipairs(belt_line.drill_side1_positions or {}) do
-                if placed_set[x .. "," .. top_y] then
-                    new_side1[#new_side1 + 1] = x
-                end
-            end
-
-            -- Filter side2 (bottom row) positions
-            local new_side2 = {}
-            for _, x in ipairs(belt_line.drill_side2_positions or {}) do
-                if placed_set[x .. "," .. bottom_y] then
-                    new_side2[#new_side2 + 1] = x
-                end
-            end
-
-            -- Rebuild union of along positions
-            local new_along = {}
-            local along_set = {}
-            for _, x in ipairs(new_side1) do
-                if not along_set[x] then
-                    along_set[x] = true
-                    new_along[#new_along + 1] = x
-                end
-            end
-            for _, x in ipairs(new_side2) do
-                if not along_set[x] then
-                    along_set[x] = true
-                    new_along[#new_along + 1] = x
-                end
-            end
-            table.sort(new_along)
-
-            if #new_along > 0 then
-                belt_line.drill_side1_positions = new_side1
-                belt_line.drill_side2_positions = new_side2
-                belt_line.drill_along_positions = new_along
-                belt_line.x_min = new_along[1]
-                belt_line.x_max = new_along[#new_along]
-
-                local new_gaps = {}
-                for _, gp in ipairs(belt_line.gap_positions or {}) do
-                    if gp.x >= belt_line.x_min and gp.x <= belt_line.x_max then
-                        new_gaps[#new_gaps + 1] = gp
-                    end
-                end
-                belt_line.gap_positions = new_gaps
-
-                filtered[#filtered + 1] = belt_line
-            end
+            local cross1 = belt_line.y - gap_half - half_h
+            local cross2 = belt_line.y + gap_half + half_h
+            local function make_key(along, cross) return along .. "," .. cross end
+            keep = filter_belt_line(belt_line, placed_set, cross1, cross2, make_key, "x_min", "x_max", "x")
+        end
+        if keep then
+            filtered[#filtered + 1] = belt_line
         end
     end
 
@@ -442,7 +410,7 @@ function placer.place(player, scan_results, settings)
     -- so only trees/rocks directly under placed entities are cleared.
     local polite = settings.polite or false
     if not polite then
-        demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, false)
+        demolish_obstacles(surface, force, player, positions, drill, gap, belt_orientation, false, beacon_width)
     end
 
     local placed = 0

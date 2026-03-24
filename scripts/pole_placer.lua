@@ -81,14 +81,22 @@ function pole_placer.calculate_positions(pole_info, drill_count, drill_spacing, 
     end
 
     local idx = start_idx
+    local last_placed = nil
     while (step > 0 and idx <= end_idx) or (step < 0 and idx >= end_idx) do
         positions_set[idx] = true
+        last_placed = idx
         idx = idx + step
     end
 
-    -- Always include both endpoints to ensure full supply area coverage
-    positions_set[1] = true
-    positions_set[drill_count] = true
+    -- Only add far endpoint if the last placed pole/substation can't reach it.
+    -- Use supply_area_distance (single-pole radius), not interval (two-pole spacing).
+    local far_end = (step > 0) and end_idx or 1
+    if last_placed and not positions_set[far_end] then
+        local gap_tiles = math.abs(last_placed - far_end) * drill_spacing
+        if gap_tiles > pole_info.supply_area_distance then
+            positions_set[far_end] = true
+        end
+    end
 
     return positions_set, interval
 end
@@ -276,34 +284,26 @@ function pole_placer._place_ns_poles(surface, force, player, belt_line, half_h, 
     local drill_positions = belt_line.drill_along_positions or {}
 
     for drill_index, drill_center in ipairs(drill_positions) do
-        -- Skip positions not in the pole_positions set (if provided)
-        if pole_positions and not pole_positions[drill_index] then
-            goto continue_ns
+        if not pole_positions or pole_positions[drill_index] then
+            local pole_y
+            if belt_direction == "south" then
+                pole_y = drill_center + 1
+            else
+                pole_y = drill_center - 1
+            end
+
+            local snap_y
+            if pole_info.height % 2 == 0 then
+                snap_y = math.floor(pole_y)
+            else
+                snap_y = math.floor(pole_y) + 0.5
+            end
+
+            local pos = {x = x_center, y = snap_y}
+            local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
+            placed = placed + p
+            skipped = skipped + s
         end
-
-        local pole_y
-        if belt_direction == "south" then
-            -- Belt flows south: pole goes 1 tile south of drill center (after UBI)
-            pole_y = drill_center + 1
-        else
-            -- Belt flows north: pole goes 1 tile north of drill center (after UBI)
-            pole_y = drill_center - 1
-        end
-
-        -- Snap y to tile center for proper alignment based on pole height
-        local snap_y
-        if pole_info.height % 2 == 0 then
-            snap_y = math.floor(pole_y)  -- even-height: place on tile boundary
-        else
-            snap_y = math.floor(pole_y) + 0.5  -- odd-height: place on tile center
-        end
-
-        local pos = {x = x_center, y = snap_y}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
-        placed = placed + p
-        skipped = skipped + s
-
-        ::continue_ns::
     end
 
     return placed, skipped
@@ -336,34 +336,26 @@ function pole_placer._place_ew_poles(surface, force, player, belt_line, half_w, 
     local drill_positions = belt_line.drill_along_positions or {}
 
     for drill_index, drill_center in ipairs(drill_positions) do
-        -- Skip positions not in the pole_positions set (if provided)
-        if pole_positions and not pole_positions[drill_index] then
-            goto continue_ew
+        if not pole_positions or pole_positions[drill_index] then
+            local pole_x
+            if belt_direction == "east" then
+                pole_x = drill_center + 1
+            else
+                pole_x = drill_center - 1
+            end
+
+            local snap_x
+            if pole_info.width % 2 == 0 then
+                snap_x = math.floor(pole_x)
+            else
+                snap_x = math.floor(pole_x) + 0.5
+            end
+
+            local pos = {x = snap_x, y = y_center}
+            local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
+            placed = placed + p
+            skipped = skipped + s
         end
-
-        local pole_x
-        if belt_direction == "east" then
-            -- Belt flows east: pole goes 1 tile east of drill center (after UBI)
-            pole_x = drill_center + 1
-        else
-            -- Belt flows west: pole goes 1 tile west of drill center (after UBI)
-            pole_x = drill_center - 1
-        end
-
-        -- Snap x to tile center for proper alignment based on pole width
-        local snap_x
-        if pole_info.width % 2 == 0 then
-            snap_x = math.floor(pole_x)  -- even-width: place on tile boundary
-        else
-            snap_x = math.floor(pole_x) + 0.5  -- odd-width: place on tile center
-        end
-
-        local pos = {x = snap_x, y = y_center}
-        local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
-        placed = placed + p
-        skipped = skipped + s
-
-        ::continue_ew::
     end
 
     return placed, skipped
@@ -415,9 +407,9 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
     local placed = 0
     local skipped = 0
 
-    for _, belt_line in ipairs(belt_lines) do
+    for _, belt_line in ipairs(belt_lines) do repeat
         local drill_positions = belt_line.drill_along_positions or {}
-        if #drill_positions == 0 then goto continue end
+        if #drill_positions == 0 then break end
 
         -- Collect all candidate substation positions along this belt line.
         -- Candidates are in the empty spaces between belt sections:
@@ -446,12 +438,7 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             for i = 1, #drill_positions - 1 do
                 local curr = drill_positions[i]
                 local next_center = drill_positions[i + 1]
-                local mid
-                if belt_direction == "south" then
-                    mid = (curr + 1 + next_center - 1) / 2
-                else
-                    mid = (curr - 1 + next_center + 1) / 2
-                end
+                local mid = (curr + next_center) / 2
                 candidates[#candidates + 1] = {x = belt_line.x, y = mid}
             end
 
@@ -482,12 +469,7 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             for i = 1, #drill_positions - 1 do
                 local curr = drill_positions[i]
                 local next_center = drill_positions[i + 1]
-                local mid
-                if belt_direction == "east" then
-                    mid = (curr + 1 + next_center - 1) / 2
-                else
-                    mid = (curr - 1 + next_center + 1) / 2
-                end
+                local mid = (curr + next_center) / 2
                 candidates[#candidates + 1] = {x = mid, y = belt_line.y}
             end
 
@@ -564,8 +546,7 @@ function pole_placer.place_substations_productive_5x5(surface, force, player, be
             end
         end
 
-        ::continue::
-    end
+    until true end
 
     return placed, skipped
 end
@@ -592,9 +573,9 @@ function pole_placer.place_substations_productive_3x3(surface, force, player, be
     local skipped = 0
     local removed_positions = {}
 
-    for _, belt_line in ipairs(belt_lines) do
+    for _, belt_line in ipairs(belt_lines) do repeat
         local side2_positions = belt_line.drill_side2_positions or {}
-        if #side2_positions == 0 then goto continue end
+        if #side2_positions == 0 then break end
 
         if belt_line.orientation == "NS" then
             local drill_spacing = drill_info.height
@@ -669,8 +650,7 @@ function pole_placer.place_substations_productive_3x3(surface, force, player, be
             end
         end
 
-        ::continue::
-    end
+    until true end
 
     return placed, skipped, removed_positions
 end

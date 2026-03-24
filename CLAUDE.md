@@ -34,7 +34,7 @@
 - Computes `effective_reach = math.min(supply_area_distance * 2, max_wire_distance)`
 - Computes `interval = math.max(1, math.floor(effective_reach / drill_spacing))`
 - Respects First-In-Flow Direction Pattern: south/east start from index 1, north/west start from last index
-- Always includes both endpoints (first and last drill) for full supply area coverage
+- Only includes the far endpoint when the last placed pole's supply area can't reach it (checks `gap_tiles > supply_area_distance`, not interval)
 - Returns `positions_set` (table mapping drill index -> true) and `interval`
 - `get_pole_info(pole_name, quality)` passes quality to `proto.get_supply_area_distance(quality)` and `proto.get_max_wire_distance(quality)`
 
@@ -380,17 +380,20 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 
 ### GUI Layout Structure
 
-**Pattern:** The configuration GUI uses a scroll pane to handle overflow, with compact layout for drill modules (inline with drill selector) and drill quality dropdown.
+**Pattern:** The configuration GUI uses a compact P.U.M.P.-inspired layout with no header labels on entity rows. Quality dropdowns appear left of entity icons. Entities with modules (drill, beacon) have a module group on the right side of the same row. Settings are always remembered.
 
 **Implementation:**
 - GUI hierarchy: `main_frame > content (frame) > scroll_pane > inner (flow)`
 - `read_settings()` navigates via `frame.content.scroll_pane.inner`
 - Scroll pane has `maximal_height = 500` to handle small screens
-- Drill module selector has no header label — placed directly after drill icon buttons in the drill section
-- Drill quality dropdown appears inline in the drill selector row (Space Age DLC only)
+- No header labels on entity rows — entity type is clear from icons
+- Quality dropdowns placed LEFT of entity icon buttons (Space Age DLC only)
+- Drill module group: `drill_selector_row > drill_module_group > [quality + module_btn]`
+- Beacon module group: `beacon_selector_row > beacon_module_row > [quality + module_btn]`
+- Settings always remembered (no checkbox)
 
 **GUI section order:**
-1. Resource info → Resource selector (conditional) → Drill + Quality + Modules (inline) → Belt → Pipe (conditional) → Pole → Beacon → Belt Direction → Polite checkbox → Foundation → Remember checkbox → Buttons
+1. Resource selector (conditional) → Drill + Module → Belt → Pipe (conditional) → Pole → Beacon + Module → Belt Direction → Foundation → Polite checkbox → Buttons
 
 ### Foundation Tile Placement Pattern
 

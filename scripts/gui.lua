@@ -139,7 +139,9 @@ function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, cu
         end
     end
 
-    mod_row.add{type = "label", caption = {"mineore.gui-beacon-module"}}
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(mod_row, "beacon_module", current_module_quality)
+    end
 
     local module_btn = mod_row.add{
         type = "choose-elem-button",
@@ -149,26 +151,21 @@ function gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, cu
         style = "slot_sized_button",
     }
     module_btn.elem_filters = filters
-
-    if script.feature_flags.quality then
-        mod_row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(mod_row, "beacon_module", current_module_quality)
-    end
 end
 
 --- Update the beacon module row when beacon selection changes.
 --- Reads current module state before rebuilding.
---- @param inner LuaGuiElement The inner flow containing beacon_module_row
+--- @param beacon_row LuaGuiElement The beacon_selector_row containing beacon_module_row
 --- @param beacon_name string|nil Newly selected beacon name
-function gui._update_beacon_module_row(inner, beacon_name)
-    local mod_row = inner.beacon_module_row
+function gui._update_beacon_module_row(beacon_row, beacon_name)
+    local mod_row = beacon_row.beacon_module_row
     if not mod_row then return end
 
     local current_module = nil
     local mod_btn = mod_row.mineore_beacon_module_btn
     if mod_btn then current_module = mod_btn.elem_value end
 
-    local current_quality = gui._read_quality_dropdown(mod_row, "beacon_module")
+    local current_quality = gui._read_quality_selector(mod_row, "beacon_module")
 
     gui._rebuild_beacon_module_row(mod_row, beacon_name, current_module, current_quality)
 end
@@ -245,8 +242,6 @@ function gui.create(player, scan_results, player_data)
     inner.style.minimal_width = 340
 
     -- Resource info section
-    gui._add_resource_info(inner, scan_results)
-
     -- Resource type selector (when multiple ore types are selected)
     local resource_names = {}
     for name, _ in pairs(scan_results.resource_groups) do
@@ -320,39 +315,26 @@ function gui.create(player, scan_results, player_data)
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Drill selector (icon buttons)
-    local effective_drill_name = gui._add_drill_selector(inner, scan_results, settings, needs_fluid, player)
-
-    -- Drill module selector (inline with drill section)
-    gui._add_module_selector(inner, scan_results, settings, effective_drill_name)
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Belt type selector (icon buttons)
+    -- Entity selectors (compact rows, no headers)
+    gui._add_drill_selector(inner, scan_results, settings, needs_fluid, player)
     gui._add_belt_selector(inner, settings, player)
     if needs_fluid then
-        inner.add{type = "line", direction = "horizontal"}
         gui._add_pipe_selector(inner, settings, player)
     end
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Pole/substation selector (icon buttons)
     gui._add_pole_selector(inner, settings, player)
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Beacon selector (icon buttons)
     gui._add_beacon_selector(inner, settings, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
 
-    -- Belt direction selector (N/S/E/W)
+    -- Belt direction selector (N/S/E/W) — keeps header for clarity
     gui._add_belt_direction_selector(inner, settings)
+
+    -- Separator
+    inner.add{type = "line", direction = "horizontal"}
+
+    -- Foundation tile selector
+    gui._add_foundation_selector(inner, settings, player)
 
     -- Separator
     inner.add{type = "line", direction = "horizontal"}
@@ -364,24 +346,6 @@ function gui.create(player, scan_results, player_data)
         caption = {"mineore.gui-polite-placement"},
         tooltip = {"mineore.gui-polite-tooltip"},
         state = settings.polite or false,
-    }
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Foundation tile selector
-    gui._add_foundation_selector(inner, settings, player)
-
-    -- Separator
-    inner.add{type = "line", direction = "horizontal"}
-
-    -- Remember settings checkbox
-    inner.add{
-        type = "checkbox",
-        name = "mineore_remember_checkbox",
-        caption = {"mineore.gui-remember-settings"},
-        tooltip = {"mineore.gui-remember-tooltip"},
-        state = settings.remember or false,
     }
 
     -- Action buttons
@@ -447,12 +411,6 @@ end
 --- @param resource_names string[] Sorted list of resource names
 --- @param settings table Player settings
 function gui._add_resource_selector(parent, resource_names, settings)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-resource-select-header"},
-        style = "caption_label",
-    }
-
     local captions = {}
     local selected_index = 1
     for i, name in ipairs(resource_names) do
@@ -479,12 +437,6 @@ end
 --- @param needs_fluid boolean|nil When true, only show drills with fluid input
 --- @param player LuaPlayer
 function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-drill-header"},
-        style = "caption_label",
-    }
-
     local row = parent.add{
         type = "flow",
         name = "drill_selector_row",
@@ -493,7 +445,18 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
     row.style.vertical_align = "center"
     row.style.horizontal_spacing = 4
 
-    local flow = row.add{
+    -- Fixed-width entity section for column alignment
+    local entity_section = row.add{type = "flow", name = "entity_section", direction = "horizontal"}
+    entity_section.style.width = 320
+    entity_section.style.vertical_align = "center"
+    entity_section.style.horizontal_spacing = 4
+
+    -- Quality icons on the left (Space Age only)
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(entity_section, "drill", settings.drill_quality or settings.quality)
+    end
+
+    local flow = entity_section.add{
         type = "flow",
         name = "drill_selector_flow",
         direction = "horizontal",
@@ -568,10 +531,43 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
         end
     end
 
-    -- Quality dropdown for drills
-    if script.feature_flags.quality then
-        row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(row, "drill", settings.drill_quality or settings.quality)
+    -- Module group (right side of the row)
+    local selected_drill = nil
+    local drill_to_find = selected_name or settings.drill_name
+    for _, drill in ipairs(scan_results.compatible_drills) do
+        if drill_to_find and drill_to_find == drill.name then
+            selected_drill = drill
+            break
+        end
+    end
+    if not selected_drill and #scan_results.compatible_drills > 0 then
+        selected_drill = scan_results.compatible_drills[1]
+    end
+
+    local max_slots = selected_drill and selected_drill.module_inventory_size or 0
+    if max_slots > 0 then
+        row.add{type = "empty-widget"}.style.width = 12
+
+        local mod_group = row.add{
+            type = "flow",
+            name = "drill_module_group",
+            direction = "horizontal",
+        }
+        mod_group.style.vertical_align = "center"
+        mod_group.style.horizontal_spacing = 4
+
+        if script.feature_flags.quality then
+            gui._add_quality_icon_selector(mod_group, "drill_module", settings.module_quality)
+        end
+
+        local module_btn = mod_group.add{
+            type = "choose-elem-button",
+            name = "mineore_drill_module_btn",
+            elem_type = "item",
+            item = settings.module_name,
+            style = "slot_sized_button",
+        }
+        module_btn.elem_filters = {{filter = "type", type = "module"}}
     end
 
     return selected_name
@@ -582,12 +578,6 @@ end
 --- @param settings table Player settings
 --- @param player LuaPlayer
 function gui._add_belt_selector(parent, settings, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-belt-header"},
-        style = "caption_label",
-    }
-
     local row = parent.add{
         type = "flow",
         name = "belt_selector_row",
@@ -596,8 +586,17 @@ function gui._add_belt_selector(parent, settings, player)
     row.style.vertical_align = "center"
     row.style.horizontal_spacing = 4
 
-    -- Belt icon buttons
-    local belt_flow = row.add{
+    -- Fixed-width entity section for column alignment
+    local entity_section = row.add{type = "flow", name = "entity_section", direction = "horizontal"}
+    entity_section.style.width = 320
+    entity_section.style.vertical_align = "center"
+    entity_section.style.horizontal_spacing = 4
+
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(entity_section, "belt", settings.belt_quality or settings.quality)
+    end
+
+    local belt_flow = entity_section.add{
         type = "flow",
         name = "belt_selector_flow",
         direction = "horizontal",
@@ -666,11 +665,6 @@ function gui._add_belt_selector(parent, settings, player)
         none_btn.style = "slot_sized_button_pressed"
     end
 
-    -- Quality dropdown for belts
-    if script.feature_flags.quality then
-        row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(row, "belt", settings.belt_quality or settings.quality)
-    end
 end
 
 --- Add pole/substation selector as locked choose-elem-buttons + "none" sprite-button.
@@ -678,12 +672,6 @@ end
 --- @param settings table Player settings
 --- @param player LuaPlayer
 function gui._add_pole_selector(parent, settings, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-pole-header"},
-        style = "caption_label",
-    }
-
     local row = parent.add{
         type = "flow",
         name = "pole_selector_row",
@@ -692,7 +680,17 @@ function gui._add_pole_selector(parent, settings, player)
     row.style.vertical_align = "center"
     row.style.horizontal_spacing = 4
 
-    local pole_flow = row.add{
+    -- Fixed-width entity section for column alignment
+    local entity_section = row.add{type = "flow", name = "entity_section", direction = "horizontal"}
+    entity_section.style.width = 320
+    entity_section.style.vertical_align = "center"
+    entity_section.style.horizontal_spacing = 4
+
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(entity_section, "pole", settings.pole_quality or settings.quality)
+    end
+
+    local pole_flow = entity_section.add{
         type = "flow",
         name = "pole_selector_flow",
         direction = "horizontal",
@@ -773,11 +771,6 @@ function gui._add_pole_selector(parent, settings, player)
         none_btn.style = "slot_sized_button_pressed"
     end
 
-    -- Quality dropdown for poles
-    if script.feature_flags.quality then
-        row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(row, "pole", settings.pole_quality or settings.quality)
-    end
 end
 
 --- Add beacon selector as locked choose-elem-buttons + "none" sprite-button,
@@ -786,12 +779,6 @@ end
 --- @param settings table Player settings
 --- @param player LuaPlayer
 function gui._add_beacon_selector(parent, settings, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-beacon-header"},
-        style = "caption_label",
-    }
-
     local row = parent.add{
         type = "flow",
         name = "beacon_selector_row",
@@ -800,7 +787,17 @@ function gui._add_beacon_selector(parent, settings, player)
     row.style.vertical_align = "center"
     row.style.horizontal_spacing = 4
 
-    local beacon_flow = row.add{
+    -- Fixed-width entity section for column alignment
+    local entity_section = row.add{type = "flow", name = "entity_section", direction = "horizontal"}
+    entity_section.style.width = 320
+    entity_section.style.vertical_align = "center"
+    entity_section.style.horizontal_spacing = 4
+
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(entity_section, "beacon", settings.beacon_quality or settings.quality)
+    end
+
+    local beacon_flow = entity_section.add{
         type = "flow",
         name = "beacon_selector_flow",
         direction = "horizontal",
@@ -865,24 +862,19 @@ function gui._add_beacon_selector(parent, settings, player)
         none_btn.style = "slot_sized_button_pressed"
     end
 
-    -- Quality dropdown for beacons
-    if script.feature_flags.quality then
-        row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(row, "beacon", settings.beacon_quality or settings.quality)
-    end
+    -- Beacon module group (right side of the row, rebuilt dynamically)
+    row.add{type = "empty-widget"}.style.width = 12
 
-    -- Beacon module row (rebuilt dynamically based on selected beacon)
-    local mod_row = parent.add{
+    local mod_group = row.add{
         type = "flow",
         name = "beacon_module_row",
         direction = "horizontal",
     }
-    mod_row.style.vertical_align = "center"
-    mod_row.style.horizontal_spacing = 8
-    mod_row.style.top_margin = 4
+    mod_group.style.vertical_align = "center"
+    mod_group.style.horizontal_spacing = 4
 
     local effective_beacon = has_selection and selected_beacon or nil
-    gui._rebuild_beacon_module_row(mod_row, effective_beacon,
+    gui._rebuild_beacon_module_row(mod_group, effective_beacon,
         settings.beacon_module_name, settings.beacon_module_quality)
 end
 
@@ -932,67 +924,11 @@ function gui._add_belt_direction_selector(parent, settings)
     end
 end
 
---- Add drill module selector as choose-elem-button + count dropdown.
+--- Add a compact quality dropdown (icon-only captions, narrow width).
 --- @param parent LuaGuiElement
---- @param scan_results table
---- @param settings table Player settings
---- @param effective_drill_name string|nil The drill name actually shown as selected in the drill selector
-function gui._add_module_selector(parent, scan_results, settings, effective_drill_name)
-    -- Get the currently selected drill to check module slots.
-    -- Use effective_drill_name (from _add_drill_selector) so that module slots
-    -- match the drill actually shown as selected after fluid filtering.
-    local drill_to_find = effective_drill_name or settings.drill_name
-    local selected_drill = nil
-    for _, drill in ipairs(scan_results.compatible_drills) do
-        if drill_to_find and drill_to_find == drill.name then
-            selected_drill = drill
-            break
-        end
-    end
-    if not selected_drill and #scan_results.compatible_drills > 0 then
-        selected_drill = scan_results.compatible_drills[1]
-    end
-
-    local max_slots = selected_drill and selected_drill.module_inventory_size or 0
-
-    if max_slots == 0 then
-        parent.add{
-            type = "label",
-            name = "mineore_no_modules_label",
-            caption = {"mineore.gui-no-module-slots"},
-        }
-        return
-    end
-
-    local mod_flow = parent.add{
-        type = "flow",
-        name = "module_flow",
-        direction = "horizontal",
-    }
-    mod_flow.style.vertical_align = "center"
-    mod_flow.style.horizontal_spacing = 8
-
-    -- Unlocked choose-elem-button for module selection
-    local module_btn = mod_flow.add{
-        type = "choose-elem-button",
-        name = "mineore_drill_module_btn",
-        elem_type = "item",
-        item = settings.module_name,
-        style = "slot_sized_button",
-    }
-    module_btn.elem_filters = {{filter = "type", type = "module"}}
-
-    if script.feature_flags.quality then
-        mod_flow.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(mod_flow, "drill_module", settings.module_quality)
-    end
-end
-
---- Add a quality dropdown inline in a row.
---- @param parent LuaGuiElement
---- @param prefix string Prefix for the dropdown name (e.g., "belt", "pole", "beacon")
+--- @param prefix string Prefix for the dropdown name (e.g., "drill", "belt")
 --- @param current_quality string|nil Currently selected quality name
-function gui._add_inline_quality_dropdown(parent, prefix, current_quality)
+function gui._add_quality_icon_selector(parent, prefix, current_quality)
     local qualities = gui._get_quality_list()
     local quality_names = {}
     local quality_captions = {}
@@ -1000,7 +936,7 @@ function gui._add_inline_quality_dropdown(parent, prefix, current_quality)
 
     for i, q in ipairs(qualities) do
         quality_names[i] = q.name
-        quality_captions[i] = {"", "[quality=" .. q.name .. "] ", q.localised_name}
+        quality_captions[i] = "[quality=" .. q.name .. "]"
         if current_quality and current_quality == q.name then
             selected_index = i
         end
@@ -1012,8 +948,27 @@ function gui._add_inline_quality_dropdown(parent, prefix, current_quality)
         items = quality_captions,
         selected_index = selected_index,
     }
-    dropdown.style.width = 120
+    dropdown.style.width = 64
+    dropdown.style.height = 36
+    dropdown.style.top_padding = 0
+    dropdown.style.bottom_padding = 0
+    dropdown.style.left_padding = 2
+    dropdown.style.right_padding = 2
     dropdown.tags = {quality_names = quality_names}
+end
+
+--- Read the selected quality from a compact dropdown.
+--- @param parent LuaGuiElement|nil
+--- @param prefix string
+--- @return string|nil quality name
+function gui._read_quality_selector(parent, prefix)
+    if not parent then return nil end
+    local dropdown = parent["mineore_quality_" .. prefix]
+    if dropdown and dropdown.selected_index > 0 then
+        local quality_names = dropdown.tags.quality_names
+        return quality_names[dropdown.selected_index]
+    end
+    return nil
 end
 
 --- Get sorted list of visible quality prototypes.
@@ -1056,12 +1011,6 @@ end
 --- @param settings table Player settings
 --- @param player LuaPlayer
 function gui._add_pipe_selector(parent, settings, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-pipe-header"},
-        style = "caption_label",
-    }
-
     local row = parent.add{
         type = "flow",
         name = "pipe_selector_row",
@@ -1070,7 +1019,17 @@ function gui._add_pipe_selector(parent, settings, player)
     row.style.vertical_align = "center"
     row.style.horizontal_spacing = 4
 
-    local pipe_flow = row.add{
+    -- Fixed-width entity section for column alignment
+    local entity_section = row.add{type = "flow", name = "entity_section", direction = "horizontal"}
+    entity_section.style.width = 320
+    entity_section.style.vertical_align = "center"
+    entity_section.style.horizontal_spacing = 4
+
+    if script.feature_flags.quality then
+        gui._add_quality_icon_selector(entity_section, "pipe", settings.pipe_quality or settings.quality)
+    end
+
+    local pipe_flow = entity_section.add{
         type = "flow",
         name = "pipe_selector_flow",
         direction = "horizontal",
@@ -1151,11 +1110,6 @@ function gui._add_pipe_selector(parent, settings, player)
         none_btn.style = "slot_sized_button_pressed"
     end
 
-    -- Quality dropdown for pipes
-    if script.feature_flags.quality then
-        row.add{type = "empty-widget"}.style.width = 8
-        gui._add_inline_quality_dropdown(row, "pipe", settings.pipe_quality or settings.quality)
-    end
 end
 
 --- Get all pipe prototype names sorted by name.
@@ -1232,12 +1186,6 @@ end
 --- @param settings table Player settings
 --- @param player LuaPlayer
 function gui._add_foundation_selector(parent, settings, player)
-    parent.add{
-        type = "label",
-        caption = {"mineore.gui-foundation-header"},
-        style = "caption_label",
-    }
-
     local flow = parent.add{
         type = "flow",
         name = "foundation_selector_flow",
@@ -1245,12 +1193,19 @@ function gui._add_foundation_selector(parent, settings, player)
     }
     flow.style.horizontal_spacing = 4
 
-    local foundation_types = ghost_util.get_foundation_tiles()
+    -- Predefined foundation tile whitelist
+    local foundation_whitelist = {
+        "landfill",
+        "foundation",
+        "ice-platform",
+        "concrete",
+        "refined-concrete",
+    }
 
-    -- Filter foundation tiles by technology availability
+    -- Only show tiles whose prototypes exist and are available
     local available = {}
-    for _, tile_name in ipairs(foundation_types) do
-        if is_entity_available(player, tile_name) then
+    for _, tile_name in ipairs(foundation_whitelist) do
+        if prototypes.tile[tile_name] and is_entity_available(player, tile_name) then
             available[#available + 1] = tile_name
         end
     end
@@ -1320,43 +1275,48 @@ function gui.read_settings(player)
         settings.resource_name = resource_names[res_dropdown.selected_index]
     end
 
-    -- Read drill selection (from icon buttons inside drill_selector_row)
+    -- Read drill selection (selector_flow is inside entity_section inside row)
     local drill_row = inner.drill_selector_row
     if drill_row then
-        local drill_flow = drill_row.drill_selector_flow
+        local es = drill_row.entity_section
+        local drill_flow = es and es.drill_selector_flow or nil
         settings.drill_name = gui._read_selector_from_flow(drill_flow, "drill")
     end
 
-    -- Read belt selection (belt_selector_flow is nested inside belt_selector_row)
+    -- Read belt selection
     local belt_row = inner.belt_selector_row
     if belt_row then
-        local belt_flow = belt_row.belt_selector_flow
+        local es = belt_row.entity_section
+        local belt_flow = es and es.belt_selector_flow or nil
         settings.belt_name = gui._read_selector_from_flow(belt_flow, "belt")
     end
 
     -- Read pipe selection (may not exist if resource doesn't need fluid)
     local pipe_row = inner.pipe_selector_row
     if pipe_row then
-        local pipe_flow = pipe_row.pipe_selector_flow
+        local es = pipe_row.entity_section
+        local pipe_flow = es and es.pipe_selector_flow or nil
         settings.pipe_name = gui._read_selector_from_flow(pipe_flow, "pipe")
     end
 
     -- Read pole selection
     local pole_row = inner.pole_selector_row
     if pole_row then
-        local pole_flow = pole_row.pole_selector_flow
+        local es = pole_row.entity_section
+        local pole_flow = es and es.pole_selector_flow or nil
         settings.pole_name = gui._read_selector_from_flow(pole_flow, "pole")
     end
 
     -- Read beacon selection
     local beacon_row = inner.beacon_selector_row
     if beacon_row then
-        local beacon_flow = beacon_row.beacon_selector_flow
+        local es = beacon_row.entity_section
+        local beacon_flow = es and es.beacon_selector_flow or nil
         settings.beacon_name = gui._read_selector_from_flow(beacon_flow, "beacon")
     end
 
-    -- Read beacon module
-    local beacon_mod_row = inner.beacon_module_row
+    -- Read beacon module (inside beacon_selector_row)
+    local beacon_mod_row = beacon_row and beacon_row.beacon_module_row or nil
     if beacon_mod_row then
         local mod_btn = beacon_mod_row.mineore_beacon_module_btn
         if mod_btn and mod_btn.elem_value then
@@ -1384,24 +1344,30 @@ function gui.read_settings(player)
         settings.belt_orientation = "NS"
     end
 
-    -- Read drill module selection
-    local mod_flow = inner.module_flow
-    if mod_flow then
-        local mod_btn = mod_flow.mineore_drill_module_btn
+    -- Read drill module selection (inside drill_selector_row)
+    local drill_mod_group = drill_row and drill_row.drill_module_group or nil
+    if drill_mod_group then
+        local mod_btn = drill_mod_group.mineore_drill_module_btn
         if mod_btn and mod_btn.elem_value then
             settings.module_name = mod_btn.elem_value
         end
     end
 
     -- Read per-entity quality selections (Space Age only)
+    -- Quality icons are inside entity_section within each row
     if script.feature_flags.quality then
-        settings.drill_quality = gui._read_quality_dropdown(drill_row, "drill")
-        settings.belt_quality = gui._read_quality_dropdown(belt_row, "belt")
-        settings.pipe_quality = gui._read_quality_dropdown(pipe_row, "pipe")
-        settings.pole_quality = gui._read_quality_dropdown(pole_row, "pole")
-        settings.beacon_quality = gui._read_quality_dropdown(beacon_row, "beacon")
-        settings.module_quality = gui._read_quality_dropdown(mod_flow, "drill_module")
-        settings.beacon_module_quality = gui._read_quality_dropdown(beacon_mod_row, "beacon_module")
+        local drill_es = drill_row and drill_row.entity_section or nil
+        local belt_es = belt_row and belt_row.entity_section or nil
+        local pipe_es = pipe_row and pipe_row.entity_section or nil
+        local pole_es = pole_row and pole_row.entity_section or nil
+        local beacon_es = beacon_row and beacon_row.entity_section or nil
+        settings.drill_quality = gui._read_quality_selector(drill_es, "drill")
+        settings.belt_quality = gui._read_quality_selector(belt_es, "belt")
+        settings.pipe_quality = gui._read_quality_selector(pipe_es, "pipe")
+        settings.pole_quality = gui._read_quality_selector(pole_es, "pole")
+        settings.beacon_quality = gui._read_quality_selector(beacon_es, "beacon")
+        settings.module_quality = gui._read_quality_selector(drill_mod_group, "drill_module")
+        settings.beacon_module_quality = gui._read_quality_selector(beacon_mod_row, "beacon_module")
         -- Use belt quality as the general quality fallback, or "normal"
         settings.quality = settings.belt_quality or "normal"
     end
@@ -1418,27 +1384,10 @@ function gui.read_settings(player)
         settings.foundation_name = gui._read_selector_from_flow(foundation_flow, "foundation")
     end
 
-    -- Read remember checkbox
-    local remember = inner.mineore_remember_checkbox
-    if remember then
-        settings.remember = remember.state
-    end
+    -- Always remember settings
+    settings.remember = true
 
     return settings
-end
-
---- Read a quality dropdown value from a parent flow.
---- @param parent LuaGuiElement|nil
---- @param prefix string
---- @return string|nil quality name
-function gui._read_quality_dropdown(parent, prefix)
-    if not parent then return nil end
-    local dropdown = parent["mineore_quality_" .. prefix]
-    if dropdown and dropdown.selected_index > 0 then
-        local quality_names = dropdown.tags.quality_names
-        return quality_names[dropdown.selected_index]
-    end
-    return nil
 end
 
 --- Read the selected entity name from a flow of selector buttons.
@@ -1495,9 +1444,9 @@ function gui.handle_selector_click(element)
     -- When beacon selection changes, update the module row
     if group == "beacon" then
         local beacon_name = tags.entity_name
-        -- Navigate: element -> beacon_selector_flow -> beacon_selector_row -> inner
-        local inner = element.parent.parent.parent
-        gui._update_beacon_module_row(inner, beacon_name)
+        -- Navigate: element -> beacon_selector_flow -> entity_section -> beacon_selector_row
+        local beacon_row = element.parent.parent.parent
+        gui._update_beacon_module_row(beacon_row, beacon_name)
     end
 
     return true

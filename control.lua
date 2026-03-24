@@ -116,10 +116,10 @@ script.on_event(defines.events.on_player_selected_area, function(event)
         return
     end
 
-    -- Check if "remember settings" is enabled and we have previous settings
+    -- Always try to use saved settings unless "show GUI always" is enabled
     local show_gui_always = player.mod_settings["mineore-show-gui-always"].value
     local settings = player_data.settings
-    if settings and settings.remember and not show_gui_always then
+    if settings and not show_gui_always then
         -- Verify the remembered drill is still compatible with this selection
         local drill_still_valid = false
         for _, drill in ipairs(scan_results.compatible_drills) do
@@ -218,11 +218,21 @@ script.on_event(defines.events.on_player_selected_area, function(event)
                     settings.beacon_module_name = nil
                 end
             end
-            if settings.module_name and not prototypes.item[settings.module_name] then
-                settings.module_name = nil
+            if settings.module_name then
+                local proto = prototypes.item[settings.module_name]
+                local recipe = player.force.recipes[settings.module_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.module_name = nil
+                    settings.module_quality = nil
+                end
             end
-            if settings.beacon_module_name and not prototypes.item[settings.beacon_module_name] then
-                settings.beacon_module_name = nil
+            if settings.beacon_module_name then
+                local proto = prototypes.item[settings.beacon_module_name]
+                local recipe = player.force.recipes[settings.beacon_module_name]
+                if not proto or (recipe and not recipe.enabled) then
+                    settings.beacon_module_name = nil
+                    settings.beacon_module_quality = nil
+                end
             end
 
             -- Skip GUI, go straight to placement
