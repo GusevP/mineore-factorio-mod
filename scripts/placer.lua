@@ -649,7 +649,9 @@ function placer.place(player, scan_results, settings)
                 result.is_small_drill,
                 belt_direction,
                 polite,
-                pole_position_sets
+                pole_position_sets,
+                settings.beacon_name,
+                settings.beacon_quality or settings.quality or "normal"
             )
         end
     end
