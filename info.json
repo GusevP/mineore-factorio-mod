@@ -1,11 +1,11 @@
 {
   "name": "mineore",
-  "version": "1.3.1",
+  "version": "2.1.0",
   "title": "Miner Planner",
   "author": "CrazyFeSS",
   "contact": "",
   "homepage": "https://github.com/CrazyFeSS/factorio-miner-mod",
   "description": "Automates mining drill placement on ore patches. Drag-select an area, pick drills, belts, poles, beacons, modules, and foundation from a compact icon-based GUI, then ghost entities are placed in optimized paired-row layouts ready for bots. Features smart pole/substation spacing based on supply area, adaptive underground belt placement, quality support (Space Age), polite placement mode, and foundation tiles for any planet surface.",
-  "factorio_version": "2.0",
+  "factorio_version": "2.1",
   "dependencies": ["base >= 2.0", "? space-age >= 2.0"]
 }

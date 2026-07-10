@@ -441,8 +441,30 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 ## Build/Package Commands
 
 ```bash
-./package.sh  # Creates mod zip file for distribution
+./package.sh  # Creates BOTH release zips for distribution
 ```
+
+### Dual Release Line Pattern
+
+**Pattern:** One source tree ships as two Mod Portal uploads. Factorio gates mod compatibility on the minor series, so a mod declaring `factorio_version: "2.0"` is *not* auto-compatible with 2.1 — each series needs its own release. The code is identical; only `version` + `factorio_version` differ.
+
+| Line | Declared in | Mod version | `factorio_version` |
+|---|---|---|---|
+| Primary | `info.json` | `2.1.x` | `2.1` |
+| Compat | `package.sh` (`COMPAT_*` constants) | `1.3.x` | `2.0` |
+
+**Implementation:**
+- `package.sh` reads the primary line straight from `info.json`, then calls `build()` twice
+- `patch_info()` rewrites `version` + `factorio_version` in a **copy** of `info.json` inside the staging folder — the source tree is never mutated
+- The mod version mirrors the target series (`2.1.0` for Factorio 2.1) so the portal listing is self-explanatory
+
+**To bump:** edit `info.json` for the 2.1 line; edit `COMPAT_MOD_VERSION` in `package.sh` for the 2.0 line. Add a changelog entry under *each* version — both lines' entries live in the one `changelog.txt`, newest-first per line.
+
+**Critical constraint:** `dependencies` is **not** patched per line, so it must stay at `base >= 2.0`. Raising it to `base >= 2.1` would make the compat zip refuse to install on Factorio 2.0. Factorio 2.1's base mod satisfies `>= 2.0`, so the primary line needs no bump.
+
+**2.1 API audit (verified against runtime-api.json 2.1.9, diffed vs 2.0.77):** the mod uses no removed API. Specifically it dodges all four 2.1 breakers — it never touches `LuaEntity.fluidbox`/`LuaFluidBox` (removed; `drill.fluidbox_prototypes` is a *prototype* read and survives), uses `defines.inventory.{beacon,mining_drill}_modules` (retained; only the `assembling_machine`/`furnace`/`rocket_silo` variants were removed in favour of `crafter_modules`), uses selection modes `any-entity`/`entity-ghost`/`same-force` (unaffected by the change that stopped `blueprint`/`deconstruct`/`upgrade` implying `any-entity`), and reads module effects via `bonus > 0`, which is sign-preserving under 2.1's ÷10 rescale of quality effect values.
+
+**Known unverified seam:** the underground-belt `type="input"/"output"` parameter on `entity-ghost` creation is undocumented in *both* 2.0.77 and 2.1.9 (`entity-ghost`'s documented variant params are only `inner_name` + `tags`). It is not a 2.1 regression, but it is not a contract either — re-playtest UBI/UBO placement on each Factorio release.
 
 ## Testing
 
