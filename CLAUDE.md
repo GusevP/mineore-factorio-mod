@@ -11,6 +11,10 @@
 - `kr-small-iron-electric-pole` (Krastorio 2 iron pole, may not exist in all games)
 - `medium-electric-pole`
 
+**Lighted Poles + variants (1x1):**
+- For every whitelisted pole, the `"lighted-"..name` variant is also accepted (e.g. `lighted-small-electric-pole`, `lighted-medium-electric-pole`, `lighted-kr-small-iron-electric-pole`). Lighted-Poles-Plus clones each pole under that prefix.
+- Only lit copies of *already-whitelisted* poles are trusted — arbitrary discovered 1x1 poles stay excluded, which is the whole point of the whitelist (many mods ship broken 1x1 poles). The lit big-pole/substation (2x2) already appear via the 2x2 auto-discovery scan below.
+
 **2x2 poles (auto-discovered):**
 - Any `electric-pole` prototype with collision box exactly 2x2
 - Includes base game `substation` and any modded 2x2 substations automatically

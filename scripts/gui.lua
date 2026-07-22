@@ -1105,15 +1105,21 @@ function gui._get_electric_pole_types()
     local pole_list = {}
     local added = {}
 
-    -- Add whitelisted 1x1 poles (skip non-blueprintable entities)
-    for _, name in ipairs(gui.POLE_WHITELIST) do
-        local proto = prototypes.entity[name]
-        if proto and not proto.has_flag("not-blueprintable") then
-            pole_list[#pole_list + 1] = {
-                name = name,
-                supply_area = proto.get_supply_area_distance() or 0,
-            }
-            added[name] = true
+    -- Add whitelisted 1x1 poles plus their Lighted Poles + variants.
+    -- Lighted-Poles-Plus clones each pole as "lighted-"..name, so we accept the lit
+    -- copy of any whitelisted pole. We only ever trust lit copies of known-good poles,
+    -- which keeps broken modded 1x1 poles excluded (the reason for the whitelist).
+    -- Skip non-blueprintable entities.
+    for _, base_name in ipairs(gui.POLE_WHITELIST) do
+        for _, name in ipairs({ base_name, "lighted-" .. base_name }) do
+            local proto = prototypes.entity[name]
+            if proto and not added[name] and not proto.has_flag("not-blueprintable") then
+                pole_list[#pole_list + 1] = {
+                    name = name,
+                    supply_area = proto.get_supply_area_distance() or 0,
+                }
+                added[name] = true
+            end
         end
     end
 

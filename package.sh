@@ -15,7 +15,7 @@ cd "$(dirname "$0")"
 # Bump the 2.1 line by editing info.json as usual; bump the 2.0 line here.
 # `dependencies` is NOT patched per line, so it must stay at `base >= 2.0`:
 # raising it would make the compat zip refuse to install on Factorio 2.0.
-COMPAT_MOD_VERSION="1.3.2"
+COMPAT_MOD_VERSION="1.3.3"
 COMPAT_FACTORIO_VERSION="2.0"
 # ----------------------------------------------------------------------------
 
