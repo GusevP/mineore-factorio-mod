@@ -1,3 +1,8 @@
+Version: 2.1.3
+Date: 2026-07-22
+  Bugfixes:
+    - Beacons are now reliably powered when small or medium (1x1) electric poles are used together with beacons. Previously some beacons sat outside power-pole reach and received no power; poles are now placed along the beacon rows/columns to connect them. Thanks to mketab for the fix (#1).
+---------------------------------------------------------------------------------------------------
 Version: 2.1.2
 Date: 2026-07-22
   Bugfixes:
@@ -12,6 +17,11 @@ Version: 2.1.0
 Date: 2026-07-10
   Changes:
     - Updated for Factorio 2.1 — the mod now declares compatibility with the 2.1 release series. An audit of the 2.0-to-2.1 modding API found that nothing the mod relies on (ghost placement, drill and electric pole prototypes, module effects, quality, beacons, selection tools) changed or was removed, so there are no behaviour changes: it works exactly as before, now on 2.1. Factorio 2.0 players continue to receive the 1.3.x releases.
+---------------------------------------------------------------------------------------------------
+Version: 1.3.4
+Date: 2026-07-22
+  Bugfixes:
+    - Beacons are now reliably powered when small or medium (1x1) electric poles are used together with beacons. Previously some beacons sat outside power-pole reach and received no power; poles are now placed along the beacon rows/columns to connect them. Thanks to mketab for the fix (#1).
 ---------------------------------------------------------------------------------------------------
 Version: 1.3.3
 Date: 2026-07-22
