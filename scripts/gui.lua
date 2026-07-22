@@ -402,6 +402,33 @@ function gui._add_resource_selector(parent, resource_names, settings)
     dropdown.tags = {resource_names = resource_names}
 end
 
+--- Create a horizontally-scrollable container for a selector's icon buttons.
+--- Many modded entities overflow the fixed-width entity section; wrapping the
+--- icon flow in a horizontal scroll-pane keeps the off-screen icons reachable.
+--- The inner flow keeps the historical name (`<prefix>_selector_flow`) so the
+--- read/click navigation only gains the scroll-pane as an extra parent level.
+--- @param entity_section LuaGuiElement Fixed-width section to host the scroll-pane
+--- @param prefix string Selector group prefix (e.g. "drill", "belt", "pole")
+--- @return LuaGuiElement flow The inner flow that should receive the icon buttons
+function gui._add_selector_scroll(entity_section, prefix)
+    local scroll = entity_section.add{
+        type = "scroll-pane",
+        name = prefix .. "_selector_scroll",
+        horizontal_scroll_policy = "auto",
+        vertical_scroll_policy = "never",
+        style = "mineore_selector_scroll_pane",
+    }
+
+    local flow = scroll.add{
+        type = "flow",
+        name = prefix .. "_selector_flow",
+        direction = "horizontal",
+    }
+    flow.style.horizontal_spacing = 4
+    flow.style.vertical_align = "center"
+    return flow
+end
+
 --- Add drill selector as a row of locked choose-elem-buttons.
 --- @param parent LuaGuiElement
 --- @param scan_results table
@@ -428,12 +455,7 @@ function gui._add_drill_selector(parent, scan_results, settings, needs_fluid, pl
         gui._add_quality_icon_selector(entity_section, "drill", settings.drill_quality or settings.quality)
     end
 
-    local flow = entity_section.add{
-        type = "flow",
-        name = "drill_selector_flow",
-        direction = "horizontal",
-    }
-    flow.style.horizontal_spacing = 4
+    local flow = gui._add_selector_scroll(entity_section, "drill")
 
     -- Filter drills: when resource requires fluid, only exclude burner mining drill
     local drills_to_show = scan_results.compatible_drills
@@ -568,12 +590,7 @@ function gui._add_belt_selector(parent, settings, player)
         gui._add_quality_icon_selector(entity_section, "belt", settings.belt_quality or settings.quality)
     end
 
-    local belt_flow = entity_section.add{
-        type = "flow",
-        name = "belt_selector_flow",
-        direction = "horizontal",
-    }
-    belt_flow.style.horizontal_spacing = 4
+    local belt_flow = gui._add_selector_scroll(entity_section, "belt")
 
     local belt_types = gui._get_transport_belt_types()
 
@@ -662,12 +679,7 @@ function gui._add_pole_selector(parent, settings, player)
         gui._add_quality_icon_selector(entity_section, "pole", settings.pole_quality or settings.quality)
     end
 
-    local pole_flow = entity_section.add{
-        type = "flow",
-        name = "pole_selector_flow",
-        direction = "horizontal",
-    }
-    pole_flow.style.horizontal_spacing = 4
+    local pole_flow = gui._add_selector_scroll(entity_section, "pole")
 
     local pole_types = gui._get_electric_pole_types()
 
@@ -769,12 +781,7 @@ function gui._add_beacon_selector(parent, settings, player)
         gui._add_quality_icon_selector(entity_section, "beacon", settings.beacon_quality or settings.quality)
     end
 
-    local beacon_flow = entity_section.add{
-        type = "flow",
-        name = "beacon_selector_flow",
-        direction = "horizontal",
-    }
-    beacon_flow.style.horizontal_spacing = 4
+    local beacon_flow = gui._add_selector_scroll(entity_section, "beacon")
 
     local beacon_types = gui._get_beacon_types()
 
@@ -1001,12 +1008,7 @@ function gui._add_pipe_selector(parent, settings, player)
         gui._add_quality_icon_selector(entity_section, "pipe", settings.pipe_quality or settings.quality)
     end
 
-    local pipe_flow = entity_section.add{
-        type = "flow",
-        name = "pipe_selector_flow",
-        direction = "horizontal",
-    }
-    pipe_flow.style.horizontal_spacing = 4
+    local pipe_flow = gui._add_selector_scroll(entity_section, "pipe")
 
     local pipe_types = gui._get_pipe_types()
 
@@ -1247,44 +1249,39 @@ function gui.read_settings(player)
         settings.resource_name = resource_names[res_dropdown.selected_index]
     end
 
-    -- Read drill selection (selector_flow is inside entity_section inside row)
+    -- Read drill selection (selector_flow is inside a scroll-pane inside entity_section inside row)
     local drill_row = inner.drill_selector_row
     if drill_row then
         local es = drill_row.entity_section
-        local drill_flow = es and es.drill_selector_flow or nil
-        settings.drill_name = gui._read_selector_from_flow(drill_flow, "drill")
+        settings.drill_name = gui._read_selector_from_flow(gui._selector_flow(es, "drill"), "drill")
     end
 
     -- Read belt selection
     local belt_row = inner.belt_selector_row
     if belt_row then
         local es = belt_row.entity_section
-        local belt_flow = es and es.belt_selector_flow or nil
-        settings.belt_name = gui._read_selector_from_flow(belt_flow, "belt")
+        settings.belt_name = gui._read_selector_from_flow(gui._selector_flow(es, "belt"), "belt")
     end
 
     -- Read pipe selection (may not exist if resource doesn't need fluid)
     local pipe_row = inner.pipe_selector_row
     if pipe_row then
         local es = pipe_row.entity_section
-        local pipe_flow = es and es.pipe_selector_flow or nil
-        settings.pipe_name = gui._read_selector_from_flow(pipe_flow, "pipe")
+        settings.pipe_name = gui._read_selector_from_flow(gui._selector_flow(es, "pipe"), "pipe")
     end
 
     -- Read pole selection
     local pole_row = inner.pole_selector_row
     if pole_row then
         local es = pole_row.entity_section
-        local pole_flow = es and es.pole_selector_flow or nil
-        settings.pole_name = gui._read_selector_from_flow(pole_flow, "pole")
+        settings.pole_name = gui._read_selector_from_flow(gui._selector_flow(es, "pole"), "pole")
     end
 
     -- Read beacon selection
     local beacon_row = inner.beacon_selector_row
     if beacon_row then
         local es = beacon_row.entity_section
-        local beacon_flow = es and es.beacon_selector_flow or nil
-        settings.beacon_name = gui._read_selector_from_flow(beacon_flow, "beacon")
+        settings.beacon_name = gui._read_selector_from_flow(gui._selector_flow(es, "beacon"), "beacon")
     end
 
     -- Read beacon module (inside beacon_selector_row)
@@ -1359,6 +1356,19 @@ function gui.read_settings(player)
     return settings
 end
 
+--- Resolve the selector icon flow inside an entity section.
+--- The icon buttons live in `<prefix>_selector_flow`, which sits inside the
+--- horizontal `<prefix>_selector_scroll` scroll-pane (see gui._add_selector_scroll).
+--- @param entity_section LuaGuiElement|nil The fixed-width entity section
+--- @param prefix string Selector group prefix (e.g. "drill", "belt")
+--- @return LuaGuiElement|nil The icon flow, or nil if the layout is missing
+function gui._selector_flow(entity_section, prefix)
+    if not entity_section then return nil end
+    local scroll = entity_section[prefix .. "_selector_scroll"]
+    if not scroll then return nil end
+    return scroll[prefix .. "_selector_flow"]
+end
+
 --- Read the selected entity name from a flow of selector buttons.
 --- @param flow LuaGuiElement The flow containing the buttons
 --- @param group string The selector group name
@@ -1413,8 +1423,9 @@ function gui.handle_selector_click(element)
     -- When beacon selection changes, update the module row
     if group == "beacon" then
         local beacon_name = tags.entity_name
-        -- Navigate: element -> beacon_selector_flow -> entity_section -> beacon_selector_row
-        local beacon_row = element.parent.parent.parent
+        -- Navigate: button -> beacon_selector_flow -> beacon_selector_scroll
+        --           -> entity_section -> beacon_selector_row
+        local beacon_row = element.parent.parent.parent.parent
         gui._update_beacon_module_row(beacon_row, beacon_name)
     end
 

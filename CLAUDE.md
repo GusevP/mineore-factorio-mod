@@ -392,6 +392,13 @@ Called immediately after `placer.place()` completes. Checks return value to hand
 - Beacon module group: `beacon_selector_row > beacon_module_row > [quality + module_btn]`
 - Settings always remembered (no checkbox)
 
+**Horizontally-Scrollable Selector Rows:**
+- Each entity selector's icon buttons live in `<prefix>_selector_flow`, which is nested inside a horizontal scroll-pane `<prefix>_selector_scroll` (created by `gui._add_selector_scroll(entity_section, prefix)`), inside the fixed-width (320px) `entity_section`.
+- Applies to all five entity selectors: drill, belt, pipe, pole, beacon. (Foundation and belt-direction rows are short fixed lists — not wrapped.)
+- The scroll-pane uses the `mineore_selector_scroll_pane` style (defined in `prototypes/style.lua`, parented off `naked_scroll_pane`), is `horizontally_stretchable`, and has `horizontal_scroll_policy = "auto"` / `vertical_scroll_policy = "never"`. Because `entity_section` is a hard-fixed 320px, the stretchable pane is bounded and its content scrolls instead of overflowing the window.
+- **Rationale:** With many modded entities the icons used to spill past the fixed-width row off the edge of the window and were unselectable. The horizontal scroll-pane keeps them reachable.
+- **Navigation impact:** the icon flow is now one level deeper. `read_settings()` resolves it via the `gui._selector_flow(entity_section, prefix)` helper (not `entity_section[prefix.."_selector_flow"]` directly). The beacon-select handler in `handle_selector_click` walks `button.parent.parent.parent.parent` (four levels: flow → scroll → entity_section → beacon_selector_row) to reach the row. Quality dropdowns stay direct children of `entity_section` (outside the scroll-pane), so quality reads are unchanged.
+
 **GUI section order:**
 1. Resource selector (conditional) → Drill + Module → Belt → Pipe (conditional) → Pole → Beacon + Module → Belt Direction → Foundation → Polite checkbox → Buttons
 
