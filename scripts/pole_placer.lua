@@ -118,9 +118,11 @@ end
 --- @param belt_direction string|nil Belt flow direction ("north", "south", "east", "west")
 --- @param polite boolean|nil When true, respect polite placement
 --- @param pole_position_sets table|nil Pre-calculated pole positions per belt line {[belt_line_index] = {[drill_index]=true}}
+--- @param beacon_name string|nil Name of selected beacon
+--- @param beacon_quality string|nil Quality of selected beacon
 --- @return number placed Count of pole ghosts placed
 --- @return number skipped Count of positions where placement failed
-function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, belt_direction, polite, pole_position_sets)
+function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_name, pole_quality, gap, pole_gap_positions, outer_edge_positions, is_small_drill, belt_direction, polite, pole_position_sets, beacon_name, beacon_quality)
     if not pole_name or pole_name == "" then
         return 0, 0
     end
@@ -199,6 +201,198 @@ function pole_placer.place(surface, force, player, belt_lines, drill_info, pole_
                     surface, force, player, belt_line, half_w, pole_info, quality, belt_direction, polite, positions)
                 placed = placed + p
                 skipped = skipped + s
+            end
+        end
+
+        -- Place additional poles in beacon columns/rows if 1x1 poles and beacons are selected
+        if beacon_name and beacon_name ~= "" and pole_info.width == 1 and pole_info.height == 1 then
+            local bp, bs = pole_placer._place_beacon_poles(
+                surface, force, player, belt_lines, drill_info, pole_info, quality, gap, belt_direction, polite, beacon_name)
+            placed = placed + bp
+            skipped = skipped + bs
+        end
+    end
+
+    return placed, skipped
+end
+
+--- Place 1x1 poles along beacon columns/rows to power the beacons.
+--- @param surface LuaSurface
+--- @param force string
+--- @param player LuaPlayer
+--- @param belt_lines table
+--- @param drill_info table
+--- @param pole_info table
+--- @param quality string
+--- @param gap number
+--- @param belt_direction string
+--- @param polite boolean|nil
+--- @param beacon_name string
+--- @return number placed
+--- @return number skipped
+function pole_placer._place_beacon_poles(surface, force, player, belt_lines, drill_info, pole_info, quality, gap, belt_direction, polite, beacon_name)
+    local placed = 0
+    local skipped = 0
+
+    local proto = prototypes.entity[beacon_name]
+    if not proto then return 0, 0 end
+
+    local cbox = proto.collision_box
+    local beacon_w = math.max(1, math.ceil(cbox.right_bottom.x - cbox.left_top.x))
+    local beacon_h = math.max(1, math.ceil(cbox.right_bottom.y - cbox.left_top.y))
+    local half_bw = beacon_w / 2
+    local half_bh = beacon_h / 2
+
+    local half_w = drill_info.width / 2
+    local half_h = drill_info.height / 2
+
+    local orientation = belt_lines[1] and belt_lines[1].orientation or "NS"
+
+    -- Collect per-pair info
+    local pair_infos = {}
+    for _, belt_line in ipairs(belt_lines) do
+        if orientation == "NS" then
+            local left_col_x = belt_line.x - gap / 2 - half_w
+            local right_col_x = belt_line.x + gap / 2 + half_w
+            local left_outer = left_col_x - half_w
+            local right_outer = right_col_x + half_w
+
+            if belt_line.y_min then
+                pair_infos[#pair_infos + 1] = {
+                    left_outer = left_outer,
+                    right_outer = right_outer,
+                    y_min = belt_line.y_min,
+                    y_max = belt_line.y_max,
+                }
+            end
+        else
+            local top_row_y = belt_line.y - gap / 2 - half_h
+            local bottom_row_y = belt_line.y + gap / 2 + half_h
+            local top_outer = top_row_y - half_h
+            local bottom_outer = bottom_row_y + half_h
+
+            if belt_line.x_min then
+                pair_infos[#pair_infos + 1] = {
+                    top_outer = top_outer,
+                    bottom_outer = bottom_outer,
+                    x_min = belt_line.x_min,
+                    x_max = belt_line.x_max,
+                }
+            end
+        end
+    end
+
+    if #pair_infos == 0 then
+        return 0, 0
+    end
+
+    -- Compute beacon column/row cross-axis positions
+    local beacon_positions = {}
+    if orientation == "NS" then
+        table.sort(pair_infos, function(a, b) return a.left_outer < b.left_outer end)
+        beacon_positions[#beacon_positions + 1] = pair_infos[1].left_outer - half_bw
+        for i = 1, #pair_infos - 1 do
+            beacon_positions[#beacon_positions + 1] = (pair_infos[i].right_outer + pair_infos[i + 1].left_outer) / 2
+        end
+        beacon_positions[#beacon_positions + 1] = pair_infos[#pair_infos].right_outer + half_bw
+    else
+        table.sort(pair_infos, function(a, b) return a.top_outer < b.top_outer end)
+        beacon_positions[#beacon_positions + 1] = pair_infos[1].top_outer - half_bh
+        for i = 1, #pair_infos - 1 do
+            beacon_positions[#beacon_positions + 1] = (pair_infos[i].bottom_outer + pair_infos[i + 1].top_outer) / 2
+        end
+        beacon_positions[#beacon_positions + 1] = pair_infos[#pair_infos].bottom_outer + half_bh
+    end
+
+    -- Global along-axis extent
+    local global_min, global_max
+    for _, info in ipairs(pair_infos) do
+        if orientation == "NS" then
+            if not global_min or info.y_min < global_min then global_min = info.y_min end
+            if not global_max or info.y_max > global_max then global_max = info.y_max end
+        else
+            if not global_min or info.x_min < global_min then global_min = info.x_min end
+            if not global_max or info.x_max > global_max then global_max = info.x_max end
+        end
+    end
+
+    if not global_min or not global_max then
+        return 0, 0
+    end
+
+    -- Generate candidates per column/row
+    local candidates_by_line = {}
+    for line_idx, cross_pos in ipairs(beacon_positions) do
+        local candidates = {}
+        if orientation == "NS" then
+            local col_top = global_min - half_h + half_bh
+            local extent_bottom = global_max + half_h
+            local y = col_top
+            while (y - half_bh) < extent_bottom - 0.01 do
+                candidates[#candidates + 1] = {x = cross_pos, y = y}
+                y = y + beacon_h
+            end
+        else
+            local row_left = global_min - half_w + half_bw
+            local extent_right = global_max + half_w
+            local x = row_left
+            while (x - half_bw) < extent_right - 0.01 do
+                candidates[#candidates + 1] = {x = x, y = cross_pos}
+                x = x + beacon_w
+            end
+        end
+        candidates_by_line[line_idx] = candidates
+    end
+
+    -- Compute pole spacing interval along the candidate list
+    local reach = 0.5 + pole_info.supply_area_distance
+    local spacing = (orientation == "NS") and beacon_h or beacon_w
+    local k = math.floor(reach / spacing)
+    local I = math.min(2 * k + 1, math.floor(pole_info.max_wire_distance / spacing))
+    I = math.max(1, I)
+
+    for line_idx, candidates in ipairs(candidates_by_line) do
+        local count = #candidates
+        if count > 0 then
+            local indices = {}
+            local idx = 1
+            while idx <= count do
+                indices[idx] = true
+                idx = idx + I
+            end
+            
+            -- Ensure last candidate is covered or has a pole
+            local last_placed = count
+            while last_placed >= 1 and not indices[last_placed] do
+                last_placed = last_placed - 1
+            end
+            if last_placed >= 1 then
+                local gap_cands = count - last_placed
+                if gap_cands * spacing > pole_info.supply_area_distance then
+                    indices[count] = true
+                end
+            end
+
+            -- Place poles
+            for c_idx, cand in ipairs(candidates) do
+                if indices[c_idx] then
+                    local snap_x, snap_y
+                    if pole_info.width % 2 == 0 then
+                        snap_x = math.floor(cand.x)
+                    else
+                        snap_x = math.floor(cand.x) + 0.5
+                    end
+                    if pole_info.height % 2 == 0 then
+                        snap_y = math.floor(cand.y)
+                    else
+                        snap_y = math.floor(cand.y) + 0.5
+                    end
+                    local pos = {x = snap_x, y = snap_y}
+
+                    local p, s = pole_placer._place_ghost(surface, force, player, pole_info.name, pos, quality, polite)
+                    placed = placed + p
+                    skipped = skipped + s
+                end
             end
         end
     end

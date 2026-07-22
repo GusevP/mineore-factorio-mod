@@ -111,12 +111,13 @@ local function block_entity_tiles(blocked, cx, cy, half_w, half_h)
 end
 
 --- Build a set of blocked tile positions from placed entities.
+--- @param surface LuaSurface|nil The game surface
 --- @param drill_positions table Array of {position={x,y}, direction=...} drill placements
 --- @param drill_info table Drill info {width, height}
 --- @param belt_lines table Belt line metadata from calculator
 --- @param gap number Gap size between paired rows
 --- @return table<string, true> Set keyed by "x,y" tile coordinate strings
-function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines, gap)
+function beacon_placer.build_blocked_set(surface, drill_positions, drill_info, belt_lines, gap)
     local blocked = {}
 
     local half_w = drill_info.width / 2
@@ -149,6 +150,48 @@ function beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines
                 local ty = y_start_tile + tile_offset
                 for tx = x_start, x_end do
                     blocked[tx .. "," .. ty] = true
+                end
+            end
+        end
+    end
+
+    -- Block tiles occupied by electric poles / ghosts on the surface
+    if surface and #drill_positions > 0 then
+        local min_x = math.huge
+        local max_x = -math.huge
+        local min_y = math.huge
+        local max_y = -math.huge
+        for _, entry in ipairs(drill_positions) do
+            local pos = entry.position
+            if pos.x < min_x then min_x = pos.x end
+            if pos.x > max_x then max_x = pos.x end
+            if pos.y < min_y then min_y = pos.y end
+            if pos.y > max_y then max_y = pos.y end
+        end
+
+        local expand = gap + 12 -- safe margin to cover beacon columns
+        local search_area = {
+            {min_x - expand, min_y - expand},
+            {max_x + expand, max_y + expand}
+        }
+        local poles = surface.find_entities_filtered{
+            area = search_area,
+            type = {"electric-pole", "entity-ghost"}
+        }
+        for _, p in ipairs(poles) do
+            local inner_name = p.name
+            local inner_type = p.type
+            if p.name == "entity-ghost" then
+                inner_name = p.ghost_name
+                inner_type = p.ghost_type
+            end
+            if inner_type == "electric-pole" then
+                local proto = prototypes.entity[inner_name]
+                if proto then
+                    local cbox = proto.collision_box
+                    local w = math.ceil(cbox.right_bottom.x - cbox.left_top.x)
+                    local h = math.ceil(cbox.right_bottom.y - cbox.left_top.y)
+                    block_entity_tiles(blocked, p.position.x, p.position.y, w / 2, h / 2)
                 end
             end
         end
@@ -379,8 +422,8 @@ function beacon_placer.place(surface, force, player, drill_positions, drill_info
     max_beacons_per_drill = max_beacons_per_drill or 4
     local quality = beacon_quality or "normal"
 
-    -- Build blocked positions from drills and belts
-    local blocked = beacon_placer.build_blocked_set(drill_positions, drill_info, belt_lines, gap)
+    -- Build blocked positions from drills, belts, and electric poles
+    local blocked = beacon_placer.build_blocked_set(surface, drill_positions, drill_info, belt_lines, gap)
 
     -- Generate targeted candidate positions alongside drill columns/rows
     local candidates = generate_candidates(drill_positions, drill_info, beacon_info, belt_lines, gap)
